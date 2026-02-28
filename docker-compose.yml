@@ -69,7 +69,6 @@ services:
     image: ghcr.io/antonmedv/crow-watch/migrate:latest
     command:
       [
-        "goose",
         "-dir",
         "/migrations",
         "-table",
