@@ -1,0 +1,160 @@
+{{ define "title" }}Invite | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .invite-url {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.75rem;
+    }
+    .invite-url input {
+      flex: 1;
+      font-size: 0.85rem;
+    }
+    .invite-url button {
+      white-space: nowrap;
+    }
+    .invite-history {
+      margin-top: 2rem;
+    }
+    .invite-history h2 {
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .invite-table {
+      width: 100%;
+      font-size: 0.85rem;
+      border-collapse: collapse;
+    }
+    .invite-table th,
+    .invite-table td {
+      text-align: left;
+      padding: 0.4rem 0.6rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .invite-table th {
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .status--registered {
+      color: var(--text-green, #1a7f37);
+    }
+    .status--expired {
+      color: var(--text-muted);
+    }
+    .status--pending {
+      color: var(--text-warning, #9a6700);
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <h1 class="page-title">Invite</h1>
+  <nav class="tabs" aria-label="Invite Tabs">
+    <a
+      class="{{ classes "tabs__tab" (when (eq .Tab "email") "active") }}"
+      href="/invite?tab=email"
+      >E-mail</a
+    >
+    <a
+      class="{{ classes "tabs__tab" (when (eq .Tab "link") "active") }}"
+      href="/invite?tab=link"
+      >Link</a
+    >
+  </nav>
+  <div class="tab-content">
+    {{ if .Error }}<p class="error" role="alert">{{ .Error }}</p>{{ end }}
+    {{ if .Success }}
+      <p class="success" role="status">{{ .Success }}</p>
+    {{ end }}
+
+    {{ if eq .Tab "email" }}
+      <form method="post" action="/invite/email">
+        <div class="field">
+          <label for="email">Recipient e-mail</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            class="field-input"
+            value="{{ .Email }}"
+            required
+            placeholder="friend@example.com"
+          />
+          <p class="field-hint">
+            We'll send them an invitation with a link to register.
+          </p>
+        </div>
+        <button class="btn" type="submit">Send invitation</button>
+      </form>
+    {{ end }}
+
+    {{ if eq .Tab "link" }}
+      <p>
+        Generate a single-use invite link to share. Links expire after 24 hours.
+      </p>
+      <form method="post" action="/invite/link">
+        <button class="btn" type="submit">Generate link</button>
+      </form>
+      {{ if .InviteURL }}
+        <div class="invite-url">
+          <input
+            type="text"
+            class="field-input"
+            value="{{ .InviteURL }}"
+            readonly
+            onclick="this.select()"
+          />
+          <button
+            type="button"
+            class="btn btn--secondary"
+            onclick="navigator.clipboard.writeText(this.previousElementSibling.value)"
+          >
+            Copy
+          </button>
+        </div>
+      {{ end }}
+    {{ end }}
+  </div>
+
+  {{ if .Invitations }}
+    <div class="invite-history">
+      <h2>Your invitations</h2>
+      <table class="invite-table">
+        <thead>
+          <tr>
+            <th>Recipient</th>
+            <th>Status</th>
+            <th>Sent</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Invitations }}
+            <tr>
+              <td>
+                {{ if .RegisteredUsername }}
+                  <a href="/u/{{ .RegisteredUsername }}"
+                    >{{ .RegisteredUsername }}</a
+                  >
+                {{ else if .Email }}
+                  {{ .Email }}
+                {{ else }}
+                  (link invite)
+                {{ end }}
+              </td>
+              <td>
+                <span
+                  class="{{ classes (cond (eq .Status "Registered") "status--registered" (cond (eq .Status "Expired") "status--expired" "status--pending")) }}"
+                >
+                  {{ .Status }}
+                </span>
+              </td>
+              <td>{{ timeAgo .CreatedAt }}</td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    </div>
+  {{ end }}
+{{ end }}

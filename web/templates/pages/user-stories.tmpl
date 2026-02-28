@@ -1,0 +1,45 @@
+{{ define "title" }}Stories by {{ .ProfileUsername }} | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .user-stories-header {
+      margin-bottom: 16px;
+    }
+
+    .user-stories-header__name {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .user-stories-header__name a {
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 400;
+      margin-left: 8px;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <div class="user-stories-header">
+    <h1 class="user-stories-header__name">
+      Stories by
+      {{ .ProfileUsername }}
+      <a href="/u/{{ .ProfileUsername }}">profile</a>
+    </h1>
+  </div>
+  <ol class="story-list">
+    {{ range .Stories }}
+      <li class="story-item" data-role="story-item">
+        {{ template "story-item" . }}
+      </li>
+    {{ end }}
+  </ol>
+  {{ if .HasMore }}
+    <a class="more-link" href="{{ .PagePath }}/{{ add .CurrentPage 1 }}">
+      Page
+      {{ add .CurrentPage 1 }}
+    </a>
+  {{ end }}
+{{ end }}

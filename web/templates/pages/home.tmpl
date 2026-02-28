@@ -1,0 +1,31 @@
+{{ define "title" -}}
+  {{- if eq .PagePath "/newest/page" -}}
+    {{- if gt .CurrentPage 1 -}}
+      Newest Page {{ .CurrentPage }} | Crow Watch
+    {{- else -}}
+      Newest | Crow Watch
+    {{- end -}}
+  {{- else -}}
+    {{- if gt .CurrentPage 1 -}}
+      Page {{ .CurrentPage }} | Crow Watch
+    {{- else -}}
+      Crow Watch
+    {{- end -}}
+  {{- end -}}
+{{ end }}
+
+{{ define "content" }}
+  <ol class="story-list">
+    {{ range .Stories }}
+      <li class="story-item" data-role="story-item">
+        {{ template "story-item" . }}
+      </li>
+    {{ end }}
+  </ol>
+  {{ if .HasMore }}
+    <a class="more-link" href="{{ .PagePath }}/{{ add .CurrentPage 1 }}">
+      Page
+      {{ add .CurrentPage 1 }}
+    </a>
+  {{ end }}
+{{ end }}

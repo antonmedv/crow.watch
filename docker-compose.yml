@@ -1,0 +1,115 @@
+services:
+  app:
+    image: ghcr.io/antonmedv/crow-watch/app:latest
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      ADDR: ":8080"
+      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-crowwatch_session}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-720}
+      SECURE_COOKIES: ${SECURE_COOKIES:-true}
+      ZOHO_HOST: ${ZOHO_HOST:-}
+      ZOHO_TOKEN: ${ZOHO_TOKEN:-}
+      FROM_EMAIL: ${FROM_EMAIL:-}
+      APP_URL: ${APP_URL:-}
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    networks:
+      - crownet
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+  cmd:
+    image: ghcr.io/antonmedv/crow-watch/cmd:latest
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+    networks:
+      - crownet
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - tools
+    stdin_open: true
+    tty: true
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - crownet
+    shm_size: 128mb
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  migrate:
+    image: ghcr.io/antonmedv/crow-watch/migrate:latest
+    command:
+      [
+        "goose",
+        "-dir",
+        "/migrations",
+        "-table",
+        "migrations",
+        "postgres",
+        "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable",
+        "up",
+      ]
+    networks:
+      - crownet
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  backup:
+    image: ghcr.io/antonmedv/crow-watch/backup:latest
+    environment:
+      PGHOST: db
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+      LINODE_CLI_OBJ_ACCESS_KEY: ${LINODE_OBJ_ACCESS_KEY}
+      LINODE_CLI_OBJ_SECRET_KEY: ${LINODE_OBJ_SECRET_KEY}
+      LINODE_BUCKET: ${LINODE_BUCKET}
+      LINODE_CLUSTER: ${LINODE_CLUSTER:-us-east-1}
+      S3_PREFIX: ${S3_PREFIX:-backups}
+      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 3 * * *}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    networks:
+      - crownet
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  crownet:
+    driver: bridge
+
+volumes:
+  pgdata:

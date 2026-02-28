@@ -1,0 +1,7 @@
+.git
+.env
+node_modules
+scripts
+stories.yaml
+tags.yaml
+*.md

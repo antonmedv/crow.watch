@@ -1,0 +1,196 @@
+{{ define "title" }}Account | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .profile-links {
+      float: right;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .profile-links a {
+      display: block;
+      text-align: right;
+    }
+    .logout-section {
+      display: flex;
+      justify-content: flex-end;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <div class="profile-links">
+    <a href="/u/{{ .Username }}">Public profile</a>
+  </div>
+  <h1 class="page-title">Account</h1>
+  <nav class="tabs" aria-label="Account Tabs">
+    <a
+      class="{{ classes "tabs__tab" (when (eq .Tab "profile") "active") }}"
+      href="/account?tab=profile"
+      >Profile</a
+    >
+    <a
+      class="{{ classes "tabs__tab" (when (eq .Tab "email") "active") }}"
+      href="/account?tab=email"
+      >E-mail</a
+    >
+    <a
+      class="{{ classes "tabs__tab" (when (eq .Tab "password") "active") }}"
+      href="/account?tab=password"
+      >Password</a
+    >
+  </nav>
+  <div class="tab-content">
+    {{ if .Success }}
+      <p class="success" role="status">{{ .Success }}</p>
+    {{ end }}
+
+    {{ if eq .Tab "profile" }}
+      <form method="post" action="/account/profile">
+        <div class="field">
+          <label for="about">About</label>
+          <textarea
+            id="about"
+            name="about"
+            class="field-input"
+            rows="3"
+            maxlength="500"
+            placeholder="A little about yourself"
+          >
+{{ .About }}</textarea
+          >
+          {{ if .Errors.about }}
+            <p class="field-error">{{ .Errors.about }}</p>
+          {{ end }}
+        </div>
+        <div class="field">
+          <label for="website">Website</label>
+          <input
+            id="website"
+            name="website"
+            type="url"
+            class="field-input"
+            value="{{ .Website }}"
+            maxlength="250"
+            placeholder="https://example.com"
+          />
+          {{ if .Errors.website }}
+            <p class="field-error">{{ .Errors.website }}</p>
+          {{ end }}
+        </div>
+        <button class="btn" type="submit">Update profile</button>
+      </form>
+    {{ end }}
+
+    {{ if eq .Tab "email" }}
+      {{ if not .EmailConfirmed }}
+        <p>
+          Your e-mail address is not yet confirmed. Please check your inbox.
+        </p>
+        <form
+          method="post"
+          action="/account/resend-confirmation"
+          style="margin-bottom: 16px;"
+        >
+          <button class="btn btn--secondary" type="submit">
+            Resend confirmation e-mail
+          </button>
+        </form>
+      {{ end }}
+      {{ if .UnconfirmedEmail }}
+        <p>
+          Pending confirmation for <strong>{{ .UnconfirmedEmail }}</strong>.
+        </p>
+      {{ end }}
+      <form method="post" action="/account/email">
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            class="field-input"
+            value="{{ .Email }}"
+            autocomplete="email"
+            placeholder="you@example.com"
+          />
+          {{ if .Errors.email }}
+            <p class="field-error">{{ .Errors.email }}</p>
+          {{ end }}
+          <p class="field-hint">
+            A confirmation e-mail will be sent to the new address.
+          </p>
+        </div>
+        <div class="field">
+          <label for="email-password">Password</label>
+          <input
+            id="email-password"
+            name="password"
+            type="password"
+            class="field-input"
+            required
+            autocomplete="current-password"
+          />
+          {{ if .Errors.email_password }}
+            <p class="field-error">{{ .Errors.email_password }}</p>
+          {{ end }}
+        </div>
+        <button class="btn" type="submit">Change e-mail</button>
+      </form>
+    {{ end }}
+
+    {{ if eq .Tab "password" }}
+      <form method="post" action="/account/password">
+        <div class="field">
+          <label for="current_password">Current password</label>
+          <input
+            id="current_password"
+            name="current_password"
+            type="password"
+            class="field-input"
+            required
+            autocomplete="current-password"
+          />
+          {{ if .Errors.current_password }}
+            <p class="field-error">{{ .Errors.current_password }}</p>
+          {{ end }}
+        </div>
+        <div class="field">
+          <label for="new_password">New password</label>
+          <input
+            id="new_password"
+            name="new_password"
+            type="password"
+            class="field-input"
+            required
+            autocomplete="new-password"
+          />
+          {{ if .Errors.new_password }}
+            <p class="field-error">{{ .Errors.new_password }}</p>
+          {{ end }}
+        </div>
+        <div class="field">
+          <label for="new_password_confirmation">Confirm new password</label>
+          <input
+            id="new_password_confirmation"
+            name="new_password_confirmation"
+            type="password"
+            class="field-input"
+            required
+            autocomplete="new-password"
+          />
+          {{ if .Errors.new_password_confirmation }}
+            <p class="field-error">{{ .Errors.new_password_confirmation }}</p>
+          {{ end }}
+        </div>
+        <button class="btn" type="submit">Change password</button>
+      </form>
+    {{ end }}
+  </div>
+
+  <div class="logout-section">
+    <form method="post" action="/logout">
+      <button type="submit" class="btn btn--secondary">Logout</button>
+    </form>
+  </div>
+{{ end }}

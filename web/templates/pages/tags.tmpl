@@ -1,0 +1,114 @@
+{{ define "title" }}Tags | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .tags-page {
+      max-width: 640px;
+    }
+
+    .tags-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .tags-table td {
+      padding: 3px 0;
+      vertical-align: baseline;
+    }
+
+    .tags-table__tag {
+      white-space: nowrap;
+      padding-right: 12px;
+    }
+
+    .tags-table__tag .tag {
+      font-size: 13px;
+      padding: 3px 10px;
+    }
+
+    .tags-table__category td {
+      padding-top: 20px;
+      padding-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .tags-table tbody:first-child .tags-table__category td {
+      padding-top: 0;
+    }
+
+    .tags-table__desc {
+      width: 100%;
+      color: var(--text-muted);
+    }
+
+    .tags-table__hide {
+      white-space: nowrap;
+      text-align: right;
+      padding-left: 12px;
+    }
+
+    .tags-table__hide button {
+      background: none;
+      border: none;
+      border-radius: 3px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 8px;
+    }
+
+    .tags-table__hide button:hover {
+      border-color: var(--text-muted);
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <div class="tags-page">
+    <h1 class="page-title">Tags</h1>
+    <table class="tags-table">
+      {{ range .TagGroups }}
+        <tbody>
+          {{ if .Category }}
+            <tr class="tags-table__category">
+              <td colspan="{{ if $.IsLoggedIn }}3{{ else }}2{{ end }}">
+                {{ .Category }}
+              </td>
+            </tr>
+          {{ end }}
+          {{ range .Tags }}
+            <tr>
+              <td class="tags-table__tag">
+                <a
+                  class="{{ classes "tag" (when .IsMedia "tag--media") }}"
+                  href="/t/{{ .Tag }}"
+                  >{{ .Tag }}</a
+                >
+              </td>
+              <td class="tags-table__desc">{{ .Description }}</td>
+              {{ if $.IsLoggedIn }}
+                <td class="tags-table__hide">
+                  <button
+                    class="hide-tag-btn"
+                    data-action="hide-tag"
+                    data-tag-id="{{ .ID }}"
+                    data-hidden="{{ cond (inSlice .ID $.HiddenTagIDs) "true" "false" }}"
+                  >
+                    {{ if inSlice .ID $.HiddenTagIDs }}
+                      unhide
+                    {{ else }}
+                      hide
+                    {{ end }}
+                  </button>
+                </td>
+              {{ end }}
+            </tr>
+          {{ end }}
+        </tbody>
+      {{ end }}
+    </table>
+  </div>
+{{ end }}

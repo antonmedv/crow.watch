@@ -1,0 +1,162 @@
+{{ define "title" }}Campaigns | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .campaign-form {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .campaign-form h2 {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+    .campaign-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .campaign-table th,
+    .campaign-table td {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .campaign-table th {
+      font-weight: 600;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.1rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    .badge--active {
+      background: var(--primary);
+      color: #fff;
+    }
+    .badge--stopped {
+      color: var(--text);
+    }
+    .toggle-form {
+      display: inline;
+    }
+    .toggle-btn {
+      font-size: 0.85rem;
+      padding: 0.2rem 0.6rem;
+      cursor: pointer;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <div>
+    <h1 class="page-title">Campaigns</h1>
+
+    <div class="campaign-form">
+      <h2>Create campaign</h2>
+      {{ if .Error }}
+        <p class="error" role="alert">{{ .Error }}</p>
+      {{ end }}
+      <form method="post" action="/mod/campaigns">
+        <div class="field">
+          <label for="slug">Slug</label>
+          <input
+            id="slug"
+            name="slug"
+            type="text"
+            class="field-input"
+            value="{{ .Slug }}"
+            required
+            placeholder="summer-2026"
+            minlength="2"
+            maxlength="30"
+            pattern="[a-z0-9]+(-[a-z0-9]+)*"
+          />
+          <p class="field-hint">
+            Lowercase letters, numbers, and hyphens. Used in /join/{slug}
+          </p>
+        </div>
+        <div class="field">
+          <label for="welcome_message">Welcome message</label>
+          <textarea
+            id="welcome_message"
+            name="welcome_message"
+            class="field-input"
+            rows="3"
+            placeholder="Optional welcome message shown on the registration page"
+          >
+{{ .WelcomeMessage }}</textarea
+          >
+        </div>
+        <div class="field">
+          <label for="sponsor_username">Sponsor username</label>
+          <input
+            id="sponsor_username"
+            name="sponsor_username"
+            type="text"
+            class="field-input"
+            value="{{ .SponsorUsername }}"
+            required
+            placeholder="username"
+          />
+          <p class="field-hint">
+            This user becomes the inviter for everyone who registers
+          </p>
+        </div>
+        <button class="btn" type="submit">Create campaign</button>
+      </form>
+    </div>
+
+    {{ if .Campaigns }}
+      <table class="campaign-table">
+        <thead>
+          <tr>
+            <th>Slug</th>
+            <th>Sponsor</th>
+            <th>Status</th>
+            <th>Registered</th>
+            <th>Created by</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {{ range .Campaigns }}
+            <tr>
+              <td><a href="/join/{{ .Slug }}">/join/{{ .Slug }}</a></td>
+              <td>{{ .SponsorName }}</td>
+              <td>
+                {{ if .Active }}
+                  <span class="badge badge--active">Active</span>
+                {{ else }}
+                  <span class="badge badge--stopped">Stopped</span>
+                {{ end }}
+              </td>
+              <td>{{ .RegisteredCount }}</td>
+              <td>{{ .CreatedByName }}</td>
+              <td>
+                <form
+                  class="toggle-form"
+                  method="post"
+                  action="/mod/campaigns/{{ .ID }}/toggle"
+                >
+                  {{ if .Active }}
+                    <input type="hidden" name="active" value="false" />
+                    <button class="btn toggle-btn" type="submit">Stop</button>
+                  {{ else }}
+                    <input type="hidden" name="active" value="true" />
+                    <button class="btn toggle-btn" type="submit">
+                      Continue
+                    </button>
+                  {{ end }}
+                </form>
+              </td>
+            </tr>
+          {{ end }}
+        </tbody>
+      </table>
+    {{ else }}
+      <p>No campaigns yet.</p>
+    {{ end }}
+  </div>
+{{ end }}

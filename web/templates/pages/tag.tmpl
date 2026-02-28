@@ -1,0 +1,47 @@
+{{ define "title" }}
+  {{ .TagName }} | Crow Watch
+{{ end }}
+
+{{ define "head" }}
+  <style>
+    .tag-header {
+      margin-bottom: 16px;
+    }
+
+    .tag-header__name {
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .tag-header__description {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 4px 0 0 8px;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <div class="tag-header">
+    <h1 class="tag-header__name">
+      {{ .TagName }}
+      {{ if .TagDescription }}
+        <span class="tag-header__description">{{ .TagDescription }}</span>
+      {{ end }}
+    </h1>
+  </div>
+  <ol class="story-list">
+    {{ range .Stories }}
+      <li class="story-item" data-role="story-item">
+        {{ template "story-item" . }}
+      </li>
+    {{ end }}
+  </ol>
+  {{ if .HasMore }}
+    <a class="more-link" href="{{ .PagePath }}/{{ add .CurrentPage 1 }}">
+      Page
+      {{ add .CurrentPage 1 }}
+    </a>
+  {{ end }}
+{{ end }}

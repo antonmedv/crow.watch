@@ -1,0 +1,92 @@
+{{ define "title" }}Register | Crow Watch{{ end }}
+
+{{ define "content" }}
+  <div class="auth-wrapper">
+    <section class="auth-card" aria-label="Register">
+      <div class="auth-card__body">
+        {{ if .Errors.token }}
+          <p class="error" role="alert">{{ .Errors.token }}</p>
+        {{ else }}
+          {{ if .WelcomeMessage }}
+            <p style="margin-bottom: 1rem">{{ .WelcomeMessage }}</p>
+          {{ end }}
+          {{ if .InviterName }}
+            <p style="margin-bottom: 1rem">
+              Invited by <strong>{{ .InviterName }}</strong>
+            </p>
+          {{ end }}
+          {{ if .Errors.form }}
+            <p class="error" role="alert">{{ .Errors.form }}</p>
+          {{ end }}
+          <form method="post" action="{{ .FormAction }}">
+            <div class="field">
+              <label for="username">Username</label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                class="field-input"
+                value="{{ .Username }}"
+                required
+                autocomplete="username"
+                placeholder="username"
+                minlength="2"
+                maxlength="20"
+              />
+              {{ if .Errors.username }}
+                <p class="field-error">{{ .Errors.username }}</p>
+              {{ end }}
+            </div>
+            <div class="field">
+              <label for="email">E-mail</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                class="field-input"
+                value="{{ .Email }}"
+                required
+                autocomplete="email"
+                placeholder="you@example.com"
+              />
+              {{ if .Errors.email }}
+                <p class="field-error">{{ .Errors.email }}</p>
+              {{ end }}
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                class="field-input"
+                required
+                autocomplete="new-password"
+                placeholder="••••••••"
+              />
+              {{ if .Errors.password }}
+                <p class="field-error">{{ .Errors.password }}</p>
+              {{ end }}
+            </div>
+            <div class="field">
+              <label for="password_confirmation">Confirm password</label>
+              <input
+                id="password_confirmation"
+                name="password_confirmation"
+                type="password"
+                class="field-input"
+                required
+                autocomplete="new-password"
+                placeholder="••••••••"
+              />
+              {{ if .Errors.password_confirmation }}
+                <p class="field-error">{{ .Errors.password_confirmation }}</p>
+              {{ end }}
+            </div>
+            <button class="btn auth-btn" type="submit">Create account</button>
+          </form>
+        {{ end }}
+      </div>
+    </section>
+  </div>
+{{ end }}

@@ -1,0 +1,183 @@
+{{ define "comment-node" }}
+  <li class="comments_subtree">
+    <input
+      id="comment_folder_{{ .ID }}"
+      class="comment_folder_button"
+      type="checkbox"
+    />
+    <div
+      id="comment-{{ .ID }}"
+      class="{{ classes "comment" (when .IsUnread "comment--unread") (when .IsDeleted "comment--deleted") }}"
+    >
+      <div class="comment__voters">
+        <label for="comment_folder_{{ .ID }}" class="comment_folder"></label>
+        {{ if and (not .IsDeleted) .IsLoggedIn }}
+          {{ if .IsAuthor }}
+            <span class="vote-btn vote-btn--disabled">
+              <svg class="icon"><use href="#icon-upvote"></use></svg>
+            </span>
+          {{ else }}
+            <button
+              class="{{ classes "vote-btn comment-vote-btn" (when .HasUpvoted "vote-btn--active") }}"
+              data-action="comment-vote"
+              data-comment-id="{{ .ID }}"
+              data-voted="{{ .HasUpvoted }}"
+            >
+              <svg class="icon"><use href="#icon-upvote"></use></svg>
+            </button>
+          {{ end }}
+        {{ else if not .IsDeleted }}
+          <span class="vote-btn vote-btn--disabled">
+            <svg class="icon"><use href="#icon-upvote"></use></svg>
+          </span>
+        {{ end }}
+        <span
+          class="vote-score"
+          data-role="vote-score"
+          data-comment-id="{{ .ID }}"
+        >
+          {{ cond (eq .Upvotes 0) "~" .Upvotes }}
+        </span>
+      </div>
+      <div class="comment__details">
+        <div class="comment__byline">
+          <a name="c_{{ .ID }}"></a>
+          {{ if .IsDeleted }}
+            <span class="comment__author comment__author--deleted">
+              [deleted]
+            </span>
+            <span class="comment__time">{{ timeAgo .CreatedAt }}</span>
+          {{ else }}
+            <a href="/u/{{ .Username }}" class="comment__author">
+              {{ .Username }}
+            </a>
+            <span class="comment__time">{{ timeAgo .CreatedAt }}</span>
+            {{ if .IsUnread }}
+              <span class="comment__unread">(unread)</span>
+            {{ end }}
+            {{ if .CanEdit }}
+              <span class="comment__sep">|</span>
+              <button
+                class="comment__action comment-edit-toggle"
+                data-action="comment-edit-toggle"
+                data-comment-id="{{ .ID }}"
+              >
+                edit
+              </button>
+            {{ end }}
+            {{ if .IsAuthor }}
+              <span class="comment__sep">|</span>
+              <form
+                method="POST"
+                action="/comments/{{ .ID }}/delete"
+                class="comment-delete-form"
+                data-role="comment-delete-form"
+              >
+                <button
+                  type="submit"
+                  class="comment__action comment-delete-btn"
+                >
+                  delete
+                </button>
+              </form>
+            {{ end }}
+            {{ if and .IsLoggedIn (not .IsAuthor) }}
+              <span class="comment__sep">|</span>
+              {{ if .HasFlagged }}
+                <button
+                  class="comment__action comment-unflag-btn"
+                  data-action="comment-unflag"
+                  data-comment-id="{{ .ID }}"
+                >
+                  unflag
+                </button>
+              {{ else }}
+                <span class="flag-dropdown" data-role="flag-dropdown">
+                  <button
+                    class="comment__action comment-flag-btn"
+                    data-action="comment-flag"
+                    data-comment-id="{{ .ID }}"
+                  >
+                    flag
+                  </button>
+                  <div class="flag-dropdown__menu" data-role="flag-menu" hidden>
+                    {{ range .FlagReasons }}
+                      <button
+                        class="flag-dropdown__option"
+                        data-action="flag-option"
+                        data-reason="{{ . }}"
+                      >
+                        {{ . }}
+                      </button>
+                    {{ end }}
+                  </div>
+                </span>
+              {{ end }}
+            {{ end }}
+            {{ if .FlagCounts }}
+              <span class="comment__sep">|</span>
+              {{- range $i, $f := .FlagCounts -}}
+                {{- if $i }},{{ end }}
+                {{ $f.Count }}
+                {{ $f.Reason -}}
+              {{- end }}
+            {{ end }}
+            {{ if and .IsLoggedIn (not .IsMaxDepth) }}
+              <span class="comment__sep">|</span>
+              <button
+                class="comment__action comment-reply-btn"
+                data-action="comment-reply"
+                data-comment-id="{{ .ID }}"
+                data-story-code="{{ .StoryCode }}"
+              >
+                reply
+              </button>
+            {{ end }}
+          {{ end }}
+        </div>
+        {{ if .IsDeleted }}
+          <div class="comment__text comment__text--deleted">{{ .Body }}</div>
+        {{ else }}
+          <div class="comment__text markdown-body">{{ .Body }}</div>
+        {{ end }}
+        {{ if .CanEdit }}
+          <form
+            method="POST"
+            action="/comments/{{ .ID }}/edit"
+            class="comment-edit-form"
+            data-role="comment-edit-form"
+            data-comment-id="{{ .ID }}"
+            hidden
+          >
+            <textarea
+              name="body"
+              class="field-input comment-edit-textarea"
+              rows="4"
+            >
+              {{- .RawBody -}}
+            </textarea
+            >
+            <div class="comment-edit-actions">
+              <button type="submit" class="btn comment-edit-save">save</button>
+              <button
+                type="button"
+                class="btn btn--secondary comment-edit-cancel"
+                data-action="comment-edit-cancel"
+                data-comment-id="{{ .ID }}"
+              >
+                cancel
+              </button>
+            </div>
+          </form>
+        {{ end }}
+      </div>
+    </div>
+    {{ if .Children }}
+      <ol class="comments">
+        {{ range .Children }}
+          {{ template "comment-node" . }}
+        {{ end }}
+      </ol>
+    {{ end }}
+  </li>
+{{ end }}

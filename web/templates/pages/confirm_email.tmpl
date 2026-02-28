@@ -1,0 +1,17 @@
+{{ define "title" }}Confirm Email | Crow Watch{{ end }}
+
+{{ define "content" }}
+  <div class="auth-wrapper">
+    <section class="auth-card" aria-label="Confirm Email">
+      <nav class="tabs tabs--full" aria-label="Confirm Email">
+        <span class="tabs__tab active">Confirm Email</span>
+      </nav>
+      <div class="auth-card__body">
+        {{ if .Error }}<p class="error" role="alert">{{ .Error }}</p>{{ end }}
+        {{ if .Success }}
+          <p class="success" role="status">{{ .Success }}</p>
+        {{ end }}
+      </div>
+    </section>
+  </div>
+{{ end }}

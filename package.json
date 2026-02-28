@@ -1,0 +1,19 @@
+{
+  "private": true,
+  "scripts": {
+    "db:status": "./scripts/goose.sh status",
+    "db:up": "./scripts/goose.sh up",
+    "db:down": "./scripts/goose.sh down",
+    "db:reset": "./scripts/goose.sh reset",
+    "cmd:useradm": "go run ./cmd/useradm",
+    "cmd:tagseed": "go run ./cmd/tagseed",
+    "cmd:storyseed": "go run ./cmd/storyseed",
+    "cmd:votecalc": "go run ./cmd/votecalc",
+    "sqlc:generate": "sqlc generate",
+    "fmt": "prettier --write . && go fmt ./..."
+  },
+  "devDependencies": {
+    "prettier": "^3.8.1",
+    "prettier-plugin-go-template": "^0.0.15"
+  }
+}

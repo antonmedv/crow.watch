@@ -1,0 +1,444 @@
+{{ define "title" }}Submit | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .submit-rules h3 {
+      margin-block: 16px;
+      font-size: 16px;
+    }
+
+    .submit-rules ul {
+      margin: 0 0 16px;
+      padding-left: 1.4em;
+      color: var(--text-muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .submit-rules li + li {
+      margin-top: 4px;
+    }
+
+    .submit-rules ul:last-child {
+      margin-bottom: 0;
+    }
+
+    .tag-picker {
+      position: relative;
+    }
+
+    .tag-picker__control {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+      min-height: 44px;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      cursor: text;
+      transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+    }
+
+    .tag-picker__control:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+    }
+
+    .tag-picker__chips {
+      display: contents;
+    }
+
+    .tag-picker__chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 13px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      white-space: nowrap;
+    }
+
+    .tag-picker__chip--media {
+      background: var(--tag-media-bg);
+      color: var(--tag-media-text);
+    }
+
+    .tag-picker__chip-remove {
+      background: none;
+      border: none;
+      color: inherit;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+      opacity: 0.6;
+    }
+
+    .tag-picker__chip-remove:hover {
+      opacity: 1;
+    }
+
+    .tag-picker__search {
+      flex: 1;
+      min-width: 80px;
+      border: none;
+      outline: none;
+      background: transparent;
+      font: inherit;
+      font-size: 14px;
+      color: var(--text);
+      padding: 4px 0;
+    }
+
+    .tag-picker__search::placeholder {
+      color: var(--text-muted);
+      opacity: 0.5;
+    }
+
+    .tag-picker__dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      margin-top: 4px;
+      max-height: 320px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .tag-picker[aria-expanded="true"] .tag-picker__dropdown {
+      display: block;
+    }
+
+    .tag-picker__group[hidden] {
+      display: none;
+    }
+
+    .tag-picker__group-label {
+      position: sticky;
+      top: 0;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      padding: 8px 10px 4px;
+      background: var(--bg);
+    }
+
+    .tag-picker__option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .tag-picker__option--focused {
+      background: var(--tag-bg);
+    }
+
+    .tag-picker__option--media .tag-picker__option-tag {
+      color: var(--tag-media-text);
+    }
+
+    .tag-picker__check {
+      width: 18px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--primary);
+      visibility: hidden;
+    }
+
+    .tag-picker__option[aria-selected="true"] .tag-picker__check {
+      visibility: visible;
+    }
+
+    .tag-picker__option-tag {
+      font-weight: 600;
+    }
+
+    .tag-picker__option-desc {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .tag-picker__option[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .tag-picker__dropdown {
+        max-height: 50vh;
+      }
+
+      .tag-picker__option {
+        padding: 10px;
+      }
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <h1 class="page-title">Submit</h1>
+  <nav class="tabs" aria-label="Submit Tabs">
+    <a
+      class="{{ classes "tabs__tab" (when (eq .Tab "link") "active") }}"
+      href="/submit?tab=link"
+      >Link</a
+    >
+    <a
+      class="{{ classes "tabs__tab" (when (eq .Tab "text") "active") }}"
+      href="/submit?tab=text"
+      >Text</a
+    >
+  </nav>
+  <div class="tab-content">
+    {{ if .Error }}
+      <p class="error" role="alert">
+        {{ .Error }}{{ if .DuplicateURL }}
+          <br />
+          <a href="{{ .DuplicateURL }}">View story</a>
+        {{ end }}
+      </p>
+    {{ end }}
+    <form method="post" action="/submit">
+      {{ if eq .Tab "link" }}
+        <div class="field">
+          <label for="url">URL</label>
+          <div class="field-with-action">
+            <input
+              id="url"
+              name="url"
+              type="text"
+              class="field-input"
+              value="{{ .URL }}"
+              required
+              maxlength="250"
+              placeholder="https://example.com/article"
+            />
+            <button
+              type="button"
+              class="btn btn--secondary"
+              id="fetch-title-btn"
+            >
+              Fetch title
+            </button>
+          </div>
+          {{ if .Errors.url }}
+            <p class="field-error">{{ .Errors.url }}</p>
+          {{ end }}
+        </div>
+      {{ end }}
+      <div class="field">
+        <label for="title">Title</label>
+        <input
+          id="title"
+          name="title"
+          type="text"
+          class="field-input"
+          value="{{ .Title }}"
+          required
+          maxlength="150"
+          placeholder="A descriptive title"
+        />
+        {{ if .Errors.title }}
+          <p class="field-error">{{ .Errors.title }}</p>
+        {{ end }}
+      </div>
+      {{ if eq .Tab "text" }}
+        <div class="field">
+          <label for="body">Text</label>
+          <textarea
+            id="body"
+            name="body"
+            class="field-input"
+            rows="6"
+            maxlength="10000"
+          >
+{{ .Body }}</textarea
+          >
+          {{ if .Errors.body }}
+            <p class="field-error">{{ .Errors.body }}</p>
+          {{ end }}
+          <p class="field-hint">Markdown available</p>
+        </div>
+      {{ end }}
+      <div class="field">
+        <label>Tags</label>
+        {{ if .Errors.tags }}
+          <p class="field-error">{{ .Errors.tags }}</p>
+        {{ end }}
+        <div
+          class="tag-picker"
+          data-role="tag-picker"
+          role="combobox"
+          aria-expanded="false"
+          aria-haspopup="listbox"
+        >
+          <div class="tag-picker__control" data-role="tag-picker-control">
+            <div class="tag-picker__chips" data-role="tag-picker-chips">
+              {{ range .TagGroups }}
+                {{ range .Tags }}
+                  {{ if inSlice .ID $.Selected }}
+                    <span
+                      class="{{ classes "tag-picker__chip" (when .IsMedia "tag-picker__chip--media") }}"
+                      data-role="tag-picker-chip"
+                      data-id="{{ .ID }}"
+                    >
+                      {{ .Tag }}<button
+                        type="button"
+                        class="tag-picker__chip-remove"
+                        data-action="tag-picker-chip-remove"
+                        aria-label="Remove {{ .Tag }}"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  {{ end }}
+                {{ end }}
+              {{ end }}
+            </div>
+            <input
+              type="text"
+              class="tag-picker__search"
+              data-role="tag-picker-search"
+              placeholder="Search tags..."
+              aria-label="Search tags"
+              autocomplete="off"
+            />
+          </div>
+          <div
+            class="tag-picker__dropdown"
+            data-role="tag-picker-dropdown"
+            role="listbox"
+          >
+            {{ range .TagGroups }}
+              <div
+                class="tag-picker__group"
+                data-role="tag-picker-group"
+                data-category="{{ .Category }}"
+              >
+                {{ if .Category }}
+                  <div class="tag-picker__group-label">{{ .Category }}</div>
+                {{ end }}
+                {{ range .Tags }}
+                  <div
+                    class="{{ classes "tag-picker__option" (when .IsMedia "tag-picker__option--media") }}"
+                    data-role="tag-picker-option"
+                    role="option"
+                    aria-selected="{{ cond (inSlice .ID $.Selected) "true" "false" }}"
+                    data-id="{{ .ID }}"
+                    data-tag="{{ .Tag }}"
+                    data-description="{{ .Description }}"
+                    data-is-media="{{ .IsMedia }}"
+                  >
+                    <span class="tag-picker__check">&#10003;</span>
+                    <span class="tag-picker__option-tag">{{ .Tag }}</span>
+                    {{ if .Description }}
+                      <span class="tag-picker__option-desc"
+                        >{{ .Description }}</span
+                      >
+                    {{ end }}
+                  </div>
+                {{ end }}
+              </div>
+            {{ end }}
+          </div>
+          {{ range .TagGroups }}
+            {{ range .Tags }}
+              {{ if inSlice .ID $.Selected }}
+                <input
+                  type="hidden"
+                  name="tags"
+                  value="{{ .ID }}"
+                  data-tag-input="{{ .ID }}"
+                />
+              {{ end }}
+            {{ end }}
+          {{ end }}
+        </div>
+      </div>
+      <button class="btn" type="submit">Submit</button>
+    </form>
+    <div class="submit-rules">
+      <h3>Title</h3>
+      <ul>
+        <li>
+          Use the article's original title. Remove the site name, section name,
+          event name, and author.
+        </li>
+        <li>Avoid clickbait. Keep titles neutral and specific.</li>
+        <li>
+          Remove hype and exaggeration: &ldquo;This Startup Will Change
+          Everything&rdquo; &rarr; &ldquo;How the Startup Scaled Its API&rdquo;
+        </li>
+        <li>
+          Replace vague claims with concrete details: &ldquo;A Crisis in Modern
+          Databases&rdquo; &rarr; &ldquo;Lock Contention Issues in
+          PostgreSQL&rdquo;
+        </li>
+        <li>
+          Avoid second-person phrasing: &ldquo;5 JavaScript Tricks You Should
+          Use&rdquo; &rarr; &ldquo;Advanced JavaScript Promise Patterns&rdquo;
+        </li>
+      </ul>
+      <h3>Tags</h3>
+      <ul>
+        <li>
+          Submit stories that clearly fit the site's scope. If no relevant tags
+          apply, do not submit the story.
+        </li>
+      </ul>
+    </div>
+  </div>
+  <script src="{{ static "js/tag-picker.js" }}"></script>
+  {{ if eq .Tab "link" }}
+    <script>
+      ;(function () {
+        const btn = document.getElementById("fetch-title-btn")
+        const urlInput = document.getElementById("url")
+        const titleInput = document.getElementById("title")
+
+        btn.addEventListener("click", async function () {
+          const url = urlInput.value.trim()
+          if (!url) return
+
+          btn.disabled = true
+          btn.textContent = "Fetching\u2026"
+
+          try {
+            const resp = await fetch("/submit/fetch-title", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: url }),
+            })
+            const data = await resp.json()
+            if (data.title) {
+              titleInput.value = data.title
+            } else {
+              titleInput.placeholder = data.error || "Could not fetch title"
+            }
+          } catch {
+            titleInput.placeholder = "Could not fetch title"
+          } finally {
+            btn.disabled = false
+            btn.textContent = "Fetch title"
+          }
+        })
+      })()
+    </script>
+  {{ end }}
+{{ end }}

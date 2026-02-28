@@ -1,0 +1,33 @@
+{{ define "title" }}404 | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .not-found {
+      margin-block: 16px;
+      text-align: center;
+      padding: 48px 0;
+    }
+
+    .not-found h1 {
+      font-size: 48px;
+      margin: 0 0 8px;
+    }
+
+    .not-found p {
+      margin: 0 0 24px;
+      color: var(--text-muted);
+    }
+
+    .not-found a {
+      color: var(--link);
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <div class="not-found">
+    <h1>404</h1>
+    <p>This page doesn't exist.</p>
+    <a href="/">Back to home</a>
+  </div>
+{{ end }}

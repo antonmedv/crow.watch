@@ -1,0 +1,71 @@
+{{ define "title" }}Replies | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .reply-list {
+      margin-block: 16px;
+    }
+
+    .reply-item {
+      padding: 12px 0;
+    }
+
+    .reply-item__header {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .reply-item__author {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .reply-item__time {
+      font-size: 13px;
+    }
+
+    .reply-item__body {
+      margin-top: 6px;
+      font-size: 15px;
+    }
+
+    .reply-list__empty {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .reply-item__unread {
+      font-weight: 700;
+      color: var(--primary);
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <h1 class="page-title">Replies</h1>
+
+  {{ if .Replies }}
+    <div class="reply-list">
+      {{ range .Replies }}
+        <div class="reply-item">
+          <div class="reply-item__header">
+            <a href="/u/{{ .CommentAuthor }}" class="reply-item__author"
+              >{{ .CommentAuthor }}</a
+            >
+            replied on
+            <a href="{{ .StoryPath }}#comment-{{ .CommentID }}"
+              >{{ .StoryTitle }}</a
+            >
+            <span class="reply-item__time">{{ timeAgo .CreatedAt }}</span>
+            {{ if .IsUnread }}
+              <span class="reply-item__unread">(unread)</span>
+            {{ end }}
+          </div>
+          <div class="reply-item__body markdown-body">{{ .Body }}</div>
+        </div>
+      {{ end }}
+    </div>
+  {{ else }}
+    <p class="reply-list__empty">No replies yet.</p>
+  {{ end }}
+{{ end }}

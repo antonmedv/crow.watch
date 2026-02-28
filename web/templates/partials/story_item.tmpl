@@ -1,0 +1,113 @@
+{{ define "story-item" }}
+  <div class="story-item__vote">
+    {{ if .IsLoggedIn }}
+      <button
+        class="{{ classes "vote-btn" (when .HasUpvoted "vote-btn--active") }}"
+        data-action="vote"
+        data-story-id="{{ .ID }}"
+        data-voted="{{ .HasUpvoted }}"
+      >
+        <svg class="icon"><use href="#icon-upvote"></use></svg>
+      </button>
+    {{ else }}
+      <span
+        class="vote-btn vote-btn--disabled"
+        data-action="vote"
+        data-vote-disabled
+      >
+        <svg class="icon"><use href="#icon-upvote"></use></svg>
+      </span>
+    {{ end }}
+    <span class="vote-score" data-role="vote-score" data-story-id="{{ .ID }}"
+      >{{ .Upvotes }}</span
+    >
+  </div>
+  <div class="story-item__body">
+    <div class="story-item__title">
+      <a href="{{ .URL }}">{{ .Title }}</a>
+      <span class="story-item__domain">
+        (
+        {{- cond .IsText "crow.watch" .Domain -}}
+        )
+      </span>
+    </div>
+    <div class="story-item__meta">
+      by
+      <a href="/u/{{ .Username }}">{{ .Username }}</a>
+      {{ timeAgo .CreatedAt }}
+      |
+      <a href="{{ storyPath . }}" class="story-item__comments">
+        {{- .CommentCount -}}
+        {{- " " -}}
+        {{- pluralize .CommentCount "comment" "comments" -}}
+      </a>
+      {{ if .IsLoggedIn }}
+        |
+        {{ if .HasFlagged }}
+          <button
+            class="story-item__action story-unflag-btn"
+            data-action="story-unflag"
+            data-story-id="{{ .ID }}"
+          >
+            unflag
+          </button>
+        {{ else }}
+          <span class="flag-dropdown" data-role="flag-dropdown">
+            <button
+              class="story-item__action story-flag-btn"
+              data-action="story-flag"
+              data-story-id="{{ .ID }}"
+            >
+              flag
+            </button>
+            <div class="flag-dropdown__menu" data-role="flag-menu" hidden>
+              {{ range .FlagReasons }}
+                <button
+                  class="flag-dropdown__option"
+                  data-action="flag-option"
+                  data-reason="{{ . }}"
+                >
+                  {{ . }}
+                </button>
+              {{ end }}
+            </div>
+          </span>
+        {{ end }}
+        |
+        {{ if .HasHidden }}
+          <button
+            class="story-item__action story-unhide-btn"
+            data-action="story-unhide"
+            data-story-id="{{ .ID }}"
+          >
+            unhide
+          </button>
+        {{ else }}
+          <button
+            class="story-item__action story-hide-btn"
+            data-action="story-hide"
+            data-story-id="{{ .ID }}"
+          >
+            hide
+          </button>
+        {{ end }}
+      {{ end }}
+      {{ if .FlagCounts }}
+        |
+        {{- range $i, $f := .FlagCounts -}}
+          {{- if $i }},{{ end }}
+          {{ $f.Count }}
+          {{ $f.Reason -}}
+        {{- end }}
+      {{ end }}
+      {{ range .Tags }}
+        <a
+          href="/t/{{ .Tag }}"
+          class="{{ classes "tag" (when .IsMedia "tag--media") }}"
+        >
+          {{- .Tag -}}
+        </a>
+      {{ end }}
+    </div>
+  </div>
+{{ end }}

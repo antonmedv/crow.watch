@@ -1,0 +1,81 @@
+{{ define "title" }}About | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .about {
+      max-width: 600px;
+      margin-block: 16px;
+      line-height: 1.6;
+    }
+
+    .about h2 {
+      font-size: 16px;
+      margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .about p {
+      margin: 0 0 12px;
+    }
+
+    .about a {
+      color: var(--link);
+    }
+
+    .about a:visited {
+      color: var(--link-visited);
+    }
+
+    .about__rules {
+      margin: 0;
+    }
+
+    .about__rules dt {
+      font-weight: 600;
+      margin-top: 12px;
+    }
+
+    .about__rules dt:first-child {
+      margin-top: 0;
+    }
+
+    .about__rules dd {
+      margin: 2px 0 0;
+      color: var(--text-muted);
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <article class="about">
+    <h1 class="page-title">About crow.watch</h1>
+    <p>A small, smart corner of the internet for people who build tech.</p>
+
+    <h2>The Rules</h2>
+    <dl class="about__rules">
+      <dt>Share the Shiny</dt>
+      <dd>Post great links, cool code, and new tools.</dd>
+
+      <dt>Show Your Work</dt>
+      <dd>
+        Use the <span class="tag">show</span> tag to post things you built. We
+        love to see your projects.
+      </dd>
+
+      <dt>Keep it Tech</dt>
+      <dd>We talk about programming and engineering. No fluff.</dd>
+
+      <dt>Invite Only</dt>
+      <dd>
+        To keep the quality high, you need an invite from a member to join.
+      </dd>
+    </dl>
+
+    <h2>Why Crow?</h2>
+    <p>
+      Crows are smart, they work together, and they find the best
+      &ldquo;shiny&rdquo; objects.
+    </p>
+  </article>
+{{ end }}

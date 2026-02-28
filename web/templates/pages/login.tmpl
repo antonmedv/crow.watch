@@ -1,0 +1,70 @@
+{{ define "title" }}Login | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .register-note {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <div class="auth-wrapper">
+    <section class="auth-card" aria-label="Authentication">
+      <nav class="tabs tabs--full" aria-label="Auth Tabs">
+        <a
+          class="{{ classes "tabs__tab" (when (eq .Tab "login") "active") }}"
+          href="/login?tab=login"
+          >Login</a
+        >
+        <a
+          class="{{ classes "tabs__tab" (when (eq .Tab "register") "active") }}"
+          href="/login?tab=register"
+          >Register</a
+        >
+      </nav>
+      <div class="auth-card__body">
+        {{ if eq .Tab "register" }}
+          <p class="register-note">
+            Crow Watch is invite-only. To create an account you need an
+            invitation link from an existing member.
+          </p>
+        {{ else }}
+          {{ if .Error }}<p class="error" role="alert">{{ .Error }}</p>{{ end }}
+          <form method="post" action="/login">
+            <div class="field">
+              <label for="identifier">E-mail or Username</label>
+              <input
+                id="identifier"
+                name="identifier"
+                type="text"
+                class="field-input"
+                value="{{ .Identifier }}"
+                required
+                autocomplete="username"
+                placeholder="you@example.com"
+              />
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                class="field-input"
+                required
+                autocomplete="current-password"
+                placeholder="••••••••"
+              />
+            </div>
+            <button class="btn auth-btn" type="submit">Login</button>
+            <p class="auth-link">
+              <a href="/forgot-password">Forgot your password?</a>
+            </p>
+          </form>
+        {{ end }}
+      </div>
+    </section>
+  </div>
+{{ end }}

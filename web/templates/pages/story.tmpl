@@ -1,0 +1,289 @@
+{{ define "title" }}{{ .Story.Title }} | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .story {
+      margin-block: 16px;
+    }
+
+    .story-body {
+      margin-block: 16px;
+      padding-inline: 16px;
+    }
+
+    .comments-section {
+      margin-block: 24px;
+      padding-inline: 16px;
+    }
+
+    .comment-form {
+      margin-bottom: 24px;
+    }
+
+    .comment-form__textarea {
+      width: 100%;
+      min-height: 80px;
+      resize: vertical;
+      margin-bottom: 8px;
+    }
+
+    .comment-form__submit {
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+
+    ol.comments {
+      margin: 0 0 0 20px;
+      padding-left: 6px;
+      list-style: none;
+    }
+
+    ol.comments--top {
+      margin-left: 0;
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+    }
+
+    li.comments_subtree {
+      position: relative;
+    }
+
+    :not(li.comments_subtree)
+      li.comments_subtree
+      li.comments_subtree
+      li.comments_subtree:has(+ li.comments_subtree)::before {
+      content: "";
+      position: absolute;
+      left: 19px;
+      top: 3.2em;
+      bottom: 0;
+      width: 1px;
+      background: var(--border);
+    }
+
+    .comment_folder_button {
+      display: none;
+    }
+
+    .comment_folder {
+      display: inline-block;
+      cursor: pointer;
+      color: var(--text-muted);
+      text-align: center;
+      font-size: 13px;
+      user-select: none;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .comment_folder::before {
+      content: "[\2212]";
+    }
+
+    .comment_folder_button:checked ~ .comment .comment_folder::before {
+      content: "[+]";
+    }
+
+    .comment_folder_button:checked ~ .comment .comment__text {
+      display: none;
+    }
+
+    .comment_folder_button:checked ~ .comment .comment-edit-form {
+      display: none;
+    }
+
+    .comment_folder_button:checked ~ ol.comments {
+      display: none;
+    }
+
+    .comment {
+      clear: both;
+      padding: 0.4em 0;
+      position: relative;
+    }
+
+    .comment--unread {
+      background: color-mix(in srgb, var(--primary) 5%, transparent);
+    }
+
+    .comment--deleted {
+      opacity: 0.6;
+    }
+
+    .comment__voters {
+      float: left;
+      width: 40px;
+      text-align: center;
+      margin-top: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .comment__voters .vote-btn {
+      font-size: 12px;
+      padding: 0;
+    }
+
+    .comment__voters .vote-score {
+      line-height: 1.2;
+    }
+
+    .comment__details {
+      display: flow-root;
+    }
+
+    .comment__byline {
+      color: var(--text-muted);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .comment__author {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .comment__author--deleted {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .comment__time {
+      font-size: 13px;
+    }
+
+    .comment__unread {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .comment__sep {
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .comment__action {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      padding: 0;
+    }
+
+    .comment__action:hover {
+      text-decoration: underline;
+      color: var(--text);
+    }
+
+    .comment-delete-form {
+      display: inline;
+      margin: 0;
+      padding: 0;
+    }
+
+    .comment__text {
+      max-width: 45rem;
+      word-wrap: break-word;
+      overflow: hidden;
+      margin: 4px 0;
+      font-size: 15px;
+    }
+
+    .comment__text--deleted {
+      font-style: italic;
+      color: var(--text-muted);
+    }
+
+    .comment-edit-form {
+      margin-top: 8px;
+    }
+
+    .comment-edit-textarea {
+      width: 100%;
+      min-height: 60px;
+      resize: vertical;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .comment-edit-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .comment-edit-save,
+    .comment-edit-cancel {
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+
+    .comment-reply-form {
+      margin: 8px 0 8px 0;
+      padding-left: 40px;
+    }
+
+    .comment-reply-form textarea {
+      width: 100%;
+      min-height: 60px;
+      resize: vertical;
+      margin-bottom: 8px;
+    }
+
+    .comment-reply-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .comment-reply-actions .btn {
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <section class="story">
+    <div class="story-item">
+      {{ template "story-item" .Story }}
+    </div>
+    {{ if .Body }}
+      <div class="story-body markdown-body">{{ .Body }}</div>
+    {{ end }}
+  </section>
+
+  <section class="comments-section">
+    {{ if .IsLoggedIn }}
+      <form
+        method="POST"
+        action="/x/{{ .Story.ShortCode }}/comments"
+        class="comment-form"
+      >
+        <textarea
+          name="body"
+          class="field-input comment-form__textarea"
+          rows="4"
+          placeholder="Write a comment..."
+          required
+          maxlength="10000"
+        ></textarea>
+        <button type="submit" class="btn comment-form__submit">
+          Post Comment
+        </button>
+      </form>
+    {{ end }}
+
+    {{ if .Comments }}
+      <ol class="comments comments--top">
+        {{ range .Comments }}
+          {{ template "comment-node" . }}
+        {{ end }}
+      </ol>
+    {{ end }}
+  </section>
+{{ end }}

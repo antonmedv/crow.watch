@@ -1,0 +1,53 @@
+{{ define "title" }}{{ .Username }} | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .profile h1 {
+      font-size: 1.3rem;
+      margin: 0 0 1rem;
+    }
+    .profile-meta {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .profile-meta span:not(:last-child)::after {
+      content: "\00b7";
+      margin: 0 0.4em;
+    }
+    .profile-about {
+      margin-bottom: 1rem;
+    }
+    .profile-website a {
+      word-break: break-all;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <h1 class="page-title">
+    {{ .Username }}{{ if .IsModerator }}<small>(mod)</small>{{ end }}
+  </h1>
+  <div class="profile-meta">
+    <span
+      ><a href="/u/{{ .Username }}/stories"
+        >{{ .StoryCount }}
+        {{ if eq .StoryCount 1 }}story{{ else }}stories{{ end }}</a
+      ></span
+    >
+    <span>member since {{ .CreatedAt.Format "Jan 2006" }}</span>
+    {{ if .InvitedBy }}
+      <span>invited by <a href="/u/{{ .InvitedBy }}">{{ .InvitedBy }}</a></span>
+    {{ end }}
+  </div>
+  {{ if .About }}
+    <p class="profile-about">{{ .About }}</p>
+  {{ end }}
+  {{ if .Website }}
+    <p class="profile-website">
+      <a href="{{ .Website }}" rel="nofollow noopener" target="_blank"
+        >{{ .Website }}</a
+      >
+    </p>
+  {{ end }}
+{{ end }}
