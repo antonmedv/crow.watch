@@ -11,8 +11,8 @@ def client():
     return boto3.client(
         "s3",
         endpoint_url=f"https://{os.environ['LINODE_CLUSTER']}",
-        aws_access_key_id=os.environ["LINODE_CLI_OBJ_ACCESS_KEY"],
-        aws_secret_access_key=os.environ["LINODE_CLI_OBJ_SECRET_KEY"],
+        aws_access_key_id=os.environ["LINODE_OBJ_ACCESS_KEY"],
+        aws_secret_access_key=os.environ["LINODE_OBJ_SECRET_KEY"],
     )
 
 
