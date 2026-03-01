@@ -452,9 +452,6 @@ func toTagGroups(tags []store.ListActiveTagsWithCategoryRow, isModerator bool) [
 	var groups []TagGroup
 	groupIdx := make(map[string]int)
 	for _, t := range tags {
-		if t.Privileged && !isModerator {
-			continue
-		}
 		opt := TagOption{
 			ID:          t.ID,
 			Tag:         t.Tag,
