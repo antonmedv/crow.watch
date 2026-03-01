@@ -165,9 +165,6 @@
               </div>
               {{ if .IsLoggedIn }}
                 <div class="nav-links">
-                  {{ if .IsModerator }}
-                    <a href="/mod/campaigns">Campaigns</a>
-                  {{ end }}
                   <a href="/invite">Invite</a>
                   <a href="/submit">Submit</a>
                 </div>
@@ -183,7 +180,12 @@
           <div class="site-footer__links">
             <a href="/about">About</a>
             <a href="/tags">Tags</a>
-            <a href="/mod/log">Mod Log</a>
+            {{ if .IsLoggedIn }}
+              <a href="/mod/log">Mod Log</a>
+              {{ if .IsModerator }}
+                <a href="/mod/campaigns">Campaigns</a>
+              {{ end }}
+            {{ end }}
           </div>
         </footer>
       </div>
@@ -193,6 +195,21 @@
         <script src="{{ static "js/comment.js" }}"></script>
         <script src="{{ static "js/flag.js" }}"></script>
       {{ end }}
+      <script>
+        ;(function () {
+          var nb = document.querySelector(".nav-bottom")
+          if (nb) {
+            function check() {
+              var overflows = nb.scrollWidth > nb.clientWidth
+              var atEnd = nb.scrollLeft + nb.clientWidth >= nb.scrollWidth - 1
+              nb.classList.toggle("is-overflowing", overflows && !atEnd)
+            }
+            check()
+            window.addEventListener("resize", check)
+            nb.addEventListener("scroll", check, { passive: true })
+          }
+        })()
+      </script>
       <script>
         ;(function () {
           const toggle = document.querySelector(".theme-picker__toggle")

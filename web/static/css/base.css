@@ -179,6 +179,7 @@ a:hover {
   color: var(--primary);
   border-radius: 6px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .nav-logo:hover {
@@ -196,6 +197,7 @@ a:hover {
   flex-direction: column;
   justify-content: center;
   font-size: 15px;
+  min-width: 0;
 }
 
 .nav-top {
@@ -278,12 +280,28 @@ a:hover {
   justify-content: space-between;
   gap: 12px;
   font-weight: 700;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+}
+
+.nav-bottom:not(.is-overflowing) {
+  mask-image: none;
+  -webkit-mask-image: none;
+}
+
+.nav-bottom::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .nav-badge {
