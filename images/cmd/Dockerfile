@@ -10,9 +10,8 @@ RUN go mod download
 COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /bin/useradm ./cmd/useradm \
- && CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /bin/tagseed ./cmd/tagseed \
- && CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /bin/storyseed ./cmd/storyseed \
- && CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /bin/votecalc ./cmd/votecalc
+ && CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /bin/votecalc ./cmd/votecalc \
+ && CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /bin/tokengen ./cmd/tokengen
 
 FROM alpine:3.21
 
