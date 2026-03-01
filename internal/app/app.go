@@ -43,12 +43,13 @@ type App struct {
 }
 
 type BaseData struct {
-	IsLoggedIn    bool
-	IsModerator   bool
-	Username      string
-	Slogan        string
-	DevMode       bool
-	UnreadReplies int64
+	IsLoggedIn     bool
+	IsModerator    bool
+	EmailConfirmed bool
+	Username       string
+	Slogan         string
+	DevMode        bool
+	UnreadReplies  int64
 }
 
 type HomePageData struct {
@@ -431,12 +432,13 @@ func (a *App) baseData(r *http.Request) BaseData {
 			unread = count
 		}
 		return BaseData{
-			IsLoggedIn:    true,
-			IsModerator:   current.User.IsModerator,
-			Username:      current.User.Username,
-			Slogan:        slogan,
-			DevMode:       a.DevMode,
-			UnreadReplies: unread,
+			IsLoggedIn:     true,
+			IsModerator:    current.User.IsModerator,
+			EmailConfirmed: current.User.EmailConfirmedAt.Valid,
+			Username:       current.User.Username,
+			Slogan:         slogan,
+			DevMode:        a.DevMode,
+			UnreadReplies:  unread,
 		}
 	}
 	return BaseData{DevMode: a.DevMode}

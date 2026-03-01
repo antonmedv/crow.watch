@@ -100,7 +100,9 @@
           <div class="nav-content">
             <div class="nav-top">
               <span class="nav-slogan">
-                {{ if .IsLoggedIn }}
+                {{ if and .IsLoggedIn (not .EmailConfirmed) }}
+                  <a href="/account?tab=email">please, confirm your email</a>
+                {{ else if .IsLoggedIn }}
                   {{ .Slogan }}
                 {{ else }}
                   a computing-focused community
