@@ -87,18 +87,11 @@ services:
   backup:
     image: ghcr.io/antonmedv/crow-watch/backup:latest
     environment:
-      PGHOST: db
-      PGPORT: "5432"
-      PGUSER: ${POSTGRES_USER}
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-      PGDATABASE: ${POSTGRES_DB}
-      LINODE_OBJ_ACCESS_KEY: ${LINODE_OBJ_ACCESS_KEY}
-      LINODE_OBJ_SECRET_KEY: ${LINODE_OBJ_SECRET_KEY}
-      LINODE_BUCKET: ${LINODE_BUCKET}
-      LINODE_CLUSTER: ${LINODE_CLUSTER:-us-east-1}
-      S3_PREFIX: ${S3_PREFIX:-backups}
-      BACKUP_SCHEDULE: ${BACKUP_SCHEDULE:-0 3 * * *}
-      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      TOKEN_HASH: ${BACKUP_TOKEN_HASH}
+      ADDR: ":8080"
+    volumes:
+      - backupdata:/data
     networks:
       - crownet
     depends_on:
@@ -112,3 +105,4 @@ networks:
 
 volumes:
   pgdata:
+  backupdata:

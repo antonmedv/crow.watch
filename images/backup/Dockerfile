@@ -1,13 +1,26 @@
+FROM golang:1.25-alpine AS build
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /bin/backup ./cmd/backup
+
 FROM alpine:3.21
 
-RUN apk add --no-cache postgresql17-client python3 py3-pip bash \
- && pip3 install --break-system-packages boto3
+RUN apk add --no-cache ca-certificates postgresql17-client \
+    && addgroup -S app \
+    && adduser -S -G app -H -D app
 
-COPY s3.py /usr/local/bin/s3.py
-COPY backup.sh /usr/local/bin/backup.sh
-RUN chmod +x /usr/local/bin/backup.sh /usr/local/bin/s3.py
+COPY --from=build /bin/backup /bin/backup
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN mkdir /data && chown app:app /data
 
-ENTRYPOINT ["entrypoint.sh"]
+USER app
+
+EXPOSE 8080
+
+ENTRYPOINT ["/bin/backup"]
