@@ -69,7 +69,7 @@
   --tag-media-text: #f28b82;
 }
 
-[data-theme="matrix"] {
+[data-theme="green"] {
   --bg: #0c0c0c;
   --text: #20c20e;
   --text-muted: #1a8a14;
@@ -83,7 +83,7 @@
   --tag-media-text: #55dd44;
 }
 
-[data-theme="hn"] {
+[data-theme="orange"] {
   --bg: #fff;
   --text: #000000;
   --text-muted: #828282;

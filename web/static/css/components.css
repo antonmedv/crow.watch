@@ -36,6 +36,11 @@
   font-weight: var(--story-title-weight, 700);
 }
 
+.story-item__icon {
+  color: var(--text-muted);
+  margin-top: -2px;
+}
+
 .story-item__domain {
   color: var(--text-muted);
   font-size: 13px;

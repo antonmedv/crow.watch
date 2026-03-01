@@ -24,12 +24,15 @@
   </div>
   <div class="story-item__body">
     <div class="story-item__title">
-      <a href="{{ .URL }}">{{ .Title }}</a>
-      <span class="story-item__domain">
-        (
-        {{- cond .IsText "crow.watch" .Domain -}}
-        )
-      </span>
+      {{ if .IsText }}
+        <a href="{{ storyPath . }}">{{ .Title }}</a>
+        <svg class="icon story-item__icon">
+          <use href="#icon-article"></use>
+        </svg>
+      {{ else }}
+        <a href="{{ .URL }}">{{ .Title }}</a>
+        <span class="story-item__domain">({{- .Domain -}})</span>
+      {{ end }}
     </div>
     <div class="story-item__meta">
       by
