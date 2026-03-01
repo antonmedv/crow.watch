@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -16,13 +16,17 @@ import (
 const backupPath = "/data/backup.sql.gz"
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		log.Fatal("DATABASE_URL is required")
+		logger.Error("DATABASE_URL is required")
+		os.Exit(1)
 	}
 	tokenHash := os.Getenv("TOKEN_HASH")
 	if tokenHash == "" {
-		log.Fatal("TOKEN_HASH is required")
+		logger.Error("TOKEN_HASH is required")
+		os.Exit(1)
 	}
 	addr := os.Getenv("ADDR")
 	if addr == "" {
@@ -35,23 +39,23 @@ func main() {
 		mu.Lock()
 		defer mu.Unlock()
 
-		log.Println("backup: starting pg_dump...")
+		logger.Info("starting pg_dump")
 		start := time.Now()
 
 		cmd := exec.Command("sh", "-c", fmt.Sprintf("pg_dump '%s' | gzip > '%s'", databaseURL, backupPath))
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			log.Printf("backup: pg_dump failed: %v", err)
+			logger.Error("pg_dump failed", "err", err)
 			return
 		}
 
 		info, err := os.Stat(backupPath)
 		if err != nil {
-			log.Printf("backup: stat failed: %v", err)
+			logger.Error("stat failed", "err", err)
 			return
 		}
-		log.Printf("backup: done in %s (%d bytes)", time.Since(start).Round(time.Second), info.Size())
+		logger.Info("backup complete", "duration", time.Since(start).Round(time.Second).String(), "bytes", info.Size())
 	}
 
 	// Run immediately on startup.
@@ -71,12 +75,14 @@ func main() {
 		auth := r.Header.Get("Authorization")
 		token := strings.TrimPrefix(auth, "Bearer ")
 		if token == auth || token == "" {
+			logger.Warn("unauthorized request", "remote", r.RemoteAddr)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		h := sha256.Sum256([]byte(token))
 		if hex.EncodeToString(h[:]) != tokenHash {
+			logger.Warn("invalid token", "remote", r.RemoteAddr)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -84,10 +90,14 @@ func main() {
 		mu.Lock()
 		defer mu.Unlock()
 
+		logger.Info("serving backup", "remote", r.RemoteAddr)
 		w.Header().Set("Content-Type", "application/gzip")
 		http.ServeFile(w, r, backupPath)
 	})
 
-	log.Printf("backup: listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	logger.Info("listening", "addr", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		logger.Error("server stopped", "err", err)
+		os.Exit(1)
+	}
 }
