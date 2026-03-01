@@ -53,6 +53,11 @@
   font-size: 16px;
 }
 
+.story-item__tags {
+  display: inline;
+  margin-left: 4px;
+}
+
 .story-item__action {
   background: none;
   border: none;
@@ -118,11 +123,11 @@
   background: var(--border);
 }
 
-.story-item__title a {
+.story-item__title > a {
   color: var(--link);
 }
 
-.story-item__title a:visited {
+.story-item__title > a:visited {
   color: var(--link-visited);
 }
 
@@ -163,16 +168,12 @@
   border-radius: 9999px;
   background: var(--tag-bg);
   color: var(--tag-text);
+  text-decoration: none;
   border: none;
   vertical-align: middle;
 }
 
-a.tag {
-  text-decoration: none;
-  color: inherit;
-}
-
-a.tag:hover {
+.tag:hover {
   text-decoration: underline;
 }
 

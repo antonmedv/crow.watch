@@ -33,6 +33,18 @@
         <a href="{{ .URL }}">{{ .Title }}</a>
         <span class="story-item__domain">({{- .Domain -}})</span>
       {{ end }}
+      {{ if .Tags }}
+        <span class="story-item__tags">
+          {{- range .Tags }}
+            <a
+              href="/t/{{ .Tag }}"
+              class="{{ classes "tag" (when .IsMedia "tag--media") }}"
+            >
+              {{- .Tag -}}
+            </a>
+          {{- end }}
+        </span>
+      {{ end }}
     </div>
     <div class="story-item__meta">
       by
@@ -105,14 +117,6 @@
           {{ $f.Count }}
           {{ $f.Reason -}}
         {{- end }}
-      {{ end }}
-      {{ range .Tags }}
-        <a
-          href="/t/{{ .Tag }}"
-          class="{{ classes "tag" (when .IsMedia "tag--media") }}"
-        >
-          {{- .Tag -}}
-        </a>
       {{ end }}
     </div>
   </div>
