@@ -95,6 +95,9 @@
           </button>
         {{ end }}
       {{ end }}
+      {{ if .IsModerator }}
+        | <a href="/x/{{ .ShortCode }}/edit" class="story-item__action">edit</a>
+      {{ end }}
       {{ if .FlagCounts }}
         |
         {{- range $i, $f := .FlagCounts -}}

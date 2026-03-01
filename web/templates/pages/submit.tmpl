@@ -1,4 +1,6 @@
-{{ define "title" }}Submit | Crow Watch{{ end }}
+{{ define "title" }}
+  {{ if .EditMode }}Edit Story{{ else }}Submit{{ end }} | Crow Watch
+{{ end }}
 
 {{ define "head" }}
   <style>
@@ -192,19 +194,23 @@
 {{ end }}
 
 {{ define "content" }}
-  <h1 class="page-title">Submit</h1>
-  <nav class="tabs" aria-label="Submit Tabs">
-    <a
-      class="{{ classes "tabs__tab" (when (eq .Tab "link") "active") }}"
-      href="/submit?tab=link"
-      >Link</a
-    >
-    <a
-      class="{{ classes "tabs__tab" (when (eq .Tab "text") "active") }}"
-      href="/submit?tab=text"
-      >Text</a
-    >
-  </nav>
+  <h1 class="page-title">
+    {{ if .EditMode }}Edit Story{{ else }}Submit{{ end }}
+  </h1>
+  {{ if not .EditMode }}
+    <nav class="tabs" aria-label="Submit Tabs">
+      <a
+        class="{{ classes "tabs__tab" (when (eq .Tab "link") "active") }}"
+        href="/submit?tab=link"
+        >Link</a
+      >
+      <a
+        class="{{ classes "tabs__tab" (when (eq .Tab "text") "active") }}"
+        href="/submit?tab=text"
+        >Text</a
+      >
+    </nav>
+  {{ end }}
   <div class="tab-content">
     {{ if .Error }}
       <p class="error" role="alert">
@@ -214,11 +220,18 @@
         {{ end }}
       </p>
     {{ end }}
-    <form method="post" action="/submit">
-      {{ if eq .Tab "link" }}
-        <div class="field">
-          <label for="url">URL</label>
-          <div class="field-with-action">
+    <form
+      method="post"
+      action="{{ if .EditMode }}
+        /x/{{ .EditCode }}/edit
+      {{ else }}
+        /submit
+      {{ end }}"
+    >
+      {{ if .EditMode }}
+        {{ if eq .Tab "link" }}
+          <div class="field">
+            <label for="url">URL</label>
             <input
               id="url"
               name="url"
@@ -229,18 +242,39 @@
               maxlength="250"
               placeholder="https://example.com/article"
             />
-            <button
-              type="button"
-              class="btn btn--secondary"
-              id="fetch-title-btn"
-            >
-              Fetch title
-            </button>
+            {{ if .Errors.url }}
+              <p class="field-error">{{ .Errors.url }}</p>
+            {{ end }}
           </div>
-          {{ if .Errors.url }}
-            <p class="field-error">{{ .Errors.url }}</p>
-          {{ end }}
-        </div>
+        {{ end }}
+      {{ else }}
+        {{ if eq .Tab "link" }}
+          <div class="field">
+            <label for="url">URL</label>
+            <div class="field-with-action">
+              <input
+                id="url"
+                name="url"
+                type="text"
+                class="field-input"
+                value="{{ .URL }}"
+                required
+                maxlength="250"
+                placeholder="https://example.com/article"
+              />
+              <button
+                type="button"
+                class="btn btn--secondary"
+                id="fetch-title-btn"
+              >
+                Fetch title
+              </button>
+            </div>
+            {{ if .Errors.url }}
+              <p class="field-error">{{ .Errors.url }}</p>
+            {{ end }}
+          </div>
+        {{ end }}
       {{ end }}
       <div class="field">
         <label for="title">Title</label>
@@ -371,41 +405,65 @@
           {{ end }}
         </div>
       </div>
-      <button class="btn" type="submit">Submit</button>
+      {{ if .EditMode }}
+        <div class="field">
+          <label for="reason">Reason for edit</label>
+          <textarea
+            id="reason"
+            name="reason"
+            class="field-input"
+            rows="2"
+            maxlength="500"
+            required
+            placeholder="Why are you making this edit?"
+          >
+{{ .Reason }}</textarea
+          >
+          {{ if .Errors.reason }}
+            <p class="field-error">{{ .Errors.reason }}</p>
+          {{ end }}
+        </div>
+      {{ end }}
+      <button class="btn" type="submit">
+        {{ if .EditMode }}Save Changes{{ else }}Submit{{ end }}
+      </button>
     </form>
-    <div class="submit-rules">
-      <h3>Title</h3>
-      <ul>
-        <li>
-          Use the article's original title. Remove the site name, section name,
-          event name, and author.
-        </li>
-        <li>Avoid clickbait. Keep titles neutral and specific.</li>
-        <li>
-          Remove hype and exaggeration: &ldquo;This Startup Will Change
-          Everything&rdquo; &rarr; &ldquo;How the Startup Scaled Its API&rdquo;
-        </li>
-        <li>
-          Replace vague claims with concrete details: &ldquo;A Crisis in Modern
-          Databases&rdquo; &rarr; &ldquo;Lock Contention Issues in
-          PostgreSQL&rdquo;
-        </li>
-        <li>
-          Avoid second-person phrasing: &ldquo;5 JavaScript Tricks You Should
-          Use&rdquo; &rarr; &ldquo;Advanced JavaScript Promise Patterns&rdquo;
-        </li>
-      </ul>
-      <h3>Tags</h3>
-      <ul>
-        <li>
-          Submit stories that clearly fit the site's scope. If no relevant tags
-          apply, do not submit the story.
-        </li>
-      </ul>
-    </div>
+    {{ if not .EditMode }}
+      <div class="submit-rules">
+        <h3>Title</h3>
+        <ul>
+          <li>
+            Use the article's original title. Remove the site name, section
+            name, event name, and author.
+          </li>
+          <li>Avoid clickbait. Keep titles neutral and specific.</li>
+          <li>
+            Remove hype and exaggeration: &ldquo;This Startup Will Change
+            Everything&rdquo; &rarr; &ldquo;How the Startup Scaled Its
+            API&rdquo;
+          </li>
+          <li>
+            Replace vague claims with concrete details: &ldquo;A Crisis in
+            Modern Databases&rdquo; &rarr; &ldquo;Lock Contention Issues in
+            PostgreSQL&rdquo;
+          </li>
+          <li>
+            Avoid second-person phrasing: &ldquo;5 JavaScript Tricks You Should
+            Use&rdquo; &rarr; &ldquo;Advanced JavaScript Promise Patterns&rdquo;
+          </li>
+        </ul>
+        <h3>Tags</h3>
+        <ul>
+          <li>
+            Submit stories that clearly fit the site's scope. If no relevant
+            tags apply, do not submit the story.
+          </li>
+        </ul>
+      </div>
+    {{ end }}
   </div>
   <script src="{{ static "js/tag-picker.js" }}"></script>
-  {{ if eq .Tab "link" }}
+  {{ if and (not .EditMode) (eq .Tab "link") }}
     <script>
       ;(function () {
         const btn = document.getElementById("fetch-title-btn")

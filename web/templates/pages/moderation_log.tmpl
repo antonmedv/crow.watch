@@ -1,0 +1,135 @@
+{{ define "title" }}Moderation Log | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .mod-log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .mod-log-table th,
+    .mod-log-table td {
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mod-log-table th {
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .mod-log-table td {
+      vertical-align: top;
+    }
+
+    .mod-log-reason {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .mod-log-empty {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 32px 0;
+    }
+
+    @media (max-width: 640px) {
+      .mod-log-table,
+      .mod-log-table thead,
+      .mod-log-table tbody,
+      .mod-log-table tr,
+      .mod-log-table th,
+      .mod-log-table td {
+        display: block;
+      }
+
+      .mod-log-table thead {
+        display: none;
+      }
+
+      .mod-log-table tr {
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .mod-log-table td {
+        border: none;
+        padding: 2px 0;
+      }
+
+      .mod-log-table td::before {
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-right: 8px;
+      }
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <h1 class="page-title">Moderation Log</h1>
+  {{ if .Entries }}
+    <table class="mod-log-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Moderator</th>
+          <th>Action</th>
+          <th>Target</th>
+          <th>Reason</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .Entries }}
+          <tr>
+            <td>{{ timeAgo .CreatedAt }}</td>
+            <td>
+              <a href="/u/{{ .ModeratorUsername }}">{{ .ModeratorUsername }}</a>
+            </td>
+            <td>{{ .ActionDescription }}</td>
+            <td>
+              {{ if .TargetLink }}
+                <a href="{{ .TargetLink }}">{{ .TargetTitle }}</a>
+              {{ else if .TargetTitle }}
+                {{ .TargetTitle }}
+              {{ else }}
+                {{ .TargetType }}
+                #{{ .TargetID }}
+              {{ end }}
+            </td>
+            <td class="mod-log-reason">{{ .Reason }}</td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+    {{ if or (gt .CurrentPage 1) .HasMore }}
+      <div class="pagination">
+        {{ if gt .CurrentPage 1 }}
+          <a
+            href="/mod/log{{ if gt .CurrentPage 2 }}
+              /page/{{ subtract .CurrentPage 1 }}
+            {{ end }}"
+            class="btn btn--secondary"
+            >Newer</a
+          >
+        {{ end }}
+        {{ if .HasMore }}
+          <a
+            href="/mod/log/page/{{ add .CurrentPage 1 }}"
+            class="btn btn--secondary"
+            >Older</a
+          >
+        {{ end }}
+      </div>
+    {{ end }}
+  {{ else }}
+    <p class="mod-log-empty">No moderation actions yet.</p>
+  {{ end }}
+{{ end }}

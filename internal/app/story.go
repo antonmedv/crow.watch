@@ -120,6 +120,7 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 		FlagCounts:   flagCounts,
 		IsText:       row.Body.Valid,
 		IsLoggedIn:   loggedIn,
+		IsModerator:  loggedIn && current.User.IsModerator,
 		CreatedAt:    row.CreatedAt.Time,
 	}
 

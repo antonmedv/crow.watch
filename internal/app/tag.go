@@ -182,6 +182,7 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 	data.HasMore = end < len(visible)
 
 	isLoggedIn := data.BaseData.IsLoggedIn
+	tagIsModerator := data.BaseData.IsModerator
 	for _, s := range visible[start:end] {
 		meta := storyMeta[s.ID]
 		data.Stories = append(data.Stories, StoryItem{
@@ -201,6 +202,7 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 			FlagReasons:  storyFlagReasons,
 			IsText:       meta.IsText,
 			IsLoggedIn:   isLoggedIn,
+			IsModerator:  tagIsModerator,
 			CreatedAt:    meta.CreatedAt,
 		})
 	}

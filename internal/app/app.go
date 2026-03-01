@@ -77,6 +77,7 @@ type StoryItem struct {
 	FlagCounts   []FlagCount
 	IsText       bool
 	IsLoggedIn   bool
+	IsModerator  bool
 	CreatedAt    time.Time
 }
 
@@ -113,6 +114,9 @@ type SubmitPageData struct {
 	Errors       map[string]string
 	Error        string
 	DuplicateURL string
+	EditMode     bool
+	EditCode     string
+	Reason       string
 }
 
 type TagGroup struct {
@@ -233,6 +237,26 @@ type CampaignsPageData struct {
 	Error           string
 }
 
+type ModerationLogPageData struct {
+	BaseData
+	Entries     []ModerationLogEntry
+	CurrentPage int
+	HasMore     bool
+}
+
+type ModerationLogEntry struct {
+	ID                int64
+	ModeratorUsername string
+	Action            string
+	ActionDescription string
+	TargetType        string
+	TargetID          int64
+	TargetLink        string
+	TargetTitle       string
+	Reason            string
+	CreatedAt         time.Time
+}
+
 type CampaignRow struct {
 	ID              int64
 	Slug            string
@@ -307,6 +331,10 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("POST /mod/campaigns/{id}/toggle", a.toggleCampaign)
 	mux.HandleFunc("GET /join/{slug}", a.joinPage)
 	mux.HandleFunc("POST /join/{slug}", a.joinRegister)
+	mux.HandleFunc("GET /x/{code}/edit", a.editStoryPage)
+	mux.HandleFunc("POST /x/{code}/edit", a.editStory)
+	mux.HandleFunc("GET /mod/log", a.moderationLogPage)
+	mux.HandleFunc("GET /mod/log/page/{page}", a.moderationLogPage)
 
 	if a.DevReload != nil {
 		mux.Handle("GET /__dev/reload", a.DevReload)

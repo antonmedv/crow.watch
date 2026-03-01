@@ -98,6 +98,15 @@ func (q *Queries) CreateTagging(ctx context.Context, arg CreateTaggingParams) er
 	return err
 }
 
+const deleteTaggingsByStory = `-- name: DeleteTaggingsByStory :exec
+DELETE FROM taggings WHERE story_id = $1
+`
+
+func (q *Queries) DeleteTaggingsByStory(ctx context.Context, storyID int64) error {
+	_, err := q.db.Exec(ctx, deleteTaggingsByStory, storyID)
+	return err
+}
+
 const findRecentByNormalizedURL = `-- name: FindRecentByNormalizedURL :one
 SELECT id, url, title, short_code, created_at
 FROM stories
@@ -581,4 +590,55 @@ func (q *Queries) RecalculateStoryScores(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const updateStoryBody = `-- name: UpdateStoryBody :exec
+UPDATE stories SET body = $1, updated_at = now() WHERE id = $2
+`
+
+type UpdateStoryBodyParams struct {
+	Body pgtype.Text
+	ID   int64
+}
+
+func (q *Queries) UpdateStoryBody(ctx context.Context, arg UpdateStoryBodyParams) error {
+	_, err := q.db.Exec(ctx, updateStoryBody, arg.Body, arg.ID)
+	return err
+}
+
+const updateStoryTitle = `-- name: UpdateStoryTitle :exec
+UPDATE stories SET title = $1, updated_at = now() WHERE id = $2
+`
+
+type UpdateStoryTitleParams struct {
+	Title string
+	ID    int64
+}
+
+func (q *Queries) UpdateStoryTitle(ctx context.Context, arg UpdateStoryTitleParams) error {
+	_, err := q.db.Exec(ctx, updateStoryTitle, arg.Title, arg.ID)
+	return err
+}
+
+const updateStoryURL = `-- name: UpdateStoryURL :exec
+UPDATE stories SET url = $1, normalized_url = $2, domain_id = $3, origin_id = $4, updated_at = now() WHERE id = $5
+`
+
+type UpdateStoryURLParams struct {
+	Url           pgtype.Text
+	NormalizedUrl pgtype.Text
+	DomainID      pgtype.Int8
+	OriginID      pgtype.Int8
+	ID            int64
+}
+
+func (q *Queries) UpdateStoryURL(ctx context.Context, arg UpdateStoryURLParams) error {
+	_, err := q.db.Exec(ctx, updateStoryURL,
+		arg.Url,
+		arg.NormalizedUrl,
+		arg.DomainID,
+		arg.OriginID,
+		arg.ID,
+	)
+	return err
 }

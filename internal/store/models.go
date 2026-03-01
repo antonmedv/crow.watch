@@ -83,6 +83,17 @@ type Invitation struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type ModerationLog struct {
+	ID          int64
+	ModeratorID int64
+	Action      string
+	TargetType  string
+	TargetID    int64
+	Reason      string
+	Metadata    []byte
+	CreatedAt   pgtype.Timestamptz
+}
+
 type Origin struct {
 	ID         int64
 	DomainID   int64

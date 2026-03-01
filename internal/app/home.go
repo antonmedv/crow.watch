@@ -178,6 +178,7 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 	data.HasMore = end < len(visible)
 
 	isLoggedIn := data.BaseData.IsLoggedIn
+	isModerator := data.BaseData.IsModerator
 	for _, s := range visible[start:end] {
 		meta := storyMeta[s.ID]
 		data.Stories = append(data.Stories, StoryItem{
@@ -197,6 +198,7 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 			FlagReasons:  storyFlagReasons,
 			IsText:       meta.IsText,
 			IsLoggedIn:   isLoggedIn,
+			IsModerator:  isModerator,
 			CreatedAt:    meta.CreatedAt,
 		})
 	}
@@ -319,6 +321,7 @@ func (a *App) newest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newestLoggedIn := data.BaseData.IsLoggedIn
+	newestIsModerator := data.BaseData.IsModerator
 	for _, item := range pageStories {
 		s := item.story
 		newestDomain := s.Domain.String
@@ -342,6 +345,7 @@ func (a *App) newest(w http.ResponseWriter, r *http.Request) {
 			FlagReasons:  storyFlagReasons,
 			IsText:       s.Body.Valid,
 			IsLoggedIn:   newestLoggedIn,
+			IsModerator:  newestIsModerator,
 			CreatedAt:    s.CreatedAt.Time,
 		})
 	}

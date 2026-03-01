@@ -123,6 +123,7 @@ func (a *App) userStoriesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isLoggedIn := data.BaseData.IsLoggedIn
+	userStoriesIsMod := data.BaseData.IsModerator
 	for _, item := range pageStories {
 		s := item.story
 		domain := s.Domain.String
@@ -146,6 +147,7 @@ func (a *App) userStoriesPage(w http.ResponseWriter, r *http.Request) {
 			FlagReasons:  storyFlagReasons,
 			IsText:       s.Body.Valid,
 			IsLoggedIn:   isLoggedIn,
+			IsModerator:  userStoriesIsMod,
 			CreatedAt:    s.CreatedAt.Time,
 		})
 	}
