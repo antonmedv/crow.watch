@@ -18,6 +18,5 @@ FROM alpine:3.21
 RUN apk add --no-cache ca-certificates tzdata
 
 COPY --from=build /bin/useradm /bin/useradm
-COPY --from=build /bin/tagseed /bin/tagseed
-COPY --from=build /bin/storyseed /bin/storyseed
 COPY --from=build /bin/votecalc /bin/votecalc
+COPY --from=build /bin/tokengen /bin/tokengen
