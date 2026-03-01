@@ -5,9 +5,11 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"crow.watch/internal/auth"
+	"crow.watch/internal/captcha"
 	"crow.watch/internal/store"
 
 	"github.com/jackc/pgx/v5"
@@ -210,10 +212,17 @@ func (a *App) joinPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	captchaID, err := a.Captcha.Generate()
+	if err != nil {
+		a.serverError(w, r, "generate captcha", err)
+		return
+	}
+
 	a.render(w, "register", RegisterPageData{
 		BaseData:       a.baseData(r),
 		FormAction:     "/join/" + campaign.Slug,
 		WelcomeMessage: campaign.WelcomeMessage,
+		CaptchaID:      captchaID,
 	})
 }
 
@@ -247,6 +256,7 @@ func (a *App) joinRegister(w http.ResponseWriter, r *http.Request) {
 	passwordConfirmation := r.FormValue("password_confirmation")
 
 	renderErr := func(errs map[string]string) {
+		freshID, _ := a.Captcha.Generate()
 		a.render(w, "register", RegisterPageData{
 			BaseData:       a.baseData(r),
 			FormAction:     "/join/" + campaign.Slug,
@@ -254,10 +264,18 @@ func (a *App) joinRegister(w http.ResponseWriter, r *http.Request) {
 			Username:       username,
 			Email:          email,
 			Errors:         errs,
+			CaptchaID:      freshID,
 		})
 	}
 
 	errs := validateRegistration(username, email, password, passwordConfirmation)
+
+	captchaID := r.FormValue("captcha_id")
+	captchaAnswer, _ := strconv.Atoi(r.FormValue("captcha_answer"))
+	if !a.Captcha.Validate(captchaID, captchaAnswer) {
+		errs["captcha"] = "Incorrect answer. Please try again."
+	}
+
 	if len(errs) > 0 {
 		renderErr(errs)
 		return
@@ -288,6 +306,21 @@ func (a *App) joinRegister(w http.ResponseWriter, r *http.Request) {
 	go a.sendConfirmationEmailForNewUser(context.Background(), newUser.ID, newUser.Username, newUser.Email)
 
 	a.loginAndRedirect(w, r, newUser)
+}
+
+// serveCaptchaImage renders the CAPTCHA PNG for the given ID.
+func (a *App) serveCaptchaImage(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	ca, cb, ok := a.Captcha.GetChallenge(id)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "image/png")
+	w.Header().Set("Cache-Control", "no-store")
+	if err := captcha.RenderPNG(w, ca, cb); err != nil {
+		a.Log.Error("render captcha", "error", err)
+	}
 }
 
 // uniqueUserErrors maps unique-constraint violations to field errors.

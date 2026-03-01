@@ -19,6 +19,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"crow.watch/internal/auth"
+	"crow.watch/internal/captcha"
 	"crow.watch/internal/email"
 	"crow.watch/internal/ratelimit"
 	"crow.watch/internal/store"
@@ -40,6 +41,7 @@ type App struct {
 	LoginIPLimiter   *ratelimit.Limiter
 	LoginAcctLimiter *ratelimit.Limiter
 	InviteLimiter    *ratelimit.Limiter
+	Captcha          *captcha.Store
 }
 
 type BaseData struct {
@@ -227,6 +229,7 @@ type RegisterPageData struct {
 	Email          string
 	Username       string
 	Errors         map[string]string
+	CaptchaID      string
 }
 
 type CampaignsPageData struct {
@@ -330,6 +333,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /mod/campaigns", a.campaignsPage)
 	mux.HandleFunc("POST /mod/campaigns", a.createCampaign)
 	mux.HandleFunc("POST /mod/campaigns/{id}/toggle", a.toggleCampaign)
+	mux.HandleFunc("GET /captcha/{id}", a.serveCaptchaImage)
 	mux.HandleFunc("GET /join/{slug}", a.joinPage)
 	mux.HandleFunc("POST /join/{slug}", a.joinRegister)
 	mux.HandleFunc("GET /x/{code}/edit", a.editStoryPage)

@@ -17,6 +17,7 @@ import (
 
 	"crow.watch/internal/app"
 	"crow.watch/internal/auth"
+	"crow.watch/internal/captcha"
 	"crow.watch/internal/dev"
 	"crow.watch/internal/email"
 	"crow.watch/internal/ratelimit"
@@ -123,10 +124,12 @@ func main() {
 	loginIPLimiter := ratelimit.New(10, 15*time.Minute)
 	loginAcctLimiter := ratelimit.New(5, 15*time.Minute)
 	inviteLimiter := ratelimit.New(20, time.Hour)
+	captchaStore := captcha.New(5 * time.Minute)
 	rateLimitDone := make(chan struct{})
 	loginIPLimiter.StartCleanup(5*time.Minute, rateLimitDone)
 	loginAcctLimiter.StartCleanup(5*time.Minute, rateLimitDone)
 	inviteLimiter.StartCleanup(5*time.Minute, rateLimitDone)
+	captchaStore.StartCleanup(5*time.Minute, rateLimitDone)
 
 	a := &app.App{
 		Pool:             pool,
@@ -144,6 +147,7 @@ func main() {
 		LoginIPLimiter:   loginIPLimiter,
 		LoginAcctLimiter: loginAcctLimiter,
 		InviteLimiter:    inviteLimiter,
+		Captcha:          captchaStore,
 	}
 
 	addr := envOrDefault("ADDR", ":8080")

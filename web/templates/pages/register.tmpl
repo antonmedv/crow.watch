@@ -83,6 +83,34 @@
                 <p class="field-error">{{ .Errors.password_confirmation }}</p>
               {{ end }}
             </div>
+            {{ if .CaptchaID }}
+              <div class="field">
+                <label for="captcha_answer">What does this equal?</label>
+                <img
+                  src="/captcha/{{ .CaptchaID }}"
+                  alt="CAPTCHA"
+                  style="display:block; margin-bottom:0.5rem"
+                />
+                <input
+                  type="hidden"
+                  name="captcha_id"
+                  value="{{ .CaptchaID }}"
+                />
+                <input
+                  id="captcha_answer"
+                  name="captcha_answer"
+                  type="text"
+                  class="field-input"
+                  inputmode="numeric"
+                  required
+                  autocomplete="off"
+                  placeholder="Answer"
+                />
+                {{ if .Errors.captcha }}
+                  <p class="field-error">{{ .Errors.captcha }}</p>
+                {{ end }}
+              </div>
+            {{ end }}
             <button class="btn auth-btn" type="submit">Create account</button>
           </form>
         {{ end }}
