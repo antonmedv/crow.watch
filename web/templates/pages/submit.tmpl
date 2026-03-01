@@ -222,11 +222,11 @@
     {{ end }}
     <form
       method="post"
-      action="{{ if .EditMode }}
+      action="{{- if .EditMode -}}
         /x/{{ .EditCode }}/edit
-      {{ else }}
+      {{- else -}}
         /submit
-      {{ end }}"
+      {{- end -}}"
     >
       {{ if .EditMode }}
         {{ if eq .Tab "link" }}

@@ -113,9 +113,9 @@
       <div class="pagination">
         {{ if gt .CurrentPage 1 }}
           <a
-            href="/mod/log{{ if gt .CurrentPage 2 }}
+            href="/mod/log{{- if gt .CurrentPage 2 -}}
               /page/{{ subtract .CurrentPage 1 }}
-            {{ end }}"
+            {{- end -}}"
             class="btn btn--secondary"
             >Newer</a
           >

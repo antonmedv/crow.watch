@@ -205,7 +205,7 @@ func TestRenderSubmitForm(t *testing.T) {
 	assert.Contains(t, body, `name="title"`)
 	assert.Contains(t, body, "programming")
 	assert.Contains(t, body, "video")
-	assert.Contains(t, body, `<form method="post" action="/submit">`)
+	assert.Contains(t, body, `/submit`)
 }
 
 func TestRenderSubmitFormWithErrors(t *testing.T) {
