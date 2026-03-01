@@ -364,7 +364,7 @@ func TestHomeShowsTextStory(t *testing.T) {
 	body := w.Body.String()
 	assert.Contains(t, body, `/x/abc123/ask_cw_what_editor_do_you_use`)
 	assert.Contains(t, body, "Ask CW: What editor do you use?")
-	assert.Contains(t, body, "crow.watch")
+	assert.Contains(t, body, "Crow Watch")
 }
 
 func TestRenderStoryDetailPage(t *testing.T) {
@@ -391,7 +391,7 @@ func TestRenderStoryDetailPage(t *testing.T) {
 	assert.Contains(t, body, "story-body")
 	assert.Contains(t, body, "<p>I&#39;ve been using vim for years but curious what others prefer.</p>")
 	assert.Contains(t, body, "bob")
-	assert.Contains(t, body, "crow.watch")
+	assert.Contains(t, body, "Crow Watch")
 }
 
 func TestRenderSubmitFormHasBodyField(t *testing.T) {
