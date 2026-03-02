@@ -175,6 +175,9 @@ UPDATE stories SET body = @body, updated_at = now() WHERE id = @id;
 -- name: UpdateStoryURL :exec
 UPDATE stories SET url = @url, normalized_url = @normalized_url, domain_id = @domain_id, origin_id = @origin_id, updated_at = now() WHERE id = @id;
 
+-- name: SetStoryUpvotes :exec
+UPDATE stories SET upvotes = @upvotes WHERE id = @id;
+
 -- name: DeleteTaggingsByStory :exec
 DELETE FROM taggings WHERE story_id = @story_id;
 

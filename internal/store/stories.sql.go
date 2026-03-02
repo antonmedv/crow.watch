@@ -630,6 +630,20 @@ func (q *Queries) RecalculateStoryScores(ctx context.Context) (int64, error) {
 	return result.RowsAffected(), nil
 }
 
+const setStoryUpvotes = `-- name: SetStoryUpvotes :exec
+UPDATE stories SET upvotes = $1 WHERE id = $2
+`
+
+type SetStoryUpvotesParams struct {
+	Upvotes int32
+	ID      int64
+}
+
+func (q *Queries) SetStoryUpvotes(ctx context.Context, arg SetStoryUpvotesParams) error {
+	_, err := q.db.Exec(ctx, setStoryUpvotes, arg.Upvotes, arg.ID)
+	return err
+}
+
 const updateStoryBody = `-- name: UpdateStoryBody :exec
 UPDATE stories SET body = $1, updated_at = now() WHERE id = $2
 `

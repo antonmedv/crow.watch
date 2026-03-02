@@ -101,10 +101,11 @@ func (a *App) apiSubmitStory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		URL   string   `json:"url"`
-		Title string   `json:"title"`
-		Body  string   `json:"body"`
-		Tags  []string `json:"tags"`
+		URL     string   `json:"url"`
+		Title   string   `json:"title"`
+		Body    string   `json:"body"`
+		Tags    []string `json:"tags"`
+		Hotness int32    `json:"hotness"`
 	}
 	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON body."})
@@ -291,6 +292,17 @@ func (a *App) apiSubmitStory(w http.ResponseWriter, r *http.Request) {
 		a.Log.Error("api auto-upvote story", "error", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
 		return
+	}
+
+	if req.Hotness > 1 {
+		if err := qtx.SetStoryUpvotes(r.Context(), store.SetStoryUpvotesParams{
+			ID:      story.ID,
+			Upvotes: req.Hotness,
+		}); err != nil {
+			a.Log.Error("api set story upvotes", "error", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+			return
+		}
 	}
 
 	if !isText {

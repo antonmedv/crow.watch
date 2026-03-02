@@ -8,12 +8,13 @@ import (
 	"os"
 	"sort"
 
-	"crow.watch/internal/dotenv"
-	"crow.watch/internal/store"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gopkg.in/yaml.v3"
+
+	"crow.watch/internal/dotenv"
+	"crow.watch/internal/store"
 )
 
 // mediaCategories contains category names whose tags get is_media=true.
