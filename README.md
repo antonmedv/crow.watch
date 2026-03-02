@@ -29,3 +29,7 @@ docker compose up
 ### Why Crow?
 
 Crows are smart, they work together, and they find the best shiny objects.
+
+### Join Crow Watch
+
+Registration will be invite only later. But we do need initial userbase. So please, join: https://crow.watch/join/crow-watch
