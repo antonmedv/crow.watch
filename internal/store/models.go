@@ -8,6 +8,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ApiKey struct {
+	ID         int64
+	UserID     int64
+	TokenHash  string
+	Name       string
+	LastUsedAt pgtype.Timestamptz
+	CreatedAt  pgtype.Timestamptz
+}
+
 type Campaign struct {
 	ID             int64
 	Slug           string

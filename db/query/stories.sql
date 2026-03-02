@@ -177,3 +177,9 @@ UPDATE stories SET url = @url, normalized_url = @normalized_url, domain_id = @do
 
 -- name: DeleteTaggingsByStory :exec
 DELETE FROM taggings WHERE story_id = @story_id;
+
+-- name: GetTagsByNames :many
+SELECT id, tag, description, category_id, privileged, is_media, active, hotness_mod, created_at, updated_at
+FROM tags
+WHERE lower(tag) = ANY(@names::text[])
+  AND active = true;

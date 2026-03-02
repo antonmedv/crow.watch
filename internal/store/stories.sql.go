@@ -330,6 +330,44 @@ func (q *Queries) GetStoryTagsWithMod(ctx context.Context, storyID int64) ([]Get
 	return items, nil
 }
 
+const getTagsByNames = `-- name: GetTagsByNames :many
+SELECT id, tag, description, category_id, privileged, is_media, active, hotness_mod, created_at, updated_at
+FROM tags
+WHERE lower(tag) = ANY($1::text[])
+  AND active = true
+`
+
+func (q *Queries) GetTagsByNames(ctx context.Context, names []string) ([]Tag, error) {
+	rows, err := q.db.Query(ctx, getTagsByNames, names)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Tag
+	for rows.Next() {
+		var i Tag
+		if err := rows.Scan(
+			&i.ID,
+			&i.Tag,
+			&i.Description,
+			&i.CategoryID,
+			&i.Privileged,
+			&i.IsMedia,
+			&i.Active,
+			&i.HotnessMod,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecentStories = `-- name: ListRecentStories :many
 SELECT
     s.id,
