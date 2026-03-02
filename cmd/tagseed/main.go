@@ -1,15 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
 	"sort"
-	"strings"
 
+	"crow.watch/internal/dotenv"
 	"crow.watch/internal/store"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -28,7 +27,7 @@ var privilegedCategories = map[string]bool{
 }
 
 func main() {
-	loadDotEnv(".env")
+	dotenv.Load(".env")
 
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "usage: tagseed <tags.yaml>\n")
@@ -119,37 +118,4 @@ func getOrCreateCategory(ctx context.Context, q *store.Queries, name string) (st
 		return store.Category{}, err
 	}
 	return q.CreateCategory(ctx, name)
-}
-
-func loadDotEnv(path string) {
-	file, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-		if key == "" {
-			continue
-		}
-
-		if _, exists := os.LookupEnv(key); exists {
-			continue
-		}
-
-		_ = os.Setenv(key, strings.Trim(value, `"'`))
-	}
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	crand "crypto/rand"
 	"errors"
@@ -10,9 +9,9 @@ import (
 	"math/rand/v2"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
+	"crow.watch/internal/dotenv"
 	"crow.watch/internal/link"
 	"crow.watch/internal/store"
 	"github.com/jackc/pgx/v5"
@@ -27,7 +26,7 @@ type seedStory struct {
 }
 
 func main() {
-	loadDotEnv(".env")
+	dotenv.Load(".env")
 
 	storiesPath := "stories.yaml"
 	count := 25
@@ -239,39 +238,4 @@ func generateShortCode() string {
 		b[i] = charset[int(b[i])%len(charset)]
 	}
 	return string(b)
-}
-
-func loadDotEnv(path string) {
-	file, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer func(file *os.File) {
-		_ = file.Close()
-	}(file)
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-		if key == "" {
-			continue
-		}
-
-		if _, exists := os.LookupEnv(key); exists {
-			continue
-		}
-
-		_ = os.Setenv(key, strings.Trim(value, `"'`))
-	}
 }

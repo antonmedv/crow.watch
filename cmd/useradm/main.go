@@ -1,15 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"syscall"
 
+	"crow.watch/internal/dotenv"
 	"crow.watch/internal/store"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,7 +17,7 @@ import (
 )
 
 func main() {
-	loadDotEnv(".env")
+	dotenv.Load(".env")
 
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "usage: useradm <add|passwd> [flags]\n")
@@ -157,37 +156,4 @@ func readPassword(prompt string) (string, error) {
 		return "", err
 	}
 	return string(pw), nil
-}
-
-func loadDotEnv(path string) {
-	file, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-		if key == "" {
-			continue
-		}
-
-		if _, exists := os.LookupEnv(key); exists {
-			continue
-		}
-
-		_ = os.Setenv(key, strings.Trim(value, `"'`))
-	}
 }

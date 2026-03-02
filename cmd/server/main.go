@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"io/fs"
 	"log/slog"
@@ -19,6 +18,7 @@ import (
 	"crow.watch/internal/auth"
 	"crow.watch/internal/captcha"
 	"crow.watch/internal/dev"
+	"crow.watch/internal/dotenv"
 	"crow.watch/internal/email"
 	"crow.watch/internal/ratelimit"
 	"crow.watch/internal/store"
@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-	loadDotEnv(".env")
+	dotenv.Load(".env")
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
@@ -206,37 +206,4 @@ func envOrDefault(key, fallback string) string {
 		return v
 	}
 	return fallback
-}
-
-func loadDotEnv(path string) {
-	file, err := os.Open(path)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-
-		key := strings.TrimSpace(parts[0])
-		value := strings.TrimSpace(parts[1])
-		if key == "" {
-			continue
-		}
-
-		if _, exists := os.LookupEnv(key); exists {
-			continue
-		}
-
-		_ = os.Setenv(key, strings.Trim(value, `"'`))
-	}
 }
