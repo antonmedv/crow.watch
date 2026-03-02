@@ -30,13 +30,13 @@ func (a *App) profilePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "profile", ProfilePageData{
-		BaseData:    a.baseData(r),
-		Username:    profile.Username,
-		About:       profile.About,
-		Website:     profile.Website,
-		IsModerator: profile.IsModerator,
-		StoryCount:  profile.StoryCount,
-		InvitedBy:   invitedBy,
-		CreatedAt:   profile.CreatedAt.Time,
+		BaseData:        a.baseData(r),
+		ProfileUsername: profile.Username,
+		About:           profile.About,
+		Website:         profile.Website,
+		IsModerator:     profile.IsModerator,
+		StoryCount:      profile.StoryCount,
+		InvitedBy:       invitedBy,
+		CreatedAt:       profile.CreatedAt.Time,
 	})
 }

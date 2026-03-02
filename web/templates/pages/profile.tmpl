@@ -1,11 +1,7 @@
-{{ define "title" }}{{ .Username }} | Crow Watch{{ end }}
+{{ define "title" }}{{ .ProfileUsername }} | Crow Watch{{ end }}
 
 {{ define "head" }}
   <style>
-    .profile h1 {
-      font-size: 1.3rem;
-      margin: 0 0 1rem;
-    }
     .profile-meta {
       color: var(--text-muted);
       font-size: 0.85rem;
@@ -26,11 +22,11 @@
 
 {{ define "content" }}
   <h1 class="page-title">
-    {{ .Username }}{{ if .IsModerator }}<small>(mod)</small>{{ end }}
+    {{ .ProfileUsername }}{{ if .IsModerator }}<small>(mod)</small>{{ end }}
   </h1>
   <div class="profile-meta">
     <span
-      ><a href="/u/{{ .Username }}/stories"
+      ><a href="/u/{{ .ProfileUsername }}/stories"
         >{{ .StoryCount }}
         {{ if eq .StoryCount 1 }}story{{ else }}stories{{ end }}</a
       ></span

@@ -186,13 +186,13 @@ type ConfirmEmailPageData struct {
 
 type ProfilePageData struct {
 	BaseData
-	Username    string
-	About       string
-	Website     string
-	IsModerator bool
-	StoryCount  int64
-	InvitedBy   string
-	CreatedAt   time.Time
+	ProfileUsername string
+	About           string
+	Website         string
+	IsModerator     bool
+	StoryCount      int64
+	InvitedBy       string
+	CreatedAt       time.Time
 }
 
 type UserStoriesPageData struct {
