@@ -340,6 +340,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("POST /x/{code}/edit", a.editStory)
 	mux.HandleFunc("GET /mod/log", a.moderationLogPage)
 	mux.HandleFunc("GET /mod/log/page/{page}", a.moderationLogPage)
+	mux.HandleFunc("GET /api/tags", a.apiListTags)
 	mux.HandleFunc("POST /api/story", a.apiSubmitStory)
 
 	if a.DevReload != nil {

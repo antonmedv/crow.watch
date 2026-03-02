@@ -69,6 +69,31 @@ func (a *App) apiKeyUserFromRequest(w http.ResponseWriter, r *http.Request) (sto
 	return user, row.ApiKeyID, true
 }
 
+func (a *App) apiListTags(w http.ResponseWriter, r *http.Request) {
+	tags, err := a.Queries.ListActiveTagsWithCategory(r.Context())
+	if err != nil {
+		a.Log.Error("api list tags", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+
+	type tagResponse struct {
+		Tag      string `json:"tag"`
+		Category string `json:"category,omitempty"`
+		IsMedia  bool   `json:"is_media"`
+	}
+
+	result := make([]tagResponse, len(tags))
+	for i, t := range tags {
+		result[i] = tagResponse{
+			Tag:      t.Tag,
+			Category: t.CategoryName,
+			IsMedia:  t.IsMedia,
+		}
+	}
+	writeJSON(w, http.StatusOK, result)
+}
+
 func (a *App) apiSubmitStory(w http.ResponseWriter, r *http.Request) {
 	user, _, ok := a.apiKeyUserFromRequest(w, r)
 	if !ok {
