@@ -21,3 +21,4 @@ RUN apk add --no-cache ca-certificates tzdata
 COPY --from=build /bin/useradm /bin/useradm
 COPY --from=build /bin/votecalc /bin/votecalc
 COPY --from=build /bin/tokengen /bin/tokengen
+COPY --from=build /bin/apikeygen /bin/apikeygen
