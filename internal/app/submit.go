@@ -343,6 +343,16 @@ func (a *App) fetchTitle(w http.ResponseWriter, r *http.Request) {
 		Timeout:   5 * time.Second,
 		Transport: safeTransport(),
 	}
+
+	// YouTube pages are JS-rendered, so the <title> in raw HTML is unusable.
+	// Use the free oEmbed API to get clean video titles.
+	if strings.Contains(result.Cleaned, "youtube.com/watch?v=") || strings.Contains(result.Cleaned, "youtu.be/") {
+		if title, err := fetchYouTubeTitle(r.Context(), client, result.Cleaned); err == nil {
+			writeJSON(w, http.StatusOK, map[string]string{"title": title})
+			return
+		}
+	}
+
 	httpReq, err := http.NewRequestWithContext(r.Context(), "GET", result.Cleaned, nil)
 	if err != nil {
 		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "Could not fetch URL."})
@@ -373,6 +383,36 @@ func (a *App) fetchTitle(w http.ResponseWriter, r *http.Request) {
 	title = cleanTitle(title, result.Cleaned)
 
 	writeJSON(w, http.StatusOK, map[string]string{"title": title})
+}
+
+func fetchYouTubeTitle(ctx context.Context, client *http.Client, videoURL string) (string, error) {
+	oembedURL := "https://www.youtube.com/oembed?url=" + videoURL + "&format=json"
+	req, err := http.NewRequestWithContext(ctx, "GET", oembedURL, nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("oembed: status %d", resp.StatusCode)
+	}
+	return parseOEmbedTitle(resp.Body)
+}
+
+func parseOEmbedTitle(r io.Reader) (string, error) {
+	var data struct {
+		Title string `json:"title"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r, 16*1024)).Decode(&data); err != nil {
+		return "", err
+	}
+	if data.Title == "" {
+		return "", fmt.Errorf("oembed: empty title")
+	}
+	return data.Title, nil
 }
 
 func extractTitle(r io.Reader) string {
