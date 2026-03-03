@@ -205,10 +205,12 @@
     } else if (e.key === "Enter") {
       e.preventDefault()
       if (focusedIdx >= 0 && focusedIdx < visible.length) {
-        toggle(visible[focusedIdx])
+        const opt = visible[focusedIdx]
+        toggle(opt)
+        searchInput.value = ""
+        filterOptions()
+        setFocused(options.indexOf(opt))
       }
-      searchInput.value = ""
-      filterOptions()
     } else if (e.key === "Escape") {
       close()
       searchInput.blur()
@@ -235,7 +237,9 @@
     opt.addEventListener("click", (e) => {
       e.preventDefault()
       toggle(opt)
-      searchInput.focus()
+      searchInput.value = ""
+      filterOptions()
+      setFocused(options.indexOf(opt))
     })
   })
 
