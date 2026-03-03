@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -386,7 +387,7 @@ func (a *App) fetchTitle(w http.ResponseWriter, r *http.Request) {
 }
 
 func fetchYouTubeTitle(ctx context.Context, client *http.Client, videoURL string) (string, error) {
-	oembedURL := "https://www.youtube.com/oembed?url=" + videoURL + "&format=json"
+	oembedURL := "https://www.youtube.com/oembed?url=" + url.QueryEscape(videoURL) + "&format=json"
 	req, err := http.NewRequestWithContext(ctx, "GET", oembedURL, nil)
 	if err != nil {
 		return "", err
