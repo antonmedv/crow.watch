@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"html/template"
 	"net/http"
 	"time"
 
@@ -87,6 +88,13 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Handle deleted stories
+	var storyDeletedAt *time.Time
+	if row.DeletedAt.Valid {
+		t := row.DeletedAt.Time
+		storyDeletedAt = &t
+	}
+
 	storyDomain := row.Domain.String
 	if row.Origin.Valid {
 		storyDomain = row.Origin.String
@@ -102,11 +110,19 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 		flagCounts = append(flagCounts, FlagCount{Reason: f.Reason, Count: int(f.Count)})
 	}
 
+	storyTitle := row.Title
+	storyURL := row.Url.String
+	if storyDeletedAt != nil {
+		storyTitle = "[deleted by moderator]"
+		storyURL = ""
+		storyDomain = ""
+	}
+
 	item := StoryItem{
 		ID:           row.ID,
 		ShortCode:    row.ShortCode,
-		URL:          row.Url.String,
-		Title:        row.Title,
+		URL:          storyURL,
+		Title:        storyTitle,
 		Domain:       storyDomain,
 		Username:     row.Username,
 		Tags:         tags,
@@ -122,6 +138,7 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 		IsLoggedIn:   loggedIn,
 		IsModerator:  loggedIn && current.User.IsModerator,
 		CreatedAt:    row.CreatedAt.Time,
+		DeletedAt:    storyDeletedAt,
 	}
 
 	// Fetch comments
@@ -201,10 +218,15 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	var body template.HTML
+	if storyDeletedAt == nil {
+		body = markdown.Render(row.Body.String)
+	}
+
 	a.render(w, "story", StoryPageData{
 		BaseData: a.baseData(r),
 		Story:    item,
-		Body:     markdown.Render(row.Body.String),
+		Body:     body,
 		Comments: comments,
 	})
 }

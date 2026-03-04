@@ -36,6 +36,10 @@
   font-weight: var(--story-title-weight, 700);
 }
 
+.story-item__deleted {
+  color: var(--text-muted);
+}
+
 .story-item__icon {
   color: var(--text-muted);
   margin-top: -2px;

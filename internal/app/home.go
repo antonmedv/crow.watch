@@ -368,6 +368,7 @@ type storyDisplayInfo struct {
 	HasHidden    bool
 	IsText       bool
 	CreatedAt    time.Time
+	DeletedAt    *time.Time
 }
 
 func buildCommentInputs(cd store.GetCommentRankingDataByStoriesRow) []rank.CommentInput {

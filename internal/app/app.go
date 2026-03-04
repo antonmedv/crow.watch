@@ -82,6 +82,7 @@ type StoryItem struct {
 	IsLoggedIn   bool
 	IsModerator  bool
 	CreatedAt    time.Time
+	DeletedAt    *time.Time
 }
 
 type StoryTag struct {
@@ -338,6 +339,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("POST /join/{slug}", a.joinRegister)
 	mux.HandleFunc("GET /x/{code}/edit", a.editStoryPage)
 	mux.HandleFunc("POST /x/{code}/edit", a.editStory)
+	mux.HandleFunc("POST /x/{code}/delete", a.deleteStory)
 	mux.HandleFunc("GET /mod/log", a.moderationLogPage)
 	mux.HandleFunc("GET /mod/log/page/{page}", a.moderationLogPage)
 	mux.HandleFunc("GET /api/tags", a.apiListTags)

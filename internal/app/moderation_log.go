@@ -82,6 +82,8 @@ func formatActionDescription(action string) string {
 			descriptions = append(descriptions, "edited body")
 		case "story.edit_tags":
 			descriptions = append(descriptions, "edited tags")
+		case "story.delete":
+			descriptions = append(descriptions, "deleted story")
 		default:
 			descriptions = append(descriptions, strings.TrimSpace(p))
 		}

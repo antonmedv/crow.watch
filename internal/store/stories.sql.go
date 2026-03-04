@@ -150,6 +150,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -157,7 +158,7 @@ FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.id = $1 AND s.deleted_at IS NULL
+WHERE s.id = $1
 `
 
 type GetStoryByIDRow struct {
@@ -171,6 +172,7 @@ type GetStoryByIDRow struct {
 	Downvotes    int32
 	CommentCount int32
 	CreatedAt    pgtype.Timestamptz
+	DeletedAt    pgtype.Timestamptz
 	Username     string
 	Domain       pgtype.Text
 	Origin       pgtype.Text
@@ -190,6 +192,7 @@ func (q *Queries) GetStoryByID(ctx context.Context, id int64) (GetStoryByIDRow, 
 		&i.Downvotes,
 		&i.CommentCount,
 		&i.CreatedAt,
+		&i.DeletedAt,
 		&i.Username,
 		&i.Domain,
 		&i.Origin,
@@ -209,6 +212,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -216,7 +220,7 @@ FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.short_code = $1 AND s.deleted_at IS NULL
+WHERE s.short_code = $1
 `
 
 type GetStoryByShortCodeRow struct {
@@ -230,6 +234,7 @@ type GetStoryByShortCodeRow struct {
 	Downvotes    int32
 	CommentCount int32
 	CreatedAt    pgtype.Timestamptz
+	DeletedAt    pgtype.Timestamptz
 	Username     string
 	Domain       pgtype.Text
 	Origin       pgtype.Text
@@ -249,6 +254,7 @@ func (q *Queries) GetStoryByShortCode(ctx context.Context, shortCode string) (Ge
 		&i.Downvotes,
 		&i.CommentCount,
 		&i.CreatedAt,
+		&i.DeletedAt,
 		&i.Username,
 		&i.Domain,
 		&i.Origin,
@@ -459,6 +465,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -468,7 +475,6 @@ FROM stories AS s
          LEFT JOIN origins AS o ON o.id = s.origin_id
          JOIN taggings AS tg ON tg.story_id = s.id
 WHERE tg.tag_id = $1
-  AND s.deleted_at IS NULL
 ORDER BY s.created_at DESC
 LIMIT $2
 `
@@ -488,6 +494,7 @@ type ListRecentStoriesByTagRow struct {
 	Downvotes    int32
 	CommentCount int32
 	CreatedAt    pgtype.Timestamptz
+	DeletedAt    pgtype.Timestamptz
 	Username     string
 	Domain       pgtype.Text
 	Origin       pgtype.Text
@@ -512,6 +519,7 @@ func (q *Queries) ListRecentStoriesByTag(ctx context.Context, arg ListRecentStor
 			&i.Downvotes,
 			&i.CommentCount,
 			&i.CreatedAt,
+			&i.DeletedAt,
 			&i.Username,
 			&i.Domain,
 			&i.Origin,
@@ -537,6 +545,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -545,7 +554,6 @@ JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
 WHERE lower(u.username) = lower($1)
-  AND s.deleted_at IS NULL
 ORDER BY s.created_at DESC
 LIMIT $2
 `
@@ -565,6 +573,7 @@ type ListStoriesByUsernameRow struct {
 	Downvotes    int32
 	CommentCount int32
 	CreatedAt    pgtype.Timestamptz
+	DeletedAt    pgtype.Timestamptz
 	Username     string
 	Domain       pgtype.Text
 	Origin       pgtype.Text
@@ -589,6 +598,7 @@ func (q *Queries) ListStoriesByUsername(ctx context.Context, arg ListStoriesByUs
 			&i.Downvotes,
 			&i.CommentCount,
 			&i.CreatedAt,
+			&i.DeletedAt,
 			&i.Username,
 			&i.Domain,
 			&i.Origin,
@@ -641,6 +651,15 @@ type SetStoryUpvotesParams struct {
 
 func (q *Queries) SetStoryUpvotes(ctx context.Context, arg SetStoryUpvotesParams) error {
 	_, err := q.db.Exec(ctx, setStoryUpvotes, arg.Upvotes, arg.ID)
+	return err
+}
+
+const softDeleteStory = `-- name: SoftDeleteStory :exec
+UPDATE stories SET deleted_at = now(), updated_at = now() WHERE id = $1
+`
+
+func (q *Queries) SoftDeleteStory(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, softDeleteStory, id)
 	return err
 }
 

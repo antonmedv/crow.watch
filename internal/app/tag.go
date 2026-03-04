@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -138,6 +139,11 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 		if s.Origin.Valid {
 			domain = s.Origin.String
 		}
+		var deletedAt *time.Time
+		if s.DeletedAt.Valid {
+			t := s.DeletedAt.Time
+			deletedAt = &t
+		}
 		storyMeta[s.ID] = storyDisplayInfo{
 			ShortCode:    s.ShortCode,
 			URL:          s.Url.String,
@@ -153,6 +159,7 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 			HasHidden:    hiddenMap[s.ID],
 			IsText:       s.Body.Valid,
 			CreatedAt:    s.CreatedAt.Time,
+			DeletedAt:    deletedAt,
 		}
 	}
 
@@ -185,12 +192,20 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 	tagIsModerator := data.BaseData.IsModerator
 	for _, s := range visible[start:end] {
 		meta := storyMeta[s.ID]
+		title := meta.Title
+		url := meta.URL
+		domain := meta.Domain
+		if meta.DeletedAt != nil {
+			title = "[deleted by moderator]"
+			url = ""
+			domain = ""
+		}
 		data.Stories = append(data.Stories, StoryItem{
 			ID:           s.ID,
 			ShortCode:    meta.ShortCode,
-			URL:          meta.URL,
-			Title:        meta.Title,
-			Domain:       meta.Domain,
+			URL:          url,
+			Title:        title,
+			Domain:       domain,
 			Username:     meta.Username,
 			Tags:         meta.Tags,
 			Upvotes:      meta.Upvotes,
@@ -204,6 +219,7 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 			IsLoggedIn:   isLoggedIn,
 			IsModerator:  tagIsModerator,
 			CreatedAt:    meta.CreatedAt,
+			DeletedAt:    meta.DeletedAt,
 		})
 	}
 

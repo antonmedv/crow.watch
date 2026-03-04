@@ -53,6 +53,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -62,7 +63,6 @@ FROM stories AS s
          LEFT JOIN origins AS o ON o.id = s.origin_id
          JOIN taggings AS tg ON tg.story_id = s.id
 WHERE tg.tag_id = @tag_id
-  AND s.deleted_at IS NULL
 ORDER BY s.created_at DESC
 LIMIT @story_limit;
 
@@ -78,6 +78,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -85,7 +86,7 @@ FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.id = @id AND s.deleted_at IS NULL;
+WHERE s.id = @id;
 
 -- name: GetStoryByShortCode :one
 SELECT
@@ -99,6 +100,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -106,7 +108,7 @@ FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.short_code = @short_code AND s.deleted_at IS NULL;
+WHERE s.short_code = @short_code;
 
 -- name: GetStoryTags :many
 SELECT t.id, t.tag, t.is_media
@@ -133,6 +135,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -141,7 +144,6 @@ JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
 WHERE lower(u.username) = lower(@username)
-  AND s.deleted_at IS NULL
 ORDER BY s.created_at DESC
 LIMIT @story_limit;
 
@@ -180,6 +182,9 @@ UPDATE stories SET upvotes = @upvotes WHERE id = @id;
 
 -- name: DeleteTaggingsByStory :exec
 DELETE FROM taggings WHERE story_id = @story_id;
+
+-- name: SoftDeleteStory :exec
+UPDATE stories SET deleted_at = now(), updated_at = now() WHERE id = @id;
 
 -- name: GetTagsByNames :many
 SELECT id, tag, description, category_id, privileged, is_media, active, hotness_mod, created_at, updated_at

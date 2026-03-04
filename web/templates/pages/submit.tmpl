@@ -428,6 +428,35 @@
         {{ if .EditMode }}Save Changes{{ else }}Submit{{ end }}
       </button>
     </form>
+    {{ if .EditMode }}
+      {{ if .IsModerator }}
+        <hr
+          style="margin: 24px 0; border: none; border-top: 1px solid var(--border);"
+        />
+        <h2 style="font-size: 18px; margin-bottom: 12px;">Delete Story</h2>
+        <form method="post" action="/x/{{ .EditCode }}/delete">
+          <div class="field">
+            <label for="delete-reason">Reason for deletion</label>
+            <textarea
+              id="delete-reason"
+              name="reason"
+              class="field-input"
+              rows="2"
+              maxlength="500"
+              required
+              placeholder="Why are you deleting this story?"
+            ></textarea>
+          </div>
+          <button
+            class="btn"
+            style="background: #c00; border-color: #c00; color: #fff;"
+            type="submit"
+          >
+            Delete Story
+          </button>
+        </form>
+      {{ end }}
+    {{ end }}
     {{ if not .EditMode }}
       <div class="submit-rules">
         <h3>Title</h3>

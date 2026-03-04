@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -130,11 +131,21 @@ func (a *App) userStoriesPage(w http.ResponseWriter, r *http.Request) {
 		if s.Origin.Valid {
 			domain = s.Origin.String
 		}
+		title := s.Title
+		url := s.Url.String
+		var deletedAt *time.Time
+		if s.DeletedAt.Valid {
+			t := s.DeletedAt.Time
+			deletedAt = &t
+			title = "[deleted by moderator]"
+			url = ""
+			domain = ""
+		}
 		data.Stories = append(data.Stories, StoryItem{
 			ID:           s.ID,
 			ShortCode:    s.ShortCode,
-			URL:          s.Url.String,
-			Title:        s.Title,
+			URL:          url,
+			Title:        title,
 			Domain:       domain,
 			Username:     s.Username,
 			Tags:         item.tags,
@@ -149,6 +160,7 @@ func (a *App) userStoriesPage(w http.ResponseWriter, r *http.Request) {
 			IsLoggedIn:   isLoggedIn,
 			IsModerator:  userStoriesIsMod,
 			CreatedAt:    s.CreatedAt.Time,
+			DeletedAt:    deletedAt,
 		})
 	}
 

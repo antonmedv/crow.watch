@@ -250,13 +250,13 @@
     <div class="story-item">
       {{ template "story-item" .Story }}
     </div>
-    {{ if .Body }}
+    {{ if and .Body (not .Story.DeletedAt) }}
       <div class="story-body markdown-body">{{ .Body }}</div>
     {{ end }}
   </section>
 
   <section class="comments-section">
-    {{ if .IsLoggedIn }}
+    {{ if and .IsLoggedIn (not .Story.DeletedAt) }}
       <form
         method="POST"
         action="/x/{{ .Story.ShortCode }}/comments"

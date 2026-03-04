@@ -39,6 +39,11 @@ func (a *App) editStoryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if row.DeletedAt.Valid {
+		http.NotFound(w, r)
+		return
+	}
+
 	tagRows, err := a.Queries.GetStoryTags(r.Context(), row.ID)
 	if err != nil {
 		a.serverError(w, r, "get story tags", err)
@@ -93,6 +98,11 @@ func (a *App) editStory(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		a.serverError(w, r, "get story by short code", err)
+		return
+	}
+
+	if row.DeletedAt.Valid {
+		http.NotFound(w, r)
 		return
 	}
 
