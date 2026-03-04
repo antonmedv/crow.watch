@@ -40,8 +40,7 @@
         </span>
       </div>
       <div class="comment__details">
-        <div class="comment__byline">
-          <a name="c_{{ .ID }}"></a>
+        <div class="comment__byline" id="c_{{ .ID }}">
           {{ if .IsDeleted }}
             <span class="comment__author comment__author--deleted">
               [deleted]

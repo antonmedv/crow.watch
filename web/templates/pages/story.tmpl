@@ -33,8 +33,8 @@
     }
 
     ol.comments {
-      margin: 0 0 0 20px;
-      padding-left: 6px;
+      margin-left: 30px;
+      padding-left: 0;
       list-style: none;
     }
 
@@ -54,8 +54,8 @@
       li.comments_subtree:has(+ li.comments_subtree)::before {
       content: "";
       position: absolute;
-      left: 19px;
-      top: 3.2em;
+      left: 15px;
+      top: 64px;
       bottom: 0;
       width: 1px;
       background: var(--border);
@@ -66,13 +66,10 @@
     }
 
     .comment_folder {
-      display: inline-block;
       cursor: pointer;
       color: var(--text-muted);
       text-align: center;
-      font-size: 13px;
       user-select: none;
-      line-height: 1;
       margin-bottom: 2px;
     }
 
@@ -96,9 +93,14 @@
       display: none;
     }
 
+    .comment_folder_button:checked ~ .comment .vote-btn,
+    .comment_folder_button:checked ~ .comment .vote-score {
+      display: none;
+    }
+
     .comment {
       clear: both;
-      padding: 0.4em 0;
+      margin-block: 8px;
       position: relative;
     }
 
@@ -112,7 +114,7 @@
 
     .comment__voters {
       float: left;
-      width: 40px;
+      width: 30px;
       text-align: center;
       margin-top: 0;
       display: flex;
@@ -135,7 +137,7 @@
 
     .comment__byline {
       color: var(--text-muted);
-      font-size: 13px;
+      font-size: 16px;
       display: flex;
       align-items: center;
       flex-wrap: wrap;
@@ -153,7 +155,6 @@
     }
 
     .comment__time {
-      font-size: 13px;
     }
 
     .comment__unread {
@@ -172,7 +173,6 @@
       color: var(--text-muted);
       cursor: pointer;
       font: inherit;
-      font-size: 13px;
       padding: 0;
     }
 
@@ -191,8 +191,6 @@
       max-width: 45rem;
       word-wrap: break-word;
       overflow: hidden;
-      margin: 4px 0;
-      font-size: 15px;
     }
 
     .comment__text--deleted {
@@ -225,7 +223,7 @@
 
     .comment-reply-form {
       margin: 8px 0 8px 0;
-      padding-left: 40px;
+      padding-left: 30px;
     }
 
     .comment-reply-form textarea {
