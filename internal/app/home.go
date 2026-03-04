@@ -12,12 +12,16 @@ import (
 
 const storiesPerPage = 25
 
-// home serves the hotness-ranked story listing (GET / and GET /page/{page}).
 func (a *App) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		a.notFound(w, r)
 		return
 	}
+	a.page(w, r)
+}
+
+// page serves the hotness-ranked story listing (GET / and GET /page/{page}).
+func (a *App) page(w http.ResponseWriter, r *http.Request) {
 	page := parsePage(r)
 	data := HomePageData{
 		BaseData:    a.baseData(r),

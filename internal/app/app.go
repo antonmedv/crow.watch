@@ -283,7 +283,7 @@ func (a *App) Routes() http.Handler {
 	mux.Handle("GET /static/", http.StripPrefix("/static/", staticHandler))
 	mux.Handle("GET /favicon.png", http.FileServerFS(a.StaticFS))
 	mux.HandleFunc("GET /", a.home)
-	mux.HandleFunc("GET /page/{page}", a.home)
+	mux.HandleFunc("GET /page/{page}", a.page)
 	mux.HandleFunc("GET /newest", a.newest)
 	mux.HandleFunc("GET /newest/page/{page}", a.newest)
 	mux.HandleFunc("GET /login", a.loginPage)
