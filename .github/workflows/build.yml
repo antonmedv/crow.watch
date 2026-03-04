@@ -55,7 +55,7 @@ jobs:
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
-          file: ./images/cmd/Dockerfile
+          file: ./docker/cmd/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/cmd:latest
@@ -81,7 +81,7 @@ jobs:
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
-          file: ./images/migrate/Dockerfile
+          file: ./docker/migrate/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/migrate:latest
@@ -107,7 +107,7 @@ jobs:
       - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
-          file: ./images/backup/Dockerfile
+          file: ./docker/backup/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_PREFIX }}/backup:latest

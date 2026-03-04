@@ -7,6 +7,8 @@ package store
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const getIPsByUserID = `-- name: GetIPsByUserID :many
@@ -62,6 +64,73 @@ func (q *Queries) GetUsersByIP(ctx context.Context, ipAddress string) ([]UserIp,
 			&i.FirstSeenAt,
 			&i.LastSeenAt,
 			&i.HitCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersSharingIPsWith = `-- name: GetUsersSharingIPsWith :many
+SELECT
+    ui.ip_address,
+    ui.action,
+    ui.hit_count,
+    ui.first_seen_at,
+    ui.last_seen_at,
+    u.id AS user_id,
+    u.username,
+    u.created_at AS user_created_at,
+    u.banned_at,
+    u.campaign,
+    inviter.username AS inviter_name
+FROM user_ips ui
+JOIN users u ON u.id = ui.user_id
+LEFT JOIN users inviter ON inviter.id = u.inviter_id
+WHERE ui.ip_address IN (SELECT uii.ip_address FROM user_ips uii WHERE uii.user_id = $1)
+  AND ui.user_id != $1
+ORDER BY ui.ip_address, u.username, ui.action
+`
+
+type GetUsersSharingIPsWithRow struct {
+	IpAddress     string
+	Action        string
+	HitCount      int32
+	FirstSeenAt   pgtype.Timestamptz
+	LastSeenAt    pgtype.Timestamptz
+	UserID        int64
+	Username      string
+	UserCreatedAt pgtype.Timestamptz
+	BannedAt      pgtype.Timestamptz
+	Campaign      string
+	InviterName   pgtype.Text
+}
+
+func (q *Queries) GetUsersSharingIPsWith(ctx context.Context, userID int64) ([]GetUsersSharingIPsWithRow, error) {
+	rows, err := q.db.Query(ctx, getUsersSharingIPsWith, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUsersSharingIPsWithRow
+	for rows.Next() {
+		var i GetUsersSharingIPsWithRow
+		if err := rows.Scan(
+			&i.IpAddress,
+			&i.Action,
+			&i.HitCount,
+			&i.FirstSeenAt,
+			&i.LastSeenAt,
+			&i.UserID,
+			&i.Username,
+			&i.UserCreatedAt,
+			&i.BannedAt,
+			&i.Campaign,
+			&i.InviterName,
 		); err != nil {
 			return nil, err
 		}

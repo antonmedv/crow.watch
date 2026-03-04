@@ -34,10 +34,12 @@ func clientIP(r *http.Request) string {
 func (a *App) recordIP(r *http.Request, userID int64, action string) {
 	ip := clientIP(r)
 	go func() {
-		_ = a.Queries.UpsertUserIP(context.Background(), store.UpsertUserIPParams{
+		if err := a.Queries.UpsertUserIP(context.Background(), store.UpsertUserIPParams{
 			UserID:    userID,
 			IpAddress: ip,
 			Action:    action,
-		})
+		}); err != nil {
+			a.Log.Error("record user ip", "error", err, "user_id", userID, "action", action)
+		}
 	}()
 }
