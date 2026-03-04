@@ -326,5 +326,7 @@ func (a *App) apiSubmitStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	a.recordIP(r, user.ID, "story")
+
 	writeJSON(w, http.StatusOK, map[string]string{"url": storyPath(shortCode, req.Title)})
 }

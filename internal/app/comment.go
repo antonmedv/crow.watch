@@ -242,6 +242,8 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	a.recordIP(r, current.User.ID, "comment")
+
 	// Recalculate downvotes: this user's comment may neutralize a hide+flag penalty
 	_ = a.Queries.RecalculateStoryDownvotes(r.Context(), story.ID)
 

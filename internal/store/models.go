@@ -197,6 +197,16 @@ type User struct {
 	UpdatedAt                       pgtype.Timestamptz
 }
 
+type UserIp struct {
+	ID          int64
+	UserID      int64
+	IpAddress   string
+	Action      string
+	FirstSeenAt pgtype.Timestamptz
+	LastSeenAt  pgtype.Timestamptz
+	HitCount    int32
+}
+
 type Vote struct {
 	UserID    int64
 	StoryID   int64

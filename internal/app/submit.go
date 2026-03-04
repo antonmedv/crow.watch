@@ -261,6 +261,8 @@ func (a *App) submitStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	a.recordIP(r, current.User.ID, "story")
+
 	if isText {
 		http.Redirect(w, r, storyPath(shortCode, title), http.StatusSeeOther)
 	} else {

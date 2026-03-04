@@ -181,6 +181,8 @@ func (a *App) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	a.recordIP(r, newUser.ID, "registration")
+
 	// If the invitation was sent to this email, auto-confirm.
 	if invite.Email.Valid && invite.Email.String == email {
 		if err := a.Queries.ConfirmUserEmail(r.Context(), newUser.ID); err != nil {
@@ -304,6 +306,8 @@ func (a *App) joinRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go a.sendConfirmationEmailForNewUser(context.Background(), newUser.ID, newUser.Username, newUser.Email)
+
+	a.recordIP(r, newUser.ID, "registration")
 
 	a.loginAndRedirect(w, r, newUser)
 }
