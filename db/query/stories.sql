@@ -111,13 +111,6 @@ LEFT JOIN origins AS o ON o.id = s.origin_id
 WHERE s.short_code = @short_code;
 
 -- name: GetStoryTags :many
-SELECT t.id, t.tag, t.is_media
-FROM taggings AS tg
-JOIN tags AS t ON t.id = tg.tag_id
-WHERE tg.story_id = @story_id
-ORDER BY t.is_media DESC, t.tag ASC;
-
--- name: GetStoryTagsWithMod :many
 SELECT t.id, t.tag, t.is_media, t.hotness_mod
 FROM taggings AS tg
 JOIN tags AS t ON t.id = tg.tag_id

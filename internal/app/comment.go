@@ -198,17 +198,17 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
-		parentDepth, err := a.Queries.GetCommentDepth(r.Context(), pid)
+		parent, err := a.Queries.GetCommentByID(r.Context(), pid)
 		if err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
-		if parentDepth >= int32(maxCommentDepth) {
+		if parent.Depth >= int32(maxCommentDepth) {
 			http.Error(w, "max nesting depth reached", http.StatusBadRequest)
 			return
 		}
 		parentID = pgtype.Int8{Int64: pid, Valid: true}
-		depth = parentDepth + 1
+		depth = parent.Depth + 1
 	}
 
 	tx, err := a.Pool.Begin(r.Context())

@@ -106,14 +106,14 @@ func main() {
 			continue
 		}
 
-		domain, err := getOrCreateDomain(ctx, queries, result.Domain)
+		domain, err := queries.GetOrCreateDomain(ctx, result.Domain)
 		if err != nil {
 			log.Fatalf("domain %q: %v", result.Domain, err)
 		}
 
 		var originID pgtype.Int8
 		if result.Origin != "" {
-			origin, err := getOrCreateOrigin(ctx, queries, domain.ID, result.Origin)
+			origin, err := queries.GetOrCreateOrigin(ctx, store.GetOrCreateOriginParams{DomainID: domain.ID, Origin: result.Origin})
 			if err != nil {
 				log.Fatalf("origin %q: %v", result.Origin, err)
 			}
@@ -201,31 +201,6 @@ func getOrCreateSeedUser(ctx context.Context, q *store.Queries) (store.User, err
 		Username: row.Username,
 		Email:    row.Email,
 	}, nil
-}
-
-func getOrCreateDomain(ctx context.Context, q *store.Queries, name string) (store.Domain, error) {
-	d, err := q.GetDomainByName(ctx, name)
-	if err == nil {
-		return d, nil
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return store.Domain{}, err
-	}
-	return q.CreateDomain(ctx, name)
-}
-
-func getOrCreateOrigin(ctx context.Context, q *store.Queries, domainID int64, name string) (store.Origin, error) {
-	o, err := q.GetOriginByName(ctx, name)
-	if err == nil {
-		return o, nil
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return store.Origin{}, err
-	}
-	return q.CreateOrigin(ctx, store.CreateOriginParams{
-		DomainID: domainID,
-		Origin:   name,
-	})
 }
 
 func generateShortCode() string {

@@ -263,7 +263,7 @@ func (q *Queries) GetStoryByShortCode(ctx context.Context, shortCode string) (Ge
 }
 
 const getStoryTags = `-- name: GetStoryTags :many
-SELECT t.id, t.tag, t.is_media
+SELECT t.id, t.tag, t.is_media, t.hotness_mod
 FROM taggings AS tg
 JOIN tags AS t ON t.id = tg.tag_id
 WHERE tg.story_id = $1
@@ -271,9 +271,10 @@ ORDER BY t.is_media DESC, t.tag ASC
 `
 
 type GetStoryTagsRow struct {
-	ID      int64
-	Tag     string
-	IsMedia bool
+	ID         int64
+	Tag        string
+	IsMedia    bool
+	HotnessMod float64
 }
 
 func (q *Queries) GetStoryTags(ctx context.Context, storyID int64) ([]GetStoryTagsRow, error) {
@@ -285,41 +286,6 @@ func (q *Queries) GetStoryTags(ctx context.Context, storyID int64) ([]GetStoryTa
 	var items []GetStoryTagsRow
 	for rows.Next() {
 		var i GetStoryTagsRow
-		if err := rows.Scan(&i.ID, &i.Tag, &i.IsMedia); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getStoryTagsWithMod = `-- name: GetStoryTagsWithMod :many
-SELECT t.id, t.tag, t.is_media, t.hotness_mod
-FROM taggings AS tg
-JOIN tags AS t ON t.id = tg.tag_id
-WHERE tg.story_id = $1
-ORDER BY t.is_media DESC, t.tag ASC
-`
-
-type GetStoryTagsWithModRow struct {
-	ID         int64
-	Tag        string
-	IsMedia    bool
-	HotnessMod float64
-}
-
-func (q *Queries) GetStoryTagsWithMod(ctx context.Context, storyID int64) ([]GetStoryTagsWithModRow, error) {
-	rows, err := q.db.Query(ctx, getStoryTagsWithMod, storyID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetStoryTagsWithModRow
-	for rows.Next() {
-		var i GetStoryTagsWithModRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Tag,

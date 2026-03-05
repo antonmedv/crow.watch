@@ -267,7 +267,7 @@ func (a *App) editStory(w http.ResponseWriter, r *http.Request) {
 	qtx := a.Queries.WithTx(tx)
 
 	if urlChanged {
-		domain, err := a.getOrCreateDomain(r.Context(), urlResult.Domain)
+		domain, err := a.Queries.GetOrCreateDomain(r.Context(), urlResult.Domain)
 		if err != nil {
 			a.serverError(w, r, "get or create domain", err)
 			return
@@ -286,7 +286,7 @@ func (a *App) editStory(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if urlResult.Origin != "" {
-			origin, err := a.getOrCreateOrigin(r.Context(), domain.ID, urlResult.Origin)
+			origin, err := a.Queries.GetOrCreateOrigin(r.Context(), store.GetOrCreateOriginParams{DomainID: domain.ID, Origin: urlResult.Origin})
 			if err != nil {
 				a.serverError(w, r, "get or create origin", err)
 				return

@@ -9,42 +9,20 @@ import (
 	"context"
 )
 
-const createOrigin = `-- name: CreateOrigin :one
+const getOrCreateOrigin = `-- name: GetOrCreateOrigin :one
 INSERT INTO origins (domain_id, origin)
 VALUES ($1, $2)
+ON CONFLICT ((lower(origin))) DO UPDATE SET origin = origins.origin
 RETURNING id, domain_id, origin, banned, ban_reason, story_count, created_at, updated_at
 `
 
-type CreateOriginParams struct {
+type GetOrCreateOriginParams struct {
 	DomainID int64
 	Origin   string
 }
 
-func (q *Queries) CreateOrigin(ctx context.Context, arg CreateOriginParams) (Origin, error) {
-	row := q.db.QueryRow(ctx, createOrigin, arg.DomainID, arg.Origin)
-	var i Origin
-	err := row.Scan(
-		&i.ID,
-		&i.DomainID,
-		&i.Origin,
-		&i.Banned,
-		&i.BanReason,
-		&i.StoryCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getOriginByName = `-- name: GetOriginByName :one
-SELECT id, domain_id, origin, banned, ban_reason, story_count, created_at, updated_at
-FROM origins
-WHERE lower(origin) = lower($1)
-LIMIT 1
-`
-
-func (q *Queries) GetOriginByName(ctx context.Context, origin string) (Origin, error) {
-	row := q.db.QueryRow(ctx, getOriginByName, origin)
+func (q *Queries) GetOrCreateOrigin(ctx context.Context, arg GetOrCreateOriginParams) (Origin, error) {
+	row := q.db.QueryRow(ctx, getOrCreateOrigin, arg.DomainID, arg.Origin)
 	var i Origin
 	err := row.Scan(
 		&i.ID,

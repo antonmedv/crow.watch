@@ -9,36 +9,15 @@ import (
 	"context"
 )
 
-const createDomain = `-- name: CreateDomain :one
+const getOrCreateDomain = `-- name: GetOrCreateDomain :one
 INSERT INTO domains (domain)
 VALUES ($1)
+ON CONFLICT ((lower(domain))) DO UPDATE SET domain = domains.domain
 RETURNING id, domain, banned, ban_reason, story_count, created_at, updated_at
 `
 
-func (q *Queries) CreateDomain(ctx context.Context, domain string) (Domain, error) {
-	row := q.db.QueryRow(ctx, createDomain, domain)
-	var i Domain
-	err := row.Scan(
-		&i.ID,
-		&i.Domain,
-		&i.Banned,
-		&i.BanReason,
-		&i.StoryCount,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getDomainByName = `-- name: GetDomainByName :one
-SELECT id, domain, banned, ban_reason, story_count, created_at, updated_at
-FROM domains
-WHERE lower(domain) = lower($1)
-LIMIT 1
-`
-
-func (q *Queries) GetDomainByName(ctx context.Context, domain string) (Domain, error) {
-	row := q.db.QueryRow(ctx, getDomainByName, domain)
+func (q *Queries) GetOrCreateDomain(ctx context.Context, domain string) (Domain, error) {
+	row := q.db.QueryRow(ctx, getOrCreateDomain, domain)
 	var i Domain
 	err := row.Scan(
 		&i.ID,

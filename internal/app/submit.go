@@ -155,7 +155,7 @@ func (a *App) submitStory(w http.ResponseWriter, r *http.Request) {
 	if !isText {
 		// Get or create domain
 		var err error
-		domain, err = a.getOrCreateDomain(r.Context(), result.Domain)
+		domain, err = a.Queries.GetOrCreateDomain(r.Context(), result.Domain)
 		if err != nil {
 			a.serverError(w, r, "get or create domain", err)
 			return
@@ -168,7 +168,7 @@ func (a *App) submitStory(w http.ResponseWriter, r *http.Request) {
 
 		// Get or create origin
 		if result.Origin != "" {
-			origin, err := a.getOrCreateOrigin(r.Context(), domain.ID, result.Origin)
+			origin, err := a.Queries.GetOrCreateOrigin(r.Context(), store.GetOrCreateOriginParams{DomainID: domain.ID, Origin: result.Origin})
 			if err != nil {
 				a.serverError(w, r, "get or create origin", err)
 				return
@@ -298,28 +298,6 @@ func (a *App) renderSubmitDuplicate(w http.ResponseWriter, r *http.Request, curr
 		Error:        "This link has already been submitted recently.",
 		DuplicateURL: dupURL,
 	})
-}
-
-func (a *App) getOrCreateDomain(ctx context.Context, domainName string) (store.Domain, error) {
-	d, err := a.Queries.GetDomainByName(ctx, domainName)
-	if err == nil {
-		return d, nil
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return store.Domain{}, err
-	}
-	return a.Queries.CreateDomain(ctx, domainName)
-}
-
-func (a *App) getOrCreateOrigin(ctx context.Context, domainID int64, originName string) (store.Origin, error) {
-	o, err := a.Queries.GetOriginByName(ctx, originName)
-	if err == nil {
-		return o, nil
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return store.Origin{}, err
-	}
-	return a.Queries.CreateOrigin(ctx, store.CreateOriginParams{DomainID: domainID, Origin: originName})
 }
 
 func (a *App) fetchTitle(w http.ResponseWriter, r *http.Request) {

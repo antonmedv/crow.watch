@@ -84,17 +84,6 @@ func (q *Queries) GetCommentByID(ctx context.Context, id int64) (Comment, error)
 	return i, err
 }
 
-const getCommentDepth = `-- name: GetCommentDepth :one
-SELECT depth FROM comments WHERE id = $1
-`
-
-func (q *Queries) GetCommentDepth(ctx context.Context, id int64) (int32, error) {
-	row := q.db.QueryRow(ctx, getCommentDepth, id)
-	var depth int32
-	err := row.Scan(&depth)
-	return depth, err
-}
-
 const getCommentRankingDataByStories = `-- name: GetCommentRankingDataByStories :many
 SELECT
     c.story_id,

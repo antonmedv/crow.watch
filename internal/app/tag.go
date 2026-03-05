@@ -115,9 +115,9 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 	inputs := make([]rank.StoryInput, 0, len(stories))
 	storyMeta := make(map[int64]storyDisplayInfo, len(stories))
 	for _, s := range stories {
-		tagRows, err := a.Queries.GetStoryTagsWithMod(r.Context(), s.ID)
+		tagRows, err := a.Queries.GetStoryTags(r.Context(), s.ID)
 		if err != nil {
-			a.Log.Error("get story tags with mod", "error", err, "story_id", s.ID)
+			a.Log.Error("get story tags", "error", err, "story_id", s.ID)
 			continue
 		}
 		var tags []rank.TagInput

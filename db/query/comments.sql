@@ -8,9 +8,6 @@ SELECT id, story_id, user_id, parent_id, body, depth, upvotes, downvotes, create
 FROM comments
 WHERE id = @id;
 
--- name: GetCommentDepth :one
-SELECT depth FROM comments WHERE id = @id;
-
 -- name: ListCommentsByStory :many
 SELECT
     c.id,

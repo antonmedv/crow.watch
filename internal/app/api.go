@@ -202,7 +202,7 @@ func (a *App) apiSubmitStory(w http.ResponseWriter, r *http.Request) {
 	var originID pgtype.Int8
 
 	if !isText {
-		domain, err = a.getOrCreateDomain(r.Context(), cleanResult.Domain)
+		domain, err = a.Queries.GetOrCreateDomain(r.Context(), cleanResult.Domain)
 		if err != nil {
 			a.Log.Error("api get or create domain", "error", err)
 			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
@@ -214,7 +214,7 @@ func (a *App) apiSubmitStory(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if cleanResult.Origin != "" {
-			origin, err := a.getOrCreateOrigin(r.Context(), domain.ID, cleanResult.Origin)
+			origin, err := a.Queries.GetOrCreateOrigin(r.Context(), store.GetOrCreateOriginParams{DomainID: domain.ID, Origin: cleanResult.Origin})
 			if err != nil {
 				a.Log.Error("api get or create origin", "error", err)
 				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
