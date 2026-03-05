@@ -112,44 +112,6 @@ func (q *Queries) GetTagsByIDs(ctx context.Context, ids []int64) ([]Tag, error) 
 	return items, nil
 }
 
-const listActiveTags = `-- name: ListActiveTags :many
-SELECT id, tag, description, category_id, privileged, is_media, active, hotness_mod, created_at, updated_at
-FROM tags
-WHERE active = true
-ORDER BY is_media DESC, tag ASC
-`
-
-func (q *Queries) ListActiveTags(ctx context.Context) ([]Tag, error) {
-	rows, err := q.db.Query(ctx, listActiveTags)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Tag
-	for rows.Next() {
-		var i Tag
-		if err := rows.Scan(
-			&i.ID,
-			&i.Tag,
-			&i.Description,
-			&i.CategoryID,
-			&i.Privileged,
-			&i.IsMedia,
-			&i.Active,
-			&i.HotnessMod,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listActiveTagsWithCategory = `-- name: ListActiveTagsWithCategory :many
 SELECT t.id, t.tag, t.description, t.category_id, t.privileged, t.is_media,
        COALESCE(c.name, '') AS category_name

@@ -1,9 +1,3 @@
--- name: ListActiveTags :many
-SELECT id, tag, description, category_id, privileged, is_media, active, hotness_mod, created_at, updated_at
-FROM tags
-WHERE active = true
-ORDER BY is_media DESC, tag ASC;
-
 -- name: ListActiveTagsWithCategory :many
 SELECT t.id, t.tag, t.description, t.category_id, t.privileged, t.is_media,
        COALESCE(c.name, '') AS category_name

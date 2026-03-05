@@ -11,13 +11,14 @@ import (
 	"strconv"
 	"time"
 
-	"crow.watch/internal/dotenv"
-	"crow.watch/internal/link"
-	"crow.watch/internal/store"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gopkg.in/yaml.v3"
+
+	"crow.watch/internal/dotenv"
+	"crow.watch/internal/link"
+	"crow.watch/internal/store"
 )
 
 type seedStory struct {
@@ -83,7 +84,7 @@ func main() {
 	fmt.Printf("Using user %q (id=%d)\n", user.Username, user.ID)
 
 	// Load existing tags for random assignment.
-	tags, err := queries.ListActiveTags(ctx)
+	tags, err := queries.ListActiveTagsWithCategory(ctx)
 	if err != nil {
 		log.Fatalf("list tags: %v", err)
 	}
@@ -168,7 +169,7 @@ func main() {
 		)
 		seedScore := 1 + rand.IntN(30)
 		_, _ = pool.Exec(ctx,
-			"UPDATE stories SET score = $1 WHERE id = $2",
+			"UPDATE stories SET upvotes = $1 WHERE id = $2",
 			seedScore, story.ID,
 		)
 
