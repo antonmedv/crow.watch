@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"crow.watch/internal/auth"
 	"crow.watch/internal/store"
@@ -24,7 +25,7 @@ func (a *App) deleteStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, err := a.Queries.GetStoryByShortCode(r.Context(), code)
+	row, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.NotFound(w, r)

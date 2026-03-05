@@ -171,7 +171,7 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	story, err := a.Queries.GetStoryByShortCode(r.Context(), code)
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -298,7 +298,7 @@ func (a *App) editComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	story, err := a.Queries.GetStoryByID(r.Context(), comment.StoryID)
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ID: pgtype.Int8{Int64: comment.StoryID, Valid: true}})
 	if err != nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -363,7 +363,7 @@ func (a *App) deleteComment(w http.ResponseWriter, r *http.Request) {
 	// Recalculate downvotes: deleting a comment may restore a hide+flag penalty
 	_ = a.Queries.RecalculateStoryDownvotes(r.Context(), comment.StoryID)
 
-	story, err := a.Queries.GetStoryByID(r.Context(), comment.StoryID)
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ID: pgtype.Int8{Int64: comment.StoryID, Valid: true}})
 	if err != nil {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return

@@ -29,7 +29,7 @@ func (a *App) editStoryPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, err := a.Queries.GetStoryByShortCode(r.Context(), code)
+	row, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.NotFound(w, r)
@@ -91,7 +91,7 @@ func (a *App) editStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, err := a.Queries.GetStoryByShortCode(r.Context(), code)
+	row, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.NotFound(w, r)
@@ -366,7 +366,7 @@ func (a *App) editStory(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, storyPath(row.ShortCode, displayTitle), http.StatusSeeOther)
 }
 
-func (a *App) renderEditError(w http.ResponseWriter, r *http.Request, current auth.AuthenticatedUser, code string, row store.GetStoryByShortCodeRow, title, body, reason, rawURL string, selectedIDs []int64, errs map[string]string, generalErr string) {
+func (a *App) renderEditError(w http.ResponseWriter, r *http.Request, current auth.AuthenticatedUser, code string, row store.GetStoryRow, title, body, reason, rawURL string, selectedIDs []int64, errs map[string]string, generalErr string) {
 	allTags, _ := a.Queries.ListActiveTagsWithCategory(r.Context())
 
 	tab := "link"

@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
+
 	"crow.watch/internal/auth"
 	"crow.watch/internal/markdown"
 	"crow.watch/internal/store"
-	"github.com/jackc/pgx/v5"
 )
 
 func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +21,7 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	row, err := a.Queries.GetStoryByShortCode(r.Context(), code)
+	row, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			http.NotFound(w, r)

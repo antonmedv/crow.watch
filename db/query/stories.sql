@@ -47,7 +47,7 @@ WHERE
 ORDER BY s.created_at DESC
 LIMIT @story_limit;
 
--- name: GetStoryByID :one
+-- name: GetStory :one
 SELECT
     s.id,
     s.user_id,
@@ -67,29 +67,8 @@ FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.id = @id;
-
--- name: GetStoryByShortCode :one
-SELECT
-    s.id,
-    s.user_id,
-    s.url,
-    s.title,
-    s.body,
-    s.short_code,
-    s.upvotes,
-    s.downvotes,
-    s.comment_count,
-    s.created_at,
-    s.deleted_at,
-    u.username,
-    d.domain,
-    o.origin
-FROM stories AS s
-JOIN users AS u ON u.id = s.user_id
-LEFT JOIN domains AS d ON d.id = s.domain_id
-LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.short_code = @short_code;
+WHERE (sqlc.narg('id')::bigint IS NULL OR s.id = sqlc.narg('id'))
+  AND (sqlc.narg('short_code')::text IS NULL OR s.short_code = sqlc.narg('short_code'));
 
 -- name: GetStoryTags :many
 SELECT t.id, t.tag, t.is_media, t.hotness_mod

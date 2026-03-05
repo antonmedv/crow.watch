@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"crow.watch/internal/store"
 )
@@ -57,7 +58,7 @@ func (a *App) moderationLogPage(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) resolveModLogTarget(r *http.Request, targetType string, targetID int64) (link, title string) {
 	if targetType == "story" {
-		row, err := a.Queries.GetStoryByID(r.Context(), targetID)
+		row, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ID: pgtype.Int8{Int64: targetID, Valid: true}})
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return "", "[deleted]"

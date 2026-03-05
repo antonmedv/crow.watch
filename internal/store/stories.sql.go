@@ -138,7 +138,7 @@ func (q *Queries) FindRecentByNormalizedURL(ctx context.Context, normalizedUrl p
 	return i, err
 }
 
-const getStoryByID = `-- name: GetStoryByID :one
+const getStory = `-- name: GetStory :one
 SELECT
     s.id,
     s.user_id,
@@ -158,10 +158,16 @@ FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.id = $1
+WHERE ($1::bigint IS NULL OR s.id = $1)
+  AND ($2::text IS NULL OR s.short_code = $2)
 `
 
-type GetStoryByIDRow struct {
+type GetStoryParams struct {
+	ID        pgtype.Int8
+	ShortCode pgtype.Text
+}
+
+type GetStoryRow struct {
 	ID           int64
 	UserID       int64
 	Url          pgtype.Text
@@ -178,71 +184,9 @@ type GetStoryByIDRow struct {
 	Origin       pgtype.Text
 }
 
-func (q *Queries) GetStoryByID(ctx context.Context, id int64) (GetStoryByIDRow, error) {
-	row := q.db.QueryRow(ctx, getStoryByID, id)
-	var i GetStoryByIDRow
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Url,
-		&i.Title,
-		&i.Body,
-		&i.ShortCode,
-		&i.Upvotes,
-		&i.Downvotes,
-		&i.CommentCount,
-		&i.CreatedAt,
-		&i.DeletedAt,
-		&i.Username,
-		&i.Domain,
-		&i.Origin,
-	)
-	return i, err
-}
-
-const getStoryByShortCode = `-- name: GetStoryByShortCode :one
-SELECT
-    s.id,
-    s.user_id,
-    s.url,
-    s.title,
-    s.body,
-    s.short_code,
-    s.upvotes,
-    s.downvotes,
-    s.comment_count,
-    s.created_at,
-    s.deleted_at,
-    u.username,
-    d.domain,
-    o.origin
-FROM stories AS s
-JOIN users AS u ON u.id = s.user_id
-LEFT JOIN domains AS d ON d.id = s.domain_id
-LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.short_code = $1
-`
-
-type GetStoryByShortCodeRow struct {
-	ID           int64
-	UserID       int64
-	Url          pgtype.Text
-	Title        string
-	Body         pgtype.Text
-	ShortCode    string
-	Upvotes      int32
-	Downvotes    int32
-	CommentCount int32
-	CreatedAt    pgtype.Timestamptz
-	DeletedAt    pgtype.Timestamptz
-	Username     string
-	Domain       pgtype.Text
-	Origin       pgtype.Text
-}
-
-func (q *Queries) GetStoryByShortCode(ctx context.Context, shortCode string) (GetStoryByShortCodeRow, error) {
-	row := q.db.QueryRow(ctx, getStoryByShortCode, shortCode)
-	var i GetStoryByShortCodeRow
+func (q *Queries) GetStory(ctx context.Context, arg GetStoryParams) (GetStoryRow, error) {
+	row := q.db.QueryRow(ctx, getStory, arg.ID, arg.ShortCode)
+	var i GetStoryRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
