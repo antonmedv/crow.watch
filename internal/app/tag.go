@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"crow.watch/internal/auth"
 	"crow.watch/internal/rank"
@@ -41,8 +42,8 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 		PagePath:       fmt.Sprintf("/t/%s/page", tag.Tag),
 	}
 
-	stories, err := a.Queries.ListRecentStoriesByTag(r.Context(), store.ListRecentStoriesByTagParams{
-		TagID:      tag.ID,
+	stories, err := a.Queries.ListStories(r.Context(), store.ListStoriesParams{
+		TagID:      pgtype.Int8{Int64: tag.ID, Valid: true},
 		StoryLimit: 500,
 	})
 	if err != nil {

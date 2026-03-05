@@ -16,33 +16,7 @@ LIMIT 1;
 INSERT INTO taggings (story_id, tag_id)
 VALUES (@story_id, @tag_id);
 
--- name: ListRecentStories :many
-SELECT
-    s.id,
-    s.url,
-    s.title,
-    s.body,
-    s.short_code,
-    s.upvotes,
-    s.downvotes,
-    s.comment_count,
-    s.created_at,
-    u.username,
-    d.domain,
-    o.origin
-FROM stories AS s
-JOIN users AS u ON u.id = s.user_id
-LEFT JOIN domains AS d ON d.id = s.domain_id
-LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.deleted_at IS NULL
-  AND s.id NOT IN (
-    SELECT tg.story_id FROM taggings AS tg
-    WHERE tg.tag_id = ANY(@hidden_tag_ids::bigint[])
-  )
-ORDER BY s.created_at DESC
-LIMIT @story_limit;
-
--- name: ListRecentStoriesByTag :many
+-- name: ListStories :many
 SELECT
     s.id,
     s.url,
@@ -58,11 +32,18 @@ SELECT
     d.domain,
     o.origin
 FROM stories AS s
-         JOIN users AS u ON u.id = s.user_id
-         LEFT JOIN domains AS d ON d.id = s.domain_id
-         LEFT JOIN origins AS o ON o.id = s.origin_id
-         JOIN taggings AS tg ON tg.story_id = s.id
-WHERE tg.tag_id = @tag_id
+JOIN users AS u ON u.id = s.user_id
+LEFT JOIN domains AS d ON d.id = s.domain_id
+LEFT JOIN origins AS o ON o.id = s.origin_id
+LEFT JOIN taggings AS tg ON tg.story_id = s.id AND tg.tag_id = sqlc.narg('tag_id')
+WHERE
+    (sqlc.narg('tag_id')::bigint IS NULL OR tg.tag_id IS NOT NULL)
+    AND (sqlc.narg('username')::text IS NULL OR lower(u.username) = lower(sqlc.narg('username')))
+    AND (NOT @hide_deleted::bool OR s.deleted_at IS NULL)
+    AND s.id NOT IN (
+        SELECT tg2.story_id FROM taggings AS tg2
+        WHERE tg2.tag_id = ANY(@hidden_tag_ids::bigint[])
+    )
 ORDER BY s.created_at DESC
 LIMIT @story_limit;
 
@@ -116,29 +97,6 @@ FROM taggings AS tg
 JOIN tags AS t ON t.id = tg.tag_id
 WHERE tg.story_id = @story_id
 ORDER BY t.is_media DESC, t.tag ASC;
-
--- name: ListStoriesByUsername :many
-SELECT
-    s.id,
-    s.url,
-    s.title,
-    s.body,
-    s.short_code,
-    s.upvotes,
-    s.downvotes,
-    s.comment_count,
-    s.created_at,
-    s.deleted_at,
-    u.username,
-    d.domain,
-    o.origin
-FROM stories AS s
-JOIN users AS u ON u.id = s.user_id
-LEFT JOIN domains AS d ON d.id = s.domain_id
-LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE lower(u.username) = lower(@username)
-ORDER BY s.created_at DESC
-LIMIT @story_limit;
 
 -- name: CountStories :one
 SELECT count(*) FROM stories WHERE deleted_at IS NULL;

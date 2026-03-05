@@ -40,7 +40,8 @@ func (a *App) page(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	stories, err := a.Queries.ListRecentStories(r.Context(), store.ListRecentStoriesParams{
+	stories, err := a.Queries.ListStories(r.Context(), store.ListStoriesParams{
+		HideDeleted:  true,
 		HiddenTagIds: hiddenTagIDs,
 		StoryLimit:   500,
 	})
@@ -230,7 +231,8 @@ func (a *App) newest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	stories, err := a.Queries.ListRecentStories(r.Context(), store.ListRecentStoriesParams{
+	stories, err := a.Queries.ListStories(r.Context(), store.ListStoriesParams{
+		HideDeleted:  true,
 		HiddenTagIds: newestHiddenTagIDs,
 		StoryLimit:   500,
 	})
@@ -241,7 +243,7 @@ func (a *App) newest(w http.ResponseWriter, r *http.Request) {
 
 	// Build story list with tags, collect IDs for batch queries
 	type newestStory struct {
-		story store.ListRecentStoriesRow
+		story store.ListStoriesRow
 		tags  []StoryTag
 	}
 	var allNewest []newestStory

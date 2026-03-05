@@ -340,7 +340,7 @@ func (q *Queries) GetTagsByNames(ctx context.Context, names []string) ([]Tag, er
 	return items, nil
 }
 
-const listRecentStories = `-- name: ListRecentStories :many
+const listStories = `-- name: ListStories :many
 SELECT
     s.id,
     s.url,
@@ -351,6 +351,7 @@ SELECT
     s.downvotes,
     s.comment_count,
     s.created_at,
+    s.deleted_at,
     u.username,
     d.domain,
     o.origin
@@ -358,99 +359,28 @@ FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE s.deleted_at IS NULL
-  AND s.id NOT IN (
-    SELECT tg.story_id FROM taggings AS tg
-    WHERE tg.tag_id = ANY($1::bigint[])
-  )
+LEFT JOIN taggings AS tg ON tg.story_id = s.id AND tg.tag_id = $1
+WHERE
+    ($1::bigint IS NULL OR tg.tag_id IS NOT NULL)
+    AND ($2::text IS NULL OR lower(u.username) = lower($2))
+    AND (NOT $3::bool OR s.deleted_at IS NULL)
+    AND s.id NOT IN (
+        SELECT tg2.story_id FROM taggings AS tg2
+        WHERE tg2.tag_id = ANY($4::bigint[])
+    )
 ORDER BY s.created_at DESC
-LIMIT $2
+LIMIT $5
 `
 
-type ListRecentStoriesParams struct {
+type ListStoriesParams struct {
+	TagID        pgtype.Int8
+	Username     pgtype.Text
+	HideDeleted  bool
 	HiddenTagIds []int64
 	StoryLimit   int32
 }
 
-type ListRecentStoriesRow struct {
-	ID           int64
-	Url          pgtype.Text
-	Title        string
-	Body         pgtype.Text
-	ShortCode    string
-	Upvotes      int32
-	Downvotes    int32
-	CommentCount int32
-	CreatedAt    pgtype.Timestamptz
-	Username     string
-	Domain       pgtype.Text
-	Origin       pgtype.Text
-}
-
-func (q *Queries) ListRecentStories(ctx context.Context, arg ListRecentStoriesParams) ([]ListRecentStoriesRow, error) {
-	rows, err := q.db.Query(ctx, listRecentStories, arg.HiddenTagIds, arg.StoryLimit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListRecentStoriesRow
-	for rows.Next() {
-		var i ListRecentStoriesRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Url,
-			&i.Title,
-			&i.Body,
-			&i.ShortCode,
-			&i.Upvotes,
-			&i.Downvotes,
-			&i.CommentCount,
-			&i.CreatedAt,
-			&i.Username,
-			&i.Domain,
-			&i.Origin,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listRecentStoriesByTag = `-- name: ListRecentStoriesByTag :many
-SELECT
-    s.id,
-    s.url,
-    s.title,
-    s.body,
-    s.short_code,
-    s.upvotes,
-    s.downvotes,
-    s.comment_count,
-    s.created_at,
-    s.deleted_at,
-    u.username,
-    d.domain,
-    o.origin
-FROM stories AS s
-         JOIN users AS u ON u.id = s.user_id
-         LEFT JOIN domains AS d ON d.id = s.domain_id
-         LEFT JOIN origins AS o ON o.id = s.origin_id
-         JOIN taggings AS tg ON tg.story_id = s.id
-WHERE tg.tag_id = $1
-ORDER BY s.created_at DESC
-LIMIT $2
-`
-
-type ListRecentStoriesByTagParams struct {
-	TagID      int64
-	StoryLimit int32
-}
-
-type ListRecentStoriesByTagRow struct {
+type ListStoriesRow struct {
 	ID           int64
 	Url          pgtype.Text
 	Title        string
@@ -466,94 +396,21 @@ type ListRecentStoriesByTagRow struct {
 	Origin       pgtype.Text
 }
 
-func (q *Queries) ListRecentStoriesByTag(ctx context.Context, arg ListRecentStoriesByTagParams) ([]ListRecentStoriesByTagRow, error) {
-	rows, err := q.db.Query(ctx, listRecentStoriesByTag, arg.TagID, arg.StoryLimit)
+func (q *Queries) ListStories(ctx context.Context, arg ListStoriesParams) ([]ListStoriesRow, error) {
+	rows, err := q.db.Query(ctx, listStories,
+		arg.TagID,
+		arg.Username,
+		arg.HideDeleted,
+		arg.HiddenTagIds,
+		arg.StoryLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListRecentStoriesByTagRow
+	var items []ListStoriesRow
 	for rows.Next() {
-		var i ListRecentStoriesByTagRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Url,
-			&i.Title,
-			&i.Body,
-			&i.ShortCode,
-			&i.Upvotes,
-			&i.Downvotes,
-			&i.CommentCount,
-			&i.CreatedAt,
-			&i.DeletedAt,
-			&i.Username,
-			&i.Domain,
-			&i.Origin,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listStoriesByUsername = `-- name: ListStoriesByUsername :many
-SELECT
-    s.id,
-    s.url,
-    s.title,
-    s.body,
-    s.short_code,
-    s.upvotes,
-    s.downvotes,
-    s.comment_count,
-    s.created_at,
-    s.deleted_at,
-    u.username,
-    d.domain,
-    o.origin
-FROM stories AS s
-JOIN users AS u ON u.id = s.user_id
-LEFT JOIN domains AS d ON d.id = s.domain_id
-LEFT JOIN origins AS o ON o.id = s.origin_id
-WHERE lower(u.username) = lower($1)
-ORDER BY s.created_at DESC
-LIMIT $2
-`
-
-type ListStoriesByUsernameParams struct {
-	Username   string
-	StoryLimit int32
-}
-
-type ListStoriesByUsernameRow struct {
-	ID           int64
-	Url          pgtype.Text
-	Title        string
-	Body         pgtype.Text
-	ShortCode    string
-	Upvotes      int32
-	Downvotes    int32
-	CommentCount int32
-	CreatedAt    pgtype.Timestamptz
-	DeletedAt    pgtype.Timestamptz
-	Username     string
-	Domain       pgtype.Text
-	Origin       pgtype.Text
-}
-
-func (q *Queries) ListStoriesByUsername(ctx context.Context, arg ListStoriesByUsernameParams) ([]ListStoriesByUsernameRow, error) {
-	rows, err := q.db.Query(ctx, listStoriesByUsername, arg.Username, arg.StoryLimit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListStoriesByUsernameRow
-	for rows.Next() {
-		var i ListStoriesByUsernameRow
+		var i ListStoriesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Url,

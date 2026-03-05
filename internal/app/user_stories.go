@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"crow.watch/internal/auth"
 	"crow.watch/internal/store"
@@ -38,8 +39,8 @@ func (a *App) userStoriesPage(w http.ResponseWriter, r *http.Request) {
 		PagePath:        fmt.Sprintf("/u/%s/stories/page", username),
 	}
 
-	stories, err := a.Queries.ListStoriesByUsername(r.Context(), store.ListStoriesByUsernameParams{
-		Username:   username,
+	stories, err := a.Queries.ListStories(r.Context(), store.ListStoriesParams{
+		Username:   pgtype.Text{String: username, Valid: true},
 		StoryLimit: 500,
 	})
 	if err != nil {
@@ -49,7 +50,7 @@ func (a *App) userStoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	// Build story list with tags
 	type userStory struct {
-		story store.ListStoriesByUsernameRow
+		story store.ListStoriesRow
 		tags  []StoryTag
 	}
 	var all []userStory
