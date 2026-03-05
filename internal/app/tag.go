@@ -4,13 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"crow.watch/internal/auth"
-	"crow.watch/internal/rank"
 	"crow.watch/internal/store"
 )
 
@@ -42,174 +39,16 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 		PagePath:       fmt.Sprintf("/t/%s/page", tag.Tag),
 	}
 
-	stories, err := a.Queries.ListStories(r.Context(), store.ListStoriesParams{
+	stories, hasMore, err := a.loadStoryList(r, data.BaseData, page, store.ListStoriesParams{
 		TagID:      pgtype.Int8{Int64: tag.ID, Valid: true},
 		StoryLimit: 500,
-	})
+	}, storyListOpts{rankByHotness: true, filterNegScore: true, filterHidden: true})
 	if err != nil {
-		a.serverError(w, r, "list stories by tag", err)
+		a.serverError(w, r, "load stories", err)
 		return
 	}
 
-	// Collect story IDs for batch queries
-	storyIDs := make([]int64, len(stories))
-	for i, s := range stories {
-		storyIDs[i] = s.ID
-	}
-
-	// Batch-fetch user votes, flags, and hidden stories if logged in
-	votedMap := make(map[int64]bool)
-	flaggedMap := make(map[int64]bool)
-	hiddenMap := make(map[int64]bool)
-	if current, ok := auth.UserFromContext(r.Context()); ok {
-		if len(storyIDs) > 0 {
-			votedIDs, err := a.Queries.GetUserVotes(r.Context(), store.GetUserVotesParams{
-				UserID:   current.User.ID,
-				StoryIds: storyIDs,
-			})
-			if err != nil {
-				a.serverError(w, r, "get user votes", err)
-				return
-			}
-			for _, id := range votedIDs {
-				votedMap[id] = true
-			}
-			flaggedIDs, err := a.Queries.GetUserStoryFlags(r.Context(), store.GetUserStoryFlagsParams{
-				UserID:   current.User.ID,
-				StoryIds: storyIDs,
-			})
-			if err != nil {
-				a.serverError(w, r, "get user story flags", err)
-				return
-			}
-			for _, id := range flaggedIDs {
-				flaggedMap[id] = true
-			}
-			hiddenIDs, err := a.Queries.GetUserHiddenStories(r.Context(), store.GetUserHiddenStoriesParams{
-				UserID:   current.User.ID,
-				StoryIds: storyIDs,
-			})
-			if err != nil {
-				a.serverError(w, r, "get user hidden stories", err)
-				return
-			}
-			for _, id := range hiddenIDs {
-				hiddenMap[id] = true
-			}
-		}
-	}
-
-	// Build rank inputs
-	inputs := make([]rank.StoryInput, 0, len(stories))
-	storyMeta := make(map[int64]storyDisplayInfo, len(stories))
-	for _, s := range stories {
-		tagRows, err := a.Queries.GetStoryTags(r.Context(), s.ID)
-		if err != nil {
-			a.Log.Error("get story tags", "error", err, "story_id", s.ID)
-			continue
-		}
-		var tags []rank.TagInput
-		var displayTags []StoryTag
-		for _, t := range tagRows {
-			tags = append(tags, rank.TagInput{HotnessMod: t.HotnessMod})
-			displayTags = append(displayTags, StoryTag{Tag: t.Tag, IsMedia: t.IsMedia})
-		}
-		upvotes := int(s.Upvotes)
-		downvotes := int(s.Downvotes)
-		inputs = append(inputs, rank.StoryInput{
-			ID:            s.ID,
-			CreatedAt:     s.CreatedAt.Time,
-			Tags:          tags,
-			StoryScore:    upvotes - downvotes,
-			CommentsCount: int(s.CommentCount),
-		})
-		domain := s.Domain.String
-		if s.Origin.Valid {
-			domain = s.Origin.String
-		}
-		var deletedAt *time.Time
-		if s.DeletedAt.Valid {
-			t := s.DeletedAt.Time
-			deletedAt = &t
-		}
-		storyMeta[s.ID] = storyDisplayInfo{
-			ShortCode:    s.ShortCode,
-			URL:          s.Url.String,
-			Title:        s.Title,
-			Domain:       domain,
-			Username:     s.Username,
-			Tags:         displayTags,
-			Upvotes:      upvotes,
-			Downvotes:    downvotes,
-			CommentCount: int(s.CommentCount),
-			HasUpvoted:   votedMap[s.ID],
-			HasFlagged:   flaggedMap[s.ID],
-			HasHidden:    hiddenMap[s.ID],
-			IsText:       s.Body.Valid,
-			CreatedAt:    s.CreatedAt.Time,
-			DeletedAt:    deletedAt,
-		}
-	}
-
-	ranked := rank.SortStories(inputs, rank.DefaultHotnessWindowSeconds)
-
-	// Filter out negative-score stories and user-hidden stories
-	var visible []rank.ScoredStory
-	for _, s := range ranked {
-		meta := storyMeta[s.ID]
-		if meta.Upvotes-meta.Downvotes < 0 {
-			continue
-		}
-		if hiddenMap[s.ID] {
-			continue
-		}
-		visible = append(visible, s)
-	}
-
-	start := (page - 1) * storiesPerPage
-	if start > len(visible) {
-		start = len(visible)
-	}
-	end := start + storiesPerPage
-	if end > len(visible) {
-		end = len(visible)
-	}
-	data.HasMore = end < len(visible)
-
-	isLoggedIn := data.BaseData.IsLoggedIn
-	tagIsModerator := data.BaseData.IsModerator
-	for _, s := range visible[start:end] {
-		meta := storyMeta[s.ID]
-		title := meta.Title
-		url := meta.URL
-		domain := meta.Domain
-		if meta.DeletedAt != nil {
-			title = "[deleted by moderator]"
-			url = ""
-			domain = ""
-		}
-		data.Stories = append(data.Stories, StoryItem{
-			ID:           s.ID,
-			ShortCode:    meta.ShortCode,
-			URL:          url,
-			Title:        title,
-			Domain:       domain,
-			Username:     meta.Username,
-			Tags:         meta.Tags,
-			Upvotes:      meta.Upvotes,
-			Downvotes:    meta.Downvotes,
-			CommentCount: meta.CommentCount,
-			HasUpvoted:   meta.HasUpvoted,
-			HasFlagged:   meta.HasFlagged,
-			HasHidden:    meta.HasHidden,
-			FlagReasons:  storyFlagReasons,
-			IsText:       meta.IsText,
-			IsLoggedIn:   isLoggedIn,
-			IsModerator:  tagIsModerator,
-			CreatedAt:    meta.CreatedAt,
-			DeletedAt:    meta.DeletedAt,
-		})
-	}
-
+	data.Stories = stories
+	data.HasMore = hasMore
 	a.render(w, "tag", data)
 }
