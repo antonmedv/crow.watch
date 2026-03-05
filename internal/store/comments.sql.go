@@ -84,44 +84,6 @@ func (q *Queries) GetCommentByID(ctx context.Context, id int64) (Comment, error)
 	return i, err
 }
 
-const getCommentRankingDataByStories = `-- name: GetCommentRankingDataByStories :many
-SELECT
-    c.story_id,
-    count(*)::int AS total,
-    count(*) FILTER (WHERE c.user_id = s.user_id)::int AS by_submitter
-FROM comments c
-JOIN stories s ON s.id = c.story_id
-WHERE c.story_id = ANY($1::bigint[])
-  AND c.deleted_at IS NULL
-GROUP BY c.story_id
-`
-
-type GetCommentRankingDataByStoriesRow struct {
-	StoryID     int64
-	Total       int32
-	BySubmitter int32
-}
-
-func (q *Queries) GetCommentRankingDataByStories(ctx context.Context, storyIds []int64) ([]GetCommentRankingDataByStoriesRow, error) {
-	rows, err := q.db.Query(ctx, getCommentRankingDataByStories, storyIds)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetCommentRankingDataByStoriesRow
-	for rows.Next() {
-		var i GetCommentRankingDataByStoriesRow
-		if err := rows.Scan(&i.StoryID, &i.Total, &i.BySubmitter); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const incrementStoryCommentCount = `-- name: IncrementStoryCommentCount :exec
 UPDATE stories SET comment_count = comment_count + 1 WHERE id = $1
 `

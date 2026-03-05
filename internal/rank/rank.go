@@ -25,28 +25,22 @@ type TagInput struct {
 	HotnessMod float64
 }
 
-type CommentInput struct {
-	Score       int
-	IsSubmitter bool
-}
-
 type StoryInput struct {
-	ID         int64
-	CreatedAt  time.Time
-	Tags       []TagInput
-	StoryScore int
-	Comments   []CommentInput
+	ID            int64
+	CreatedAt     time.Time
+	Tags          []TagInput
+	StoryScore    int
+	CommentsCount int
 }
 
 type ScoredStory struct {
 	StoryInput
-	Hotness       float64
-	Base          float64
-	Order         float64
-	Sign          int
-	Age           float64
-	CommentPoints float64
-	Cpoints       float64
+	Hotness float64
+	Base    float64
+	Order   float64
+	Sign    int
+	Age     float64
+	Cpoints float64
 }
 
 // ComputeBase calculates the base penalty from tags.
@@ -61,20 +55,12 @@ func ComputeBase(tags []TagInput) float64 {
 
 // ComputeCommentPoints calculates the comment contribution.
 // If base < 0 (heavy penalty), comment points are 0.
-// Raw comment points: each comment is 1 + (bonus 0.25 if submitter).
 // Final cpoints is clamped to storyScore.
-func ComputeCommentPoints(base float64, storyScore int, comments []CommentInput) (cpoints, rawCommentPoints float64) {
+func ComputeCommentPoints(base float64, storyScore, commentsCount int) float64 {
 	if base < 0 {
-		return 0, 0
+		return 0
 	}
-	for _, c := range comments {
-		rawCommentPoints += 1.0
-		if c.IsSubmitter {
-			rawCommentPoints += 0.25
-		}
-	}
-	cpoints = math.Min(rawCommentPoints, float64(storyScore))
-	return cpoints, rawCommentPoints
+	return math.Min(float64(commentsCount), float64(storyScore))
 }
 
 // ComputeOrder computes log10(max(abs(storyScore + cpoints), 1)).
@@ -110,26 +96,25 @@ func ComputeAge(createdAt time.Time, windowSeconds float64) float64 {
 // Lower (more negative) hotness values rank higher.
 func ComputeHotness(story StoryInput, windowSeconds float64) ScoredStory {
 	base := ComputeBase(story.Tags)
-	cpoints, rawCommentPoints := ComputeCommentPoints(base, story.StoryScore, story.Comments)
+	cpoints := ComputeCommentPoints(base, story.StoryScore, story.CommentsCount)
 	order := ComputeOrder(story.StoryScore, cpoints)
 	sign := ComputeSign(story.StoryScore)
 	age := ComputeAge(story.CreatedAt, windowSeconds)
 	hotness := -1 * (base + order*float64(sign) + age)
 
 	return ScoredStory{
-		StoryInput:    story,
-		Hotness:       hotness,
-		Base:          base,
-		Order:         order,
-		Sign:          sign,
-		Age:           age,
-		CommentPoints: rawCommentPoints,
-		Cpoints:       cpoints,
+		StoryInput: story,
+		Hotness:    hotness,
+		Base:       base,
+		Order:      order,
+		Sign:       sign,
+		Age:        age,
+		Cpoints:    cpoints,
 	}
 }
 
-// RankStories computes hotness for each story and returns them sorted (hottest first = most negative hotness).
-func RankStories(stories []StoryInput, windowSeconds float64) []ScoredStory {
+// SortStories computes hotness for each story and returns them sorted (hottest first = most negative hotness).
+func SortStories(stories []StoryInput, windowSeconds float64) []ScoredStory {
 	scored := make([]ScoredStory, len(stories))
 	for i, s := range stories {
 		scored[i] = ComputeHotness(s, windowSeconds)

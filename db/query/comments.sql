@@ -41,13 +41,3 @@ UPDATE stories SET comment_count = comment_count + 1 WHERE id = @id;
 -- name: DecrementStoryCommentCount :exec
 UPDATE stories SET comment_count = comment_count - 1 WHERE id = @id AND comment_count > 0;
 
--- name: GetCommentRankingDataByStories :many
-SELECT
-    c.story_id,
-    count(*)::int AS total,
-    count(*) FILTER (WHERE c.user_id = s.user_id)::int AS by_submitter
-FROM comments c
-JOIN stories s ON s.id = c.story_id
-WHERE c.story_id = ANY(@story_ids::bigint[])
-  AND c.deleted_at IS NULL
-GROUP BY c.story_id;

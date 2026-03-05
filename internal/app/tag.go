@@ -57,19 +57,6 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 		storyIDs[i] = s.ID
 	}
 
-	// Batch-fetch comment ranking data
-	commentDataMap := make(map[int64]store.GetCommentRankingDataByStoriesRow)
-	if len(storyIDs) > 0 {
-		commentData, err := a.Queries.GetCommentRankingDataByStories(r.Context(), storyIDs)
-		if err != nil {
-			a.serverError(w, r, "get comment ranking data", err)
-			return
-		}
-		for _, cd := range commentData {
-			commentDataMap[cd.StoryID] = cd
-		}
-	}
-
 	// Batch-fetch user votes, flags, and hidden stories if logged in
 	votedMap := make(map[int64]bool)
 	flaggedMap := make(map[int64]bool)
@@ -130,11 +117,11 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 		upvotes := int(s.Upvotes)
 		downvotes := int(s.Downvotes)
 		inputs = append(inputs, rank.StoryInput{
-			ID:         s.ID,
-			CreatedAt:  s.CreatedAt.Time,
-			Tags:       tags,
-			StoryScore: upvotes - downvotes,
-			Comments:   buildCommentInputs(commentDataMap[s.ID]),
+			ID:            s.ID,
+			CreatedAt:     s.CreatedAt.Time,
+			Tags:          tags,
+			StoryScore:    upvotes - downvotes,
+			CommentsCount: int(s.CommentCount),
 		})
 		domain := s.Domain.String
 		if s.Origin.Valid {
@@ -164,7 +151,7 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	ranked := rank.RankStories(inputs, rank.DefaultHotnessWindowSeconds)
+	ranked := rank.SortStories(inputs, rank.DefaultHotnessWindowSeconds)
 
 	// Filter out negative-score stories and user-hidden stories
 	var visible []rank.ScoredStory

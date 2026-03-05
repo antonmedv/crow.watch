@@ -80,27 +80,21 @@ func TestComputeBase(t *testing.T) {
 
 func TestComputeCommentPoints(t *testing.T) {
 	tests := []struct {
-		name        string
-		base        float64
-		storyScore  int
-		comments    []CommentInput
-		wantCpoints float64
-		wantRaw     float64
+		name         string
+		base         float64
+		storyScore   int
+		commentCount int
+		wantCpoints  float64
 	}{
-		{"no comments", 0, 5, nil, 0, 0},
-		{"base < 0 returns 0", -1, 5, []CommentInput{{Score: 1}}, 0, 0},
-		{"single comment", 0, 5, []CommentInput{{Score: 1, IsSubmitter: false}}, 1, 1},
-		{"submitter bonus", 0, 5, []CommentInput{{Score: 1, IsSubmitter: true}}, 1.25, 1.25},
-		{"clamped to story_score", 0, 2, []CommentInput{{}, {}, {}, {}, {}}, 2, 5},
-		{"many comments with submitter", 0, 10, []CommentInput{
-			{IsSubmitter: true}, {}, {IsSubmitter: true}, {},
-		}, 4.5, 4.5},
+		{"no comments", 0, 5, 0, 0},
+		{"base < 0 returns 0", -1, 5, 1, 0},
+		{"single comment", 0, 5, 1, 1},
+		{"clamped to story_score", 0, 2, 5, 2},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cpoints, raw := ComputeCommentPoints(tt.base, tt.storyScore, tt.comments)
+			cpoints := ComputeCommentPoints(tt.base, tt.storyScore, tt.commentCount)
 			assert.InDelta(t, tt.wantCpoints, cpoints, 1e-9, "cpoints")
-			assert.InDelta(t, tt.wantRaw, raw, 1e-9, "raw")
 		})
 	}
 }
@@ -245,27 +239,6 @@ func TestIncreasingScoreNonDecreasingOrder(t *testing.T) {
 	}
 }
 
-func TestNegativeBaseZerosComments(t *testing.T) {
-	comments := []CommentInput{{Score: 5}, {Score: 10, IsSubmitter: true}}
-	cpoints, raw := ComputeCommentPoints(-1.0, 100, comments)
-	assert.Equal(t, 0.0, cpoints)
-	assert.Equal(t, 0.0, raw)
-}
-
-// --- C) Regression tests ---
-
-type regressionStory struct {
-	ID         int64     `json:"id"`
-	CreatedAt  time.Time `json:"created_at"`
-	Tags       []float64 `json:"tags"`
-	StoryScore int       `json:"story_score"`
-}
-
-type regressionCase struct {
-	Stories     []regressionStory `json:"stories"`
-	ExpectedIDs []int64           `json:"expected_ids"`
-}
-
 func TestRegressionRanking(t *testing.T) {
 	now := time.Now()
 	window := float64(DefaultHotnessWindowSeconds)
@@ -284,7 +257,7 @@ func TestRegressionRanking(t *testing.T) {
 		{ID: 10, CreatedAt: now.Add(-12 * time.Hour), StoryScore: 30},                                       // 12h old, decent score
 	}
 
-	scored := RankStories(stories, window)
+	scored := SortStories(stories, window)
 
 	require.Len(t, scored, 10)
 
@@ -303,35 +276,6 @@ func TestRegressionRanking(t *testing.T) {
 	}
 }
 
-func TestControversialStoryClampedComments(t *testing.T) {
-	now := time.Now()
-	window := float64(DefaultHotnessWindowSeconds)
-
-	// Low score story with tons of comments — cpoints should be clamped to storyScore
-	manyComments := make([]CommentInput, 100)
-	for i := range manyComments {
-		manyComments[i] = CommentInput{Score: 1}
-	}
-
-	story := StoryInput{
-		ID:         1,
-		CreatedAt:  now,
-		StoryScore: 3,
-		Comments:   manyComments,
-	}
-
-	scored := RankStories([]StoryInput{story}, window)
-	require.Len(t, scored, 1)
-
-	s := scored[0]
-	assert.InDelta(t, 3.0, s.Cpoints, 1e-9, "cpoints should be clamped to storyScore")
-	assert.InDelta(t, 100.0, s.CommentPoints, 1e-9, "raw comment points should be 100")
-
-	// order should use storyScore + clamped cpoints = 3 + 3 = 6
-	expectedOrder := math.Log10(6)
-	assert.InDelta(t, expectedOrder, s.Order, 1e-9)
-}
-
 func TestRankStoriesStableOrder(t *testing.T) {
 	now := time.Now()
 	window := float64(DefaultHotnessWindowSeconds)
@@ -342,7 +286,7 @@ func TestRankStoriesStableOrder(t *testing.T) {
 		{ID: 2, CreatedAt: now, StoryScore: 5},
 	}
 
-	scored := RankStories(stories, window)
+	scored := SortStories(stories, window)
 	require.Len(t, scored, 2)
 	assert.InDelta(t, scored[0].Hotness, scored[1].Hotness, 1e-9)
 }
@@ -358,7 +302,7 @@ func TestRankStoriesSnapshot(t *testing.T) {
 		{ID: 3, CreatedAt: fixedTime.Add(-24 * time.Hour), StoryScore: 5},
 	}
 
-	scored := RankStories(stories, window)
+	scored := SortStories(stories, window)
 	require.Len(t, scored, 3)
 
 	// Verify each story's components are self-consistent
