@@ -176,9 +176,17 @@
         </nav>
         <main>{{ block "content" . }}{{ end }}</main>
         <footer class="site-footer">
-          <svg class="site-footer__icon" width="20" height="20">
-            <use href="#icon-crow"></use>
-          </svg>
+          {{ if .IsModerator }}
+            <a href="/mod/stats" aria-label="Site stats">
+              <svg class="site-footer__icon" width="20" height="20">
+                <use href="#icon-crow"></use>
+              </svg>
+            </a>
+          {{ else }}
+            <svg class="site-footer__icon" width="20" height="20">
+              <use href="#icon-crow"></use>
+            </svg>
+          {{ end }}
           <div class="site-footer__links">
             <a href="/about">About</a>
             <a href="/tags">Tags</a>

@@ -1,0 +1,107 @@
+{{ define "title" }}Site Stats | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .stats-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+    }
+
+    .stats-card h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 0 0 0.75rem;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.35rem 0;
+      font-size: 14px;
+    }
+
+    .stats-row + .stats-row {
+      border-top: 1px solid var(--border);
+    }
+
+    .stats-label {
+      color: var(--text-muted);
+    }
+
+    .stats-value {
+      font-weight: 600;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <h1 class="page-title">Site Stats</h1>
+  <div class="stats-grid">
+    <div class="stats-card">
+      <h2>Users</h2>
+      <div class="stats-row">
+        <span class="stats-label">Today</span>
+        <span class="stats-value">{{ .Stats.UsersToday }}</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">This week</span>
+        <span class="stats-value">{{ .Stats.UsersThisWeek }}</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">Total</span>
+        <span class="stats-value">{{ .Stats.TotalUsers }}</span>
+      </div>
+    </div>
+    <div class="stats-card">
+      <h2>Active Users</h2>
+      <div class="stats-row">
+        <span class="stats-label">Today</span>
+        <span class="stats-value">{{ .Stats.ActiveUsersToday }}</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">This week</span>
+        <span class="stats-value">{{ .Stats.ActiveUsersThisWeek }}</span>
+      </div>
+    </div>
+    <div class="stats-card">
+      <h2>Stories</h2>
+      <div class="stats-row">
+        <span class="stats-label">Today</span>
+        <span class="stats-value">{{ .Stats.StoriesToday }}</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">This week</span>
+        <span class="stats-value">{{ .Stats.StoriesThisWeek }}</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">Total</span>
+        <span class="stats-value">{{ .Stats.TotalStories }}</span>
+      </div>
+    </div>
+    <div class="stats-card">
+      <h2>Comments</h2>
+      <div class="stats-row">
+        <span class="stats-label">Today</span>
+        <span class="stats-value">{{ .Stats.CommentsToday }}</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">This week</span>
+        <span class="stats-value">{{ .Stats.CommentsThisWeek }}</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">Total</span>
+        <span class="stats-value">{{ .Stats.TotalComments }}</span>
+      </div>
+    </div>
+  </div>
+{{ end }}

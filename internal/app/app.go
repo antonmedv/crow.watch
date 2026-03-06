@@ -340,6 +340,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /x/{code}/edit", a.editStoryPage)
 	mux.HandleFunc("POST /x/{code}/edit", a.editStory)
 	mux.HandleFunc("POST /x/{code}/delete", a.deleteStory)
+	mux.HandleFunc("GET /mod/stats", a.modStatsPage)
 	mux.HandleFunc("GET /mod/log", a.moderationLogPage)
 	mux.HandleFunc("GET /mod/log/page/{page}", a.moderationLogPage)
 	mux.HandleFunc("GET /api/tags", a.apiListTags)
