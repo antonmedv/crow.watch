@@ -433,6 +433,68 @@
         <hr
           style="margin: 24px 0; border: none; border-top: 1px solid var(--border);"
         />
+        {{ if .DuplicateOfShortCode }}
+          <h2 style="font-size: 18px; margin-bottom: 12px;">
+            Duplicate Status
+          </h2>
+          <p style="margin-bottom: 12px;">
+            This story is marked as a duplicate of
+            <a href="/x/{{ .DuplicateOfShortCode }}/">{{ .DuplicateOfTitle }}</a
+            >.
+          </p>
+          <form method="post" action="/x/{{ .EditCode }}/unmark-duplicate">
+            <div class="field">
+              <label for="undup-reason">Reason for unmarking</label>
+              <textarea
+                id="undup-reason"
+                name="reason"
+                class="field-input"
+                rows="2"
+                maxlength="500"
+                placeholder="Why is this not a duplicate?"
+              ></textarea>
+            </div>
+            <button class="btn" type="submit">Unmark as Duplicate</button>
+          </form>
+        {{ else }}
+          <h2 style="font-size: 18px; margin-bottom: 12px;">
+            Mark as Duplicate
+          </h2>
+          <form method="post" action="/x/{{ .EditCode }}/mark-duplicate">
+            <div class="field">
+              <label for="canonical-code">Original story short code</label>
+              <input
+                id="canonical-code"
+                name="canonical_code"
+                type="text"
+                class="field-input"
+                maxlength="6"
+                required
+                placeholder="e.g. abc123"
+                style="max-width: 200px;"
+              />
+              <p class="field-hint">
+                The 6-character code from the original story's URL
+                (/x/<strong>code</strong>/...)
+              </p>
+            </div>
+            <div class="field">
+              <label for="dup-reason">Reason</label>
+              <textarea
+                id="dup-reason"
+                name="reason"
+                class="field-input"
+                rows="2"
+                maxlength="500"
+                placeholder="Why is this a duplicate?"
+              ></textarea>
+            </div>
+            <button class="btn" type="submit">Mark as Duplicate</button>
+          </form>
+        {{ end }}
+        <hr
+          style="margin: 24px 0; border: none; border-top: 1px solid var(--border);"
+        />
         <h2 style="font-size: 18px; margin-bottom: 12px;">Delete Story</h2>
         <form method="post" action="/x/{{ .EditCode }}/delete">
           <div class="field">

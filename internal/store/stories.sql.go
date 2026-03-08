@@ -25,7 +25,7 @@ func (q *Queries) CountStories(ctx context.Context) (int64, error) {
 const createStory = `-- name: CreateStory :one
 INSERT INTO stories (user_id, domain_id, origin_id, url, normalized_url, title, body, short_code)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, user_id, domain_id, origin_id, url, normalized_url, title, body, short_code, created_at, updated_at, deleted_at
+RETURNING id, user_id, domain_id, origin_id, url, normalized_url, title, body, short_code, duplicate_of_id, created_at, updated_at, deleted_at
 `
 
 type CreateStoryParams struct {
@@ -49,6 +49,7 @@ type CreateStoryRow struct {
 	Title         string
 	Body          pgtype.Text
 	ShortCode     string
+	DuplicateOfID pgtype.Int8
 	CreatedAt     pgtype.Timestamptz
 	UpdatedAt     pgtype.Timestamptz
 	DeletedAt     pgtype.Timestamptz
@@ -76,6 +77,7 @@ func (q *Queries) CreateStory(ctx context.Context, arg CreateStoryParams) (Creat
 		&i.Title,
 		&i.Body,
 		&i.ShortCode,
+		&i.DuplicateOfID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -151,13 +153,17 @@ SELECT
     s.comment_count,
     s.created_at,
     s.deleted_at,
+    s.duplicate_of_id,
     u.username,
     d.domain,
-    o.origin
+    o.origin,
+    dup.short_code AS duplicate_of_short_code,
+    dup.title AS duplicate_of_title
 FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
+LEFT JOIN stories AS dup ON dup.id = s.duplicate_of_id
 WHERE ($1::bigint IS NULL OR s.id = $1)
   AND ($2::text IS NULL OR s.short_code = $2)
 `
@@ -168,20 +174,23 @@ type GetStoryParams struct {
 }
 
 type GetStoryRow struct {
-	ID           int64
-	UserID       int64
-	Url          pgtype.Text
-	Title        string
-	Body         pgtype.Text
-	ShortCode    string
-	Upvotes      int32
-	Downvotes    int32
-	CommentCount int32
-	CreatedAt    pgtype.Timestamptz
-	DeletedAt    pgtype.Timestamptz
-	Username     string
-	Domain       pgtype.Text
-	Origin       pgtype.Text
+	ID                   int64
+	UserID               int64
+	Url                  pgtype.Text
+	Title                string
+	Body                 pgtype.Text
+	ShortCode            string
+	Upvotes              int32
+	Downvotes            int32
+	CommentCount         int32
+	CreatedAt            pgtype.Timestamptz
+	DeletedAt            pgtype.Timestamptz
+	DuplicateOfID        pgtype.Int8
+	Username             string
+	Domain               pgtype.Text
+	Origin               pgtype.Text
+	DuplicateOfShortCode pgtype.Text
+	DuplicateOfTitle     pgtype.Text
 }
 
 func (q *Queries) GetStory(ctx context.Context, arg GetStoryParams) (GetStoryRow, error) {
@@ -199,9 +208,12 @@ func (q *Queries) GetStory(ctx context.Context, arg GetStoryParams) (GetStoryRow
 		&i.CommentCount,
 		&i.CreatedAt,
 		&i.DeletedAt,
+		&i.DuplicateOfID,
 		&i.Username,
 		&i.Domain,
 		&i.Origin,
+		&i.DuplicateOfShortCode,
+		&i.DuplicateOfTitle,
 	)
 	return i, err
 }
@@ -296,13 +308,17 @@ SELECT
     s.comment_count,
     s.created_at,
     s.deleted_at,
+    s.duplicate_of_id,
     u.username,
     d.domain,
-    o.origin
+    o.origin,
+    dup.short_code AS duplicate_of_short_code,
+    dup.title AS duplicate_of_title
 FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
+LEFT JOIN stories AS dup ON dup.id = s.duplicate_of_id
 LEFT JOIN taggings AS tg ON tg.story_id = s.id AND tg.tag_id = $1
 WHERE
     ($1::bigint IS NULL OR tg.tag_id IS NOT NULL)
@@ -325,19 +341,22 @@ type ListStoriesParams struct {
 }
 
 type ListStoriesRow struct {
-	ID           int64
-	Url          pgtype.Text
-	Title        string
-	Body         pgtype.Text
-	ShortCode    string
-	Upvotes      int32
-	Downvotes    int32
-	CommentCount int32
-	CreatedAt    pgtype.Timestamptz
-	DeletedAt    pgtype.Timestamptz
-	Username     string
-	Domain       pgtype.Text
-	Origin       pgtype.Text
+	ID                   int64
+	Url                  pgtype.Text
+	Title                string
+	Body                 pgtype.Text
+	ShortCode            string
+	Upvotes              int32
+	Downvotes            int32
+	CommentCount         int32
+	CreatedAt            pgtype.Timestamptz
+	DeletedAt            pgtype.Timestamptz
+	DuplicateOfID        pgtype.Int8
+	Username             string
+	Domain               pgtype.Text
+	Origin               pgtype.Text
+	DuplicateOfShortCode pgtype.Text
+	DuplicateOfTitle     pgtype.Text
 }
 
 func (q *Queries) ListStories(ctx context.Context, arg ListStoriesParams) ([]ListStoriesRow, error) {
@@ -366,9 +385,12 @@ func (q *Queries) ListStories(ctx context.Context, arg ListStoriesParams) ([]Lis
 			&i.CommentCount,
 			&i.CreatedAt,
 			&i.DeletedAt,
+			&i.DuplicateOfID,
 			&i.Username,
 			&i.Domain,
 			&i.Origin,
+			&i.DuplicateOfShortCode,
+			&i.DuplicateOfTitle,
 		); err != nil {
 			return nil, err
 		}
@@ -378,6 +400,20 @@ func (q *Queries) ListStories(ctx context.Context, arg ListStoriesParams) ([]Lis
 		return nil, err
 	}
 	return items, nil
+}
+
+const markStoryDuplicate = `-- name: MarkStoryDuplicate :exec
+UPDATE stories SET duplicate_of_id = $1, updated_at = now() WHERE id = $2
+`
+
+type MarkStoryDuplicateParams struct {
+	DuplicateOfID pgtype.Int8
+	ID            int64
+}
+
+func (q *Queries) MarkStoryDuplicate(ctx context.Context, arg MarkStoryDuplicateParams) error {
+	_, err := q.db.Exec(ctx, markStoryDuplicate, arg.DuplicateOfID, arg.ID)
+	return err
 }
 
 const recalculateStoryScores = `-- name: RecalculateStoryScores :execrows
@@ -427,6 +463,15 @@ UPDATE stories SET deleted_at = now(), updated_at = now() WHERE id = $1
 
 func (q *Queries) SoftDeleteStory(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, softDeleteStory, id)
+	return err
+}
+
+const unmarkStoryDuplicate = `-- name: UnmarkStoryDuplicate :exec
+UPDATE stories SET duplicate_of_id = NULL, updated_at = now() WHERE id = $1
+`
+
+func (q *Queries) UnmarkStoryDuplicate(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, unmarkStoryDuplicate, id)
 	return err
 }
 

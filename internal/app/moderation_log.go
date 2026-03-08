@@ -85,6 +85,10 @@ func formatActionDescription(action string) string {
 			descriptions = append(descriptions, "edited tags")
 		case "story.delete":
 			descriptions = append(descriptions, "deleted story")
+		case "story.mark_duplicate":
+			descriptions = append(descriptions, "marked as duplicate")
+		case "story.unmark_duplicate":
+			descriptions = append(descriptions, "unmarked as duplicate")
 		default:
 			descriptions = append(descriptions, strings.TrimSpace(p))
 		}

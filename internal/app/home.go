@@ -41,7 +41,7 @@ func (a *App) page(w http.ResponseWriter, r *http.Request) {
 		HideDeleted:  true,
 		HiddenTagIds: hiddenTagIDs,
 		StoryLimit:   500,
-	}, storyListOpts{rankByHotness: true, filterNegScore: true, filterHidden: true})
+	}, storyListOpts{rankByHotness: true, filterNegScore: true, filterHidden: true, filterDuplicates: true})
 	if err != nil {
 		a.serverError(w, r, "load stories", err)
 		return
@@ -75,7 +75,7 @@ func (a *App) newest(w http.ResponseWriter, r *http.Request) {
 		HideDeleted:  true,
 		HiddenTagIds: hiddenTagIDs,
 		StoryLimit:   500,
-	}, storyListOpts{filterHidden: true})
+	}, storyListOpts{filterHidden: true, filterDuplicates: true})
 	if err != nil {
 		a.serverError(w, r, "load stories", err)
 		return

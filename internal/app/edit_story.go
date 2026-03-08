@@ -66,15 +66,17 @@ func (a *App) editStoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData:  a.baseData(r),
-		Tab:       tab,
-		Title:     row.Title,
-		Body:      row.Body.String,
-		URL:       row.Url.String,
-		TagGroups: toTagGroups(allTags, current.User.IsModerator),
-		Selected:  selectedIDs,
-		EditMode:  true,
-		EditCode:  code,
+		BaseData:             a.baseData(r),
+		Tab:                  tab,
+		Title:                row.Title,
+		Body:                 row.Body.String,
+		URL:                  row.Url.String,
+		TagGroups:            toTagGroups(allTags, current.User.IsModerator),
+		Selected:             selectedIDs,
+		EditMode:             true,
+		EditCode:             code,
+		DuplicateOfShortCode: row.DuplicateOfShortCode.String,
+		DuplicateOfTitle:     row.DuplicateOfTitle.String,
 	})
 }
 

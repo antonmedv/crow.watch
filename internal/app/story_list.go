@@ -10,27 +10,30 @@ import (
 )
 
 type storyListOpts struct {
-	rankByHotness  bool
-	filterNegScore bool
-	filterHidden   bool
+	rankByHotness    bool
+	filterNegScore   bool
+	filterHidden     bool
+	filterDuplicates bool
 }
 
 type storyDisplayInfo struct {
-	ShortCode    string
-	URL          string
-	Title        string
-	Domain       string
-	Username     string
-	Tags         []StoryTag
-	Upvotes      int
-	Downvotes    int
-	CommentCount int
-	HasUpvoted   bool
-	HasFlagged   bool
-	HasHidden    bool
-	IsText       bool
-	CreatedAt    time.Time
-	DeletedAt    *time.Time
+	ShortCode            string
+	URL                  string
+	Title                string
+	Domain               string
+	Username             string
+	Tags                 []StoryTag
+	Upvotes              int
+	Downvotes            int
+	CommentCount         int
+	HasUpvoted           bool
+	HasFlagged           bool
+	HasHidden            bool
+	IsText               bool
+	CreatedAt            time.Time
+	DeletedAt            *time.Time
+	DuplicateOfShortCode string
+	DuplicateOfTitle     string
 }
 
 // loadStoryList fetches stories, applies ranking/filtering/pagination,
@@ -134,21 +137,23 @@ func (a *App) loadStoryList(r *http.Request, base BaseData, page int, params sto
 		}
 
 		meta[s.ID] = storyDisplayInfo{
-			ShortCode:    s.ShortCode,
-			URL:          s.Url.String,
-			Title:        s.Title,
-			Domain:       domain,
-			Username:     s.Username,
-			Tags:         displayTags,
-			Upvotes:      upvotes,
-			Downvotes:    downvotes,
-			CommentCount: int(s.CommentCount),
-			HasUpvoted:   votedMap[s.ID],
-			HasFlagged:   flaggedMap[s.ID],
-			HasHidden:    hiddenMap[s.ID],
-			IsText:       s.Body.Valid,
-			CreatedAt:    s.CreatedAt.Time,
-			DeletedAt:    deletedAt,
+			ShortCode:            s.ShortCode,
+			URL:                  s.Url.String,
+			Title:                s.Title,
+			Domain:               domain,
+			Username:             s.Username,
+			Tags:                 displayTags,
+			Upvotes:              upvotes,
+			Downvotes:            downvotes,
+			CommentCount:         int(s.CommentCount),
+			HasUpvoted:           votedMap[s.ID],
+			HasFlagged:           flaggedMap[s.ID],
+			HasHidden:            hiddenMap[s.ID],
+			IsText:               s.Body.Valid,
+			CreatedAt:            s.CreatedAt.Time,
+			DeletedAt:            deletedAt,
+			DuplicateOfShortCode: s.DuplicateOfShortCode.String,
+			DuplicateOfTitle:     s.DuplicateOfTitle.String,
 		}
 		orderedIDs = append(orderedIDs, s.ID)
 	}
@@ -170,6 +175,9 @@ func (a *App) loadStoryList(r *http.Request, base BaseData, page int, params sto
 			continue
 		}
 		if opts.filterHidden && hiddenMap[id] {
+			continue
+		}
+		if opts.filterDuplicates && m.DuplicateOfShortCode != "" {
 			continue
 		}
 		visible = append(visible, id)
@@ -199,25 +207,27 @@ func (a *App) loadStoryList(r *http.Request, base BaseData, page int, params sto
 			domain = ""
 		}
 		items = append(items, StoryItem{
-			ID:           id,
-			ShortCode:    m.ShortCode,
-			URL:          url,
-			Title:        title,
-			Domain:       domain,
-			Username:     m.Username,
-			Tags:         m.Tags,
-			Upvotes:      m.Upvotes,
-			Downvotes:    m.Downvotes,
-			CommentCount: m.CommentCount,
-			HasUpvoted:   m.HasUpvoted,
-			HasFlagged:   m.HasFlagged,
-			HasHidden:    m.HasHidden,
-			FlagReasons:  storyFlagReasons,
-			IsText:       m.IsText,
-			IsLoggedIn:   base.IsLoggedIn,
-			IsModerator:  base.IsModerator,
-			CreatedAt:    m.CreatedAt,
-			DeletedAt:    m.DeletedAt,
+			ID:                   id,
+			ShortCode:            m.ShortCode,
+			URL:                  url,
+			Title:                title,
+			Domain:               domain,
+			Username:             m.Username,
+			Tags:                 m.Tags,
+			Upvotes:              m.Upvotes,
+			Downvotes:            m.Downvotes,
+			CommentCount:         m.CommentCount,
+			HasUpvoted:           m.HasUpvoted,
+			HasFlagged:           m.HasFlagged,
+			HasHidden:            m.HasHidden,
+			FlagReasons:          storyFlagReasons,
+			IsText:               m.IsText,
+			IsLoggedIn:           base.IsLoggedIn,
+			IsModerator:          base.IsModerator,
+			CreatedAt:            m.CreatedAt,
+			DeletedAt:            m.DeletedAt,
+			DuplicateOfShortCode: m.DuplicateOfShortCode,
+			DuplicateOfTitle:     m.DuplicateOfTitle,
 		})
 	}
 

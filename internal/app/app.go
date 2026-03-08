@@ -63,26 +63,28 @@ type HomePageData struct {
 }
 
 type StoryItem struct {
-	ID           int64
-	ShortCode    string
-	URL          string
-	Title        string
-	Domain       string
-	Username     string
-	Tags         []StoryTag
-	Upvotes      int
-	Downvotes    int
-	CommentCount int
-	HasUpvoted   bool
-	HasFlagged   bool
-	HasHidden    bool
-	FlagReasons  []string
-	FlagCounts   []FlagCount
-	IsText       bool
-	IsLoggedIn   bool
-	IsModerator  bool
-	CreatedAt    time.Time
-	DeletedAt    *time.Time
+	ID                   int64
+	ShortCode            string
+	URL                  string
+	Title                string
+	Domain               string
+	Username             string
+	Tags                 []StoryTag
+	Upvotes              int
+	Downvotes            int
+	CommentCount         int
+	HasUpvoted           bool
+	HasFlagged           bool
+	HasHidden            bool
+	FlagReasons          []string
+	FlagCounts           []FlagCount
+	IsText               bool
+	IsLoggedIn           bool
+	IsModerator          bool
+	CreatedAt            time.Time
+	DeletedAt            *time.Time
+	DuplicateOfShortCode string
+	DuplicateOfTitle     string
 }
 
 type StoryTag struct {
@@ -109,18 +111,20 @@ type LoginPageData struct {
 
 type SubmitPageData struct {
 	BaseData
-	Tab          string
-	URL          string
-	Title        string
-	Body         string
-	TagGroups    []TagGroup
-	Selected     []int64
-	Errors       map[string]string
-	Error        string
-	DuplicateURL string
-	EditMode     bool
-	EditCode     string
-	Reason       string
+	Tab                  string
+	URL                  string
+	Title                string
+	Body                 string
+	TagGroups            []TagGroup
+	Selected             []int64
+	Errors               map[string]string
+	Error                string
+	DuplicateURL         string
+	EditMode             bool
+	EditCode             string
+	Reason               string
+	DuplicateOfShortCode string
+	DuplicateOfTitle     string
 }
 
 type TagGroup struct {
@@ -340,6 +344,8 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /x/{code}/edit", a.editStoryPage)
 	mux.HandleFunc("POST /x/{code}/edit", a.editStory)
 	mux.HandleFunc("POST /x/{code}/delete", a.deleteStory)
+	mux.HandleFunc("POST /x/{code}/mark-duplicate", a.markDuplicate)
+	mux.HandleFunc("POST /x/{code}/unmark-duplicate", a.unmarkDuplicate)
 	mux.HandleFunc("GET /mod/stats", a.modStatsPage)
 	mux.HandleFunc("GET /mod/log", a.moderationLogPage)
 	mux.HandleFunc("GET /mod/log/page/{page}", a.moderationLogPage)

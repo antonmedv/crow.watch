@@ -1,7 +1,7 @@
 -- name: CreateStory :one
 INSERT INTO stories (user_id, domain_id, origin_id, url, normalized_url, title, body, short_code)
 VALUES (@user_id, @domain_id, @origin_id, @url, @normalized_url, @title, @body, @short_code)
-RETURNING id, user_id, domain_id, origin_id, url, normalized_url, title, body, short_code, created_at, updated_at, deleted_at;
+RETURNING id, user_id, domain_id, origin_id, url, normalized_url, title, body, short_code, duplicate_of_id, created_at, updated_at, deleted_at;
 
 -- name: FindRecentByNormalizedURL :one
 SELECT id, url, title, short_code, created_at
@@ -28,13 +28,17 @@ SELECT
     s.comment_count,
     s.created_at,
     s.deleted_at,
+    s.duplicate_of_id,
     u.username,
     d.domain,
-    o.origin
+    o.origin,
+    dup.short_code AS duplicate_of_short_code,
+    dup.title AS duplicate_of_title
 FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
+LEFT JOIN stories AS dup ON dup.id = s.duplicate_of_id
 LEFT JOIN taggings AS tg ON tg.story_id = s.id AND tg.tag_id = sqlc.narg('tag_id')
 WHERE
     (sqlc.narg('tag_id')::bigint IS NULL OR tg.tag_id IS NOT NULL)
@@ -60,13 +64,17 @@ SELECT
     s.comment_count,
     s.created_at,
     s.deleted_at,
+    s.duplicate_of_id,
     u.username,
     d.domain,
-    o.origin
+    o.origin,
+    dup.short_code AS duplicate_of_short_code,
+    dup.title AS duplicate_of_title
 FROM stories AS s
 JOIN users AS u ON u.id = s.user_id
 LEFT JOIN domains AS d ON d.id = s.domain_id
 LEFT JOIN origins AS o ON o.id = s.origin_id
+LEFT JOIN stories AS dup ON dup.id = s.duplicate_of_id
 WHERE (sqlc.narg('id')::bigint IS NULL OR s.id = sqlc.narg('id'))
   AND (sqlc.narg('short_code')::text IS NULL OR s.short_code = sqlc.narg('short_code'));
 
@@ -115,6 +123,12 @@ DELETE FROM taggings WHERE story_id = @story_id;
 
 -- name: SoftDeleteStory :exec
 UPDATE stories SET deleted_at = now(), updated_at = now() WHERE id = @id;
+
+-- name: MarkStoryDuplicate :exec
+UPDATE stories SET duplicate_of_id = @duplicate_of_id, updated_at = now() WHERE id = @id;
+
+-- name: UnmarkStoryDuplicate :exec
+UPDATE stories SET duplicate_of_id = NULL, updated_at = now() WHERE id = @id;
 
 -- name: GetTagsByNames :many
 SELECT id, tag, description, category_id, privileged, is_media, active, hotness_mod, created_at, updated_at

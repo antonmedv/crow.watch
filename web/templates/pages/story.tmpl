@@ -6,6 +6,17 @@
       margin-block: 16px;
     }
 
+    .story-duplicate-notice {
+      padding: 8px 16px;
+      color: var(--text-muted);
+      font-size: 14px;
+      border-left: 3px solid var(--border);
+    }
+
+    .story-duplicate-notice a {
+      font-weight: 600;
+    }
+
     .story-body {
       margin-block: 16px;
       padding-inline: 16px;
@@ -250,6 +261,14 @@
     <div class="story-item">
       {{ template "story-item" .Story }}
     </div>
+    {{ if .Story.DuplicateOfShortCode }}
+      <div class="story-duplicate-notice">
+        This story has been marked as a duplicate of
+        <a href="/x/{{ .Story.DuplicateOfShortCode }}/"
+          >{{ .Story.DuplicateOfTitle }}</a
+        >.
+      </div>
+    {{ end }}
     {{ if and .Body (not .Story.DeletedAt) }}
       <div class="story-body markdown-body">{{ .Body }}</div>
     {{ end }}

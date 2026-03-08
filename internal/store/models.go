@@ -139,6 +139,7 @@ type Story struct {
 	Upvotes       int32
 	Downvotes     int32
 	CommentCount  int32
+	DuplicateOfID pgtype.Int8
 	CreatedAt     pgtype.Timestamptz
 	UpdatedAt     pgtype.Timestamptz
 	DeletedAt     pgtype.Timestamptz

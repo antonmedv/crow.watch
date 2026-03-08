@@ -103,6 +103,7 @@ CREATE TABLE stories (
     upvotes INT NOT NULL DEFAULT 0,
     downvotes INT NOT NULL DEFAULT 0,
     comment_count INT NOT NULL DEFAULT 0,
+    duplicate_of_id BIGINT REFERENCES stories(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     deleted_at TIMESTAMPTZ,
@@ -117,6 +118,7 @@ CREATE TABLE stories (
 CREATE INDEX stories_normalized_url_idx ON stories (normalized_url);
 CREATE INDEX stories_created_at_idx ON stories (created_at);
 CREATE INDEX stories_user_id_idx ON stories (user_id);
+CREATE INDEX stories_duplicate_of_id_idx ON stories (duplicate_of_id) WHERE duplicate_of_id IS NOT NULL;
 
 CREATE TABLE taggings (
     story_id BIGINT NOT NULL REFERENCES stories(id) ON DELETE CASCADE,
