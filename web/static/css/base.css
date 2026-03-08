@@ -99,6 +99,20 @@
   --story-title-weight: 400;
 }
 
+[data-theme="purple"] {
+  --bg: #1a1025;
+  --text: #e0d6eb;
+  --text-muted: #9484a8;
+  --link: #c4a1f5;
+  --link-visited: #a07acc;
+  --border: #2e2240;
+  --primary: #a855f7;
+  --tag-bg: #251838;
+  --tag-text: #b49ccc;
+  --tag-media-bg: #2d1540;
+  --tag-media-text: #d8a0f0;
+}
+
 *,
 *::before,
 *::after {
