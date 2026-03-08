@@ -273,7 +273,7 @@
       <div class="story-duplicate-notice">
         Duplicates:
         {{ range $i, $d := .Duplicates }}
-          {{- if $i }}, {{ end -}}
+          {{- if $i }},{{ end -}}
           <a href="/x/{{ $d.ShortCode }}/">{{ $d.Title }}</a>
         {{- end }}
       </div>
@@ -284,7 +284,7 @@
   </section>
 
   <section class="comments-section">
-    {{ if and .IsLoggedIn (not .Story.DeletedAt) }}
+    {{ if and .Base.IsLoggedIn (not .Story.DeletedAt) }}
       <form
         method="POST"
         action="/x/{{ .Story.ShortCode }}/comments"

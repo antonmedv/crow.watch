@@ -22,7 +22,7 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 func (a *App) page(w http.ResponseWriter, r *http.Request) {
 	page := parsePage(r)
 	data := HomePageData{
-		BaseData:    a.baseData(r),
+		Base:        a.baseData(r),
 		CurrentPage: page,
 		PagePath:    "/page",
 	}
@@ -37,7 +37,7 @@ func (a *App) page(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	stories, hasMore, err := a.loadStoryList(r, data.BaseData, page, store.ListStoriesParams{
+	stories, hasMore, err := a.loadStoryList(r, data.Base, page, store.ListStoriesParams{
 		HideDeleted:  true,
 		HiddenTagIds: hiddenTagIDs,
 		StoryLimit:   500,
@@ -56,7 +56,7 @@ func (a *App) page(w http.ResponseWriter, r *http.Request) {
 func (a *App) newest(w http.ResponseWriter, r *http.Request) {
 	page := parsePage(r)
 	data := HomePageData{
-		BaseData:    a.baseData(r),
+		Base:        a.baseData(r),
 		CurrentPage: page,
 		PagePath:    "/newest/page",
 	}
@@ -71,7 +71,7 @@ func (a *App) newest(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	stories, hasMore, err := a.loadStoryList(r, data.BaseData, page, store.ListStoriesParams{
+	stories, hasMore, err := a.loadStoryList(r, data.Base, page, store.ListStoriesParams{
 		HideDeleted:  true,
 		HiddenTagIds: hiddenTagIDs,
 		StoryLimit:   500,

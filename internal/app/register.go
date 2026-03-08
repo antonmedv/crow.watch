@@ -59,8 +59,8 @@ func (a *App) registerPage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			a.render(w, "register", RegisterPageData{
-				BaseData: a.baseData(r),
-				Errors:   map[string]string{"token": "This invitation link is invalid or has expired."},
+				Base:   a.baseData(r),
+				Errors: map[string]string{"token": "This invitation link is invalid or has expired."},
 			})
 			return
 		}
@@ -74,7 +74,7 @@ func (a *App) registerPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "register", RegisterPageData{
-		BaseData:    a.baseData(r),
+		Base:        a.baseData(r),
 		FormAction:  "/register/" + token,
 		InviterName: invite.InviterName,
 		Email:       email,
@@ -90,8 +90,8 @@ func (a *App) register(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		a.render(w, "register", RegisterPageData{
-			BaseData: a.baseData(r),
-			Errors:   map[string]string{"form": "Invalid request."},
+			Base:   a.baseData(r),
+			Errors: map[string]string{"form": "Invalid request."},
 		})
 		return
 	}
@@ -107,8 +107,8 @@ func (a *App) register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			a.render(w, "register", RegisterPageData{
-				BaseData: a.baseData(r),
-				Errors:   map[string]string{"token": "This invitation link is invalid or has expired."},
+				Base:   a.baseData(r),
+				Errors: map[string]string{"token": "This invitation link is invalid or has expired."},
 			})
 			return
 		}
@@ -118,7 +118,7 @@ func (a *App) register(w http.ResponseWriter, r *http.Request) {
 
 	renderErr := func(errs map[string]string) {
 		a.render(w, "register", RegisterPageData{
-			BaseData:    a.baseData(r),
+			Base:        a.baseData(r),
 			FormAction:  "/register/" + token,
 			InviterName: invite.InviterName,
 			Email:       email,
@@ -221,7 +221,7 @@ func (a *App) joinPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "register", RegisterPageData{
-		BaseData:       a.baseData(r),
+		Base:           a.baseData(r),
 		FormAction:     "/join/" + campaign.Slug,
 		WelcomeMessage: campaign.WelcomeMessage,
 		CaptchaID:      captchaID,
@@ -260,7 +260,7 @@ func (a *App) joinRegister(w http.ResponseWriter, r *http.Request) {
 	renderErr := func(errs map[string]string) {
 		freshID, _ := a.Captcha.Generate()
 		a.render(w, "register", RegisterPageData{
-			BaseData:       a.baseData(r),
+			Base:           a.baseData(r),
 			FormAction:     "/join/" + campaign.Slug,
 			WelcomeMessage: campaign.WelcomeMessage,
 			Username:       username,

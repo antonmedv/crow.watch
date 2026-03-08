@@ -27,7 +27,7 @@ func (a *App) accountPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "account", AccountPageData{
-		BaseData:         a.baseData(r),
+		Base:             a.baseData(r),
 		Tab:              tab,
 		Email:            current.User.Email,
 		About:            current.User.About,
@@ -46,12 +46,12 @@ func (a *App) updateProfile(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		a.render(w, "account", AccountPageData{
-			BaseData: a.baseData(r),
-			Tab:      "profile",
-			Email:    current.User.Email,
-			About:    current.User.About,
-			Website:  current.User.Website,
-			Errors:   map[string]string{"about": "Invalid request."},
+			Base:    a.baseData(r),
+			Tab:     "profile",
+			Email:   current.User.Email,
+			About:   current.User.About,
+			Website: current.User.Website,
+			Errors:  map[string]string{"about": "Invalid request."},
 		})
 		return
 	}
@@ -69,12 +69,12 @@ func (a *App) updateProfile(w http.ResponseWriter, r *http.Request) {
 
 	if len(errs) > 0 {
 		a.render(w, "account", AccountPageData{
-			BaseData: a.baseData(r),
-			Tab:      "profile",
-			Email:    current.User.Email,
-			About:    about,
-			Website:  website,
-			Errors:   errs,
+			Base:    a.baseData(r),
+			Tab:     "profile",
+			Email:   current.User.Email,
+			About:   about,
+			Website: website,
+			Errors:  errs,
 		})
 		return
 	}
@@ -89,12 +89,12 @@ func (a *App) updateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "account", AccountPageData{
-		BaseData: a.baseData(r),
-		Tab:      "profile",
-		Email:    current.User.Email,
-		About:    about,
-		Website:  website,
-		Success:  "Profile updated.",
+		Base:    a.baseData(r),
+		Tab:     "profile",
+		Email:   current.User.Email,
+		About:   about,
+		Website: website,
+		Success: "Profile updated.",
 	})
 }
 
@@ -119,7 +119,7 @@ func (a *App) updateEmail(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		a.render(w, "account", AccountPageData{
-			BaseData:         a.baseData(r),
+			Base:             a.baseData(r),
 			Tab:              "email",
 			Email:            current.User.Email,
 			About:            current.User.About,
@@ -135,7 +135,7 @@ func (a *App) updateEmail(w http.ResponseWriter, r *http.Request) {
 
 	renderErr := func(errs map[string]string) {
 		a.render(w, "account", AccountPageData{
-			BaseData:         a.baseData(r),
+			Base:             a.baseData(r),
 			Tab:              "email",
 			Email:            current.User.Email,
 			About:            current.User.About,
@@ -217,7 +217,7 @@ func (a *App) updateEmail(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	a.render(w, "account", AccountPageData{
-		BaseData:         a.baseData(r),
+		Base:             a.baseData(r),
 		Tab:              "email",
 		Email:            current.User.Email,
 		About:            current.User.About,
@@ -237,12 +237,12 @@ func (a *App) updatePassword(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.ParseForm(); err != nil {
 		a.render(w, "account", AccountPageData{
-			BaseData: a.baseData(r),
-			Tab:      "password",
-			Email:    current.User.Email,
-			About:    current.User.About,
-			Website:  current.User.Website,
-			Errors:   map[string]string{"current_password": "Invalid request."},
+			Base:    a.baseData(r),
+			Tab:     "password",
+			Email:   current.User.Email,
+			About:   current.User.About,
+			Website: current.User.Website,
+			Errors:  map[string]string{"current_password": "Invalid request."},
 		})
 		return
 	}
@@ -266,12 +266,12 @@ func (a *App) updatePassword(w http.ResponseWriter, r *http.Request) {
 
 	if len(errs) > 0 {
 		a.render(w, "account", AccountPageData{
-			BaseData: a.baseData(r),
-			Tab:      "password",
-			Email:    current.User.Email,
-			About:    current.User.About,
-			Website:  current.User.Website,
-			Errors:   errs,
+			Base:    a.baseData(r),
+			Tab:     "password",
+			Email:   current.User.Email,
+			About:   current.User.About,
+			Website: current.User.Website,
+			Errors:  errs,
 		})
 		return
 	}
@@ -308,11 +308,11 @@ func (a *App) updatePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "account", AccountPageData{
-		BaseData: a.baseData(r),
-		Tab:      "password",
-		Email:    user.Email,
-		About:    user.About,
-		Website:  user.Website,
-		Success:  "Password changed. All other sessions have been logged out.",
+		Base:    a.baseData(r),
+		Tab:     "password",
+		Email:   user.Email,
+		About:   user.About,
+		Website: user.Website,
+		Success: "Password changed. All other sessions have been logged out.",
 	})
 }

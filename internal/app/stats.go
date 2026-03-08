@@ -8,7 +8,7 @@ import (
 )
 
 type ModStatsPageData struct {
-	BaseData
+	Base  Base
 	Stats store.GetSiteStatsRow
 }
 
@@ -26,7 +26,7 @@ func (a *App) modStatsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "mod_stats", ModStatsPageData{
-		BaseData: a.baseData(r),
-		Stats:    stats,
+		Base:  a.baseData(r),
+		Stats: stats,
 	})
 }

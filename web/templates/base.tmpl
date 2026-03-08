@@ -100,10 +100,10 @@
           <div class="nav-content">
             <div class="nav-top">
               <span class="nav-slogan">
-                {{ if and .IsLoggedIn (not .EmailConfirmed) }}
+                {{ if and .Base.IsLoggedIn (not .Base.EmailConfirmed) }}
                   <a href="/account?tab=email">please, confirm your email</a>
-                {{ else if .IsLoggedIn }}
-                  {{ .Slogan }}
+                {{ else if .Base.IsLoggedIn }}
+                  {{ .Base.Slogan }}
                 {{ else }}
                   a computing-focused community
                 {{ end }}
@@ -144,8 +144,8 @@
                     </button>
                   </div>
                 </span>
-                {{ if .IsLoggedIn }}
-                  <a href="/account">{{ .Username }}</a>
+                {{ if .Base.IsLoggedIn }}
+                  <a href="/account">{{ .Base.Username }}</a>
                 {{ else }}
                   <a href="/login">Login</a>
                 {{ end }}
@@ -156,16 +156,16 @@
                 <a href="/">Home</a>
                 <a href="/newest">Newest</a>
                 <a href="/t/show">Show</a>
-                {{ if .IsLoggedIn }}
+                {{ if .Base.IsLoggedIn }}
                   <a href="/replies">
                     Replies
-                    {{- if .UnreadReplies }}
-                      <span class="nav-badge">{{ .UnreadReplies }}</span>
+                    {{- if .Base.UnreadReplies }}
+                      <span class="nav-badge">{{ .Base.UnreadReplies }}</span>
                     {{- end }}
                   </a>
                 {{ end }}
               </div>
-              {{ if .IsLoggedIn }}
+              {{ if .Base.IsLoggedIn }}
                 <div class="nav-links">
                   <a href="/invite">Invite</a>
                   <a href="/submit">Submit</a>
@@ -176,7 +176,7 @@
         </nav>
         <main>{{ block "content" . }}{{ end }}</main>
         <footer class="site-footer">
-          {{ if .IsModerator }}
+          {{ if .Base.IsModerator }}
             <a href="/mod/stats" aria-label="Site stats">
               <svg class="site-footer__icon" width="20" height="20">
                 <use href="#icon-crow"></use>
@@ -190,16 +190,16 @@
           <div class="site-footer__links">
             <a href="/about">About</a>
             <a href="/tags">Tags</a>
-            {{ if .IsLoggedIn }}
+            {{ if .Base.IsLoggedIn }}
               <a href="/mod/log">Mod Log</a>
-              {{ if .IsModerator }}
+              {{ if .Base.IsModerator }}
                 <a href="/mod/campaigns">Campaigns</a>
               {{ end }}
             {{ end }}
           </div>
         </footer>
       </div>
-      {{ if .IsLoggedIn }}
+      {{ if .Base.IsLoggedIn }}
         <script src="{{ static "js/vote.js" }}"></script>
         <script src="{{ static "js/hide-tag.js" }}"></script>
         <script src="{{ static "js/comment.js" }}"></script>
@@ -263,7 +263,7 @@
           })
         })()
       </script>
-      {{ if .DevMode }}
+      {{ if .Base.DevMode }}
         <script src="{{ static "js/reload.js" }}"></script>
       {{ end }}
     </body>

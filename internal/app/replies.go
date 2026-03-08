@@ -10,7 +10,7 @@ import (
 )
 
 type RepliesPageData struct {
-	BaseData
+	Base    Base
 	Replies []ReplyItem
 }
 
@@ -51,7 +51,7 @@ func (a *App) repliesPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "replies", RepliesPageData{
-		BaseData: a.baseData(r),
-		Replies:  replies,
+		Base:    a.baseData(r),
+		Replies: replies,
 	})
 }

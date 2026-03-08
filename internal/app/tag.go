@@ -32,14 +32,14 @@ func (a *App) tagPage(w http.ResponseWriter, r *http.Request) {
 
 	page := parsePage(r)
 	data := TagPageData{
-		BaseData:       a.baseData(r),
+		Base:           a.baseData(r),
 		TagName:        tag.Tag,
 		TagDescription: tag.Description,
 		CurrentPage:    page,
 		PagePath:       fmt.Sprintf("/t/%s/page", tag.Tag),
 	}
 
-	stories, hasMore, err := a.loadStoryList(r, data.BaseData, page, store.ListStoriesParams{
+	stories, hasMore, err := a.loadStoryList(r, data.Base, page, store.ListStoriesParams{
 		TagID:      pgtype.Int8{Int64: tag.ID, Valid: true},
 		StoryLimit: 500,
 	}, storyListOpts{rankByHotness: true, filterNegScore: true, filterHidden: true})

@@ -30,13 +30,13 @@ func (a *App) userStoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	page := parsePage(r)
 	data := UserStoriesPageData{
-		BaseData:        a.baseData(r),
+		Base:            a.baseData(r),
 		ProfileUsername: username,
 		CurrentPage:     page,
 		PagePath:        fmt.Sprintf("/u/%s/stories/page", username),
 	}
 
-	stories, hasMore, err := a.loadStoryList(r, data.BaseData, page, store.ListStoriesParams{
+	stories, hasMore, err := a.loadStoryList(r, data.Base, page, store.ListStoriesParams{
 		Username:   pgtype.Text{String: username, Valid: true},
 		StoryLimit: 500,
 	}, storyListOpts{})

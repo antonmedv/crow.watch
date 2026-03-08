@@ -30,7 +30,7 @@ func (a *App) profilePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "profile", ProfilePageData{
-		BaseData:        a.baseData(r),
+		Base:            a.baseData(r),
 		ProfileUsername: profile.Username,
 		About:           profile.About,
 		Website:         profile.Website,

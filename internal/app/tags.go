@@ -27,7 +27,7 @@ func (a *App) tagsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "tags", TagsPageData{
-		BaseData:     base,
+		Base:         base,
 		TagGroups:    toTagGroups(tags, isModerator),
 		HiddenTagIDs: hiddenTagIDs,
 	})

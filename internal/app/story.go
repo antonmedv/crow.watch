@@ -241,7 +241,7 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "story", StoryPageData{
-		BaseData:   a.baseData(r),
+		Base:       a.baseData(r),
 		Story:      item,
 		Body:       body,
 		Comments:   comments,

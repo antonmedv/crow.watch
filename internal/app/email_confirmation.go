@@ -32,8 +32,8 @@ func (a *App) confirmEmail(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			a.render(w, "confirm_email", ConfirmEmailPageData{
-				BaseData: a.baseData(r),
-				Error:    "This confirmation link is invalid or has expired.",
+				Base:  a.baseData(r),
+				Error: "This confirmation link is invalid or has expired.",
 			})
 			return
 		}
@@ -44,8 +44,8 @@ func (a *App) confirmEmail(w http.ResponseWriter, r *http.Request) {
 	if err := a.Queries.ConfirmUserEmail(r.Context(), user.ID); err != nil {
 		if strings.Contains(err.Error(), "users_email_unique") {
 			a.render(w, "confirm_email", ConfirmEmailPageData{
-				BaseData: a.baseData(r),
-				Error:    "That e-mail address is already taken by another account.",
+				Base:  a.baseData(r),
+				Error: "That e-mail address is already taken by another account.",
 			})
 			return
 		}
@@ -54,8 +54,8 @@ func (a *App) confirmEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "confirm_email", ConfirmEmailPageData{
-		BaseData: a.baseData(r),
-		Success:  "Your e-mail address has been confirmed.",
+		Base:    a.baseData(r),
+		Success: "Your e-mail address has been confirmed.",
 	})
 }
 
@@ -70,7 +70,7 @@ func (a *App) resendConfirmation(w http.ResponseWriter, r *http.Request) {
 	if current.User.EmailConfirmationTokenCreatedAt.Valid &&
 		time.Since(current.User.EmailConfirmationTokenCreatedAt.Time) < confirmationEmailCooldown {
 		a.render(w, "account", AccountPageData{
-			BaseData:         a.baseData(r),
+			Base:             a.baseData(r),
 			Tab:              "email",
 			Email:            current.User.Email,
 			About:            current.User.About,
@@ -93,7 +93,7 @@ func (a *App) resendConfirmation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "account", AccountPageData{
-		BaseData:         a.baseData(r),
+		Base:             a.baseData(r),
 		Tab:              "email",
 		Email:            current.User.Email,
 		About:            current.User.About,

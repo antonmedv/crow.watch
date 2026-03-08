@@ -42,7 +42,7 @@ func (a *App) campaignsPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "campaigns", CampaignsPageData{
-		BaseData:  a.baseData(r),
+		Base:      a.baseData(r),
 		Campaigns: rows,
 	})
 }
@@ -126,7 +126,7 @@ func (a *App) renderCampaignsPage(w http.ResponseWriter, r *http.Request, slug, 
 	}
 
 	a.render(w, "campaigns", CampaignsPageData{
-		BaseData:        a.baseData(r),
+		Base:            a.baseData(r),
 		Campaigns:       rows,
 		Slug:            slug,
 		WelcomeMessage:  welcomeMessage,

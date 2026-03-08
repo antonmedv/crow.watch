@@ -38,7 +38,7 @@ type storyDisplayInfo struct {
 
 // loadStoryList fetches stories, applies ranking/filtering/pagination,
 // and returns the final StoryItem slice and whether more pages exist.
-func (a *App) loadStoryList(r *http.Request, base BaseData, page int, params store.ListStoriesParams, opts storyListOpts) ([]StoryItem, bool, error) {
+func (a *App) loadStoryList(r *http.Request, base Base, page int, params store.ListStoriesParams, opts storyListOpts) ([]StoryItem, bool, error) {
 	ctx := r.Context()
 
 	stories, err := a.Queries.ListStories(ctx, params)

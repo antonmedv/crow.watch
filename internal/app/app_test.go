@@ -84,7 +84,7 @@ func TestRenderHomeLoggedIn(t *testing.T) {
 	a := testApp(t)
 	w := httptest.NewRecorder()
 
-	a.render(w, "home", HomePageData{BaseData: BaseData{IsLoggedIn: true, Username: "alice"}})
+	a.render(w, "home", HomePageData{Base: Base{IsLoggedIn: true, Username: "alice"}})
 
 	body := w.Body.String()
 	assert.Contains(t, body, "alice")
@@ -186,8 +186,8 @@ func TestRenderSubmitForm(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
-		Tab:      "link",
+		Base: Base{IsLoggedIn: true, Username: "alice"},
+		Tab:  "link",
 		TagGroups: []TagGroup{
 			{Category: "Topics", Tags: []TagOption{
 				{ID: 1, Tag: "programming", Description: "Code and dev"},
@@ -213,12 +213,12 @@ func TestRenderSubmitFormWithErrors(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
-		Tab:      "link",
-		URL:      "bad-url",
-		Title:    "",
-		Errors:   map[string]string{"url": "URL must use http or https", "title": "Title is required."},
-		Error:    "Please fix the errors below.",
+		Base:   Base{IsLoggedIn: true, Username: "alice"},
+		Tab:    "link",
+		URL:    "bad-url",
+		Title:  "",
+		Errors: map[string]string{"url": "URL must use http or https", "title": "Title is required."},
+		Error:  "Please fix the errors below.",
 	})
 
 	body := w.Body.String()
@@ -234,7 +234,7 @@ func TestHomeShowsStories(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "home", HomePageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
+		Base: Base{IsLoggedIn: true, Username: "alice"},
 		Stories: []StoryItem{
 			{
 				ID:         1,
@@ -286,7 +286,7 @@ func TestNavShowsSubmitLink(t *testing.T) {
 	a := testApp(t)
 	w := httptest.NewRecorder()
 
-	a.render(w, "home", HomePageData{BaseData: BaseData{IsLoggedIn: true, Username: "alice"}})
+	a.render(w, "home", HomePageData{Base: Base{IsLoggedIn: true, Username: "alice"}})
 
 	body := w.Body.String()
 	assert.Contains(t, body, `href="/submit"`)
@@ -298,7 +298,7 @@ func TestHomeMediaTagHasSpace(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "home", HomePageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
+		Base: Base{IsLoggedIn: true, Username: "alice"},
 		Stories: []StoryItem{
 			{
 				ID:         1,
@@ -322,8 +322,8 @@ func TestSubmitFormPreservesSelectedTags(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	data := SubmitPageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
-		Tab:      "link",
+		Base: Base{IsLoggedIn: true, Username: "alice"},
+		Tab:  "link",
 		TagGroups: []TagGroup{
 			{Category: "Topics", Tags: []TagOption{
 				{ID: 1, Tag: "programming"},
@@ -346,7 +346,7 @@ func TestHomeShowsTextStory(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "home", HomePageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
+		Base: Base{IsLoggedIn: true, Username: "alice"},
 		Stories: []StoryItem{
 			{
 				ID:         42,
@@ -372,7 +372,7 @@ func TestRenderStoryDetailPage(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "story", StoryPageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
+		Base: Base{IsLoggedIn: true, Username: "alice"},
 		Story: StoryItem{
 			ID:         42,
 			Title:      "Ask CW: What editor do you use?",
@@ -399,8 +399,8 @@ func TestRenderSubmitFormHasBodyField(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
-		Tab:      "text",
+		Base: Base{IsLoggedIn: true, Username: "alice"},
+		Tab:  "text",
 	})
 
 	body := w.Body.String()
@@ -413,8 +413,8 @@ func TestSubmitLinkTabShowsURLNotBody(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
-		Tab:      "link",
+		Base: Base{IsLoggedIn: true, Username: "alice"},
+		Tab:  "link",
 	})
 
 	body := w.Body.String()
@@ -429,8 +429,8 @@ func TestSubmitTextTabShowsBodyNotURL(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData: BaseData{IsLoggedIn: true, Username: "alice"},
-		Tab:      "text",
+		Base: Base{IsLoggedIn: true, Username: "alice"},
+		Tab:  "text",
 	})
 
 	body := w.Body.String()

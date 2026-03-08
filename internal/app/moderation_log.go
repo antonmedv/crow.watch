@@ -49,7 +49,7 @@ func (a *App) moderationLogPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "moderation_log", ModerationLogPageData{
-		BaseData:    a.baseData(r),
+		Base:        a.baseData(r),
 		Entries:     entries,
 		CurrentPage: page,
 		HasMore:     hasMore,

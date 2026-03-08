@@ -44,7 +44,7 @@ type App struct {
 	Captcha          *captcha.Store
 }
 
-type BaseData struct {
+type Base struct {
 	IsLoggedIn     bool
 	IsModerator    bool
 	EmailConfirmed bool
@@ -55,7 +55,7 @@ type BaseData struct {
 }
 
 type HomePageData struct {
-	BaseData
+	Base        Base
 	Stories     []StoryItem
 	CurrentPage int
 	HasMore     bool
@@ -93,7 +93,7 @@ type StoryTag struct {
 }
 
 type TagPageData struct {
-	BaseData
+	Base           Base
 	TagName        string
 	TagDescription string
 	Stories        []StoryItem
@@ -103,14 +103,14 @@ type TagPageData struct {
 }
 
 type LoginPageData struct {
-	BaseData
+	Base       Base
 	Tab        string
 	Identifier string
 	Error      string
 }
 
 type SubmitPageData struct {
-	BaseData
+	Base                 Base
 	Tab                  string
 	URL                  string
 	Title                string
@@ -143,7 +143,7 @@ type DuplicateStory struct {
 }
 
 type StoryPageData struct {
-	BaseData
+	Base       Base
 	Story      StoryItem
 	Body       template.HTML
 	Comments   []*CommentNode
@@ -159,26 +159,26 @@ type TagOption struct {
 }
 
 type TagsPageData struct {
-	BaseData
+	Base         Base
 	TagGroups    []TagGroup
 	HiddenTagIDs []int64
 }
 
 type ForgotPasswordPageData struct {
-	BaseData
+	Base    Base
 	Email   string
 	Error   string
 	Success string
 }
 
 type ResetPasswordPageData struct {
-	BaseData
+	Base  Base
 	Token string
 	Error string
 }
 
 type AccountPageData struct {
-	BaseData
+	Base             Base
 	Tab              string
 	Email            string
 	About            string
@@ -190,13 +190,13 @@ type AccountPageData struct {
 }
 
 type ConfirmEmailPageData struct {
-	BaseData
+	Base    Base
 	Error   string
 	Success string
 }
 
 type ProfilePageData struct {
-	BaseData
+	Base            Base
 	ProfileUsername string
 	About           string
 	Website         string
@@ -207,7 +207,7 @@ type ProfilePageData struct {
 }
 
 type UserStoriesPageData struct {
-	BaseData
+	Base            Base
 	ProfileUsername string
 	Stories         []StoryItem
 	CurrentPage     int
@@ -216,7 +216,7 @@ type UserStoriesPageData struct {
 }
 
 type InvitePageData struct {
-	BaseData
+	Base        Base
 	Tab         string
 	Email       string
 	Error       string
@@ -233,7 +233,7 @@ type InviteRow struct {
 }
 
 type RegisterPageData struct {
-	BaseData
+	Base           Base
 	FormAction     string
 	InviterName    string
 	WelcomeMessage string
@@ -244,7 +244,7 @@ type RegisterPageData struct {
 }
 
 type CampaignsPageData struct {
-	BaseData
+	Base            Base
 	Campaigns       []CampaignRow
 	Slug            string
 	WelcomeMessage  string
@@ -253,7 +253,7 @@ type CampaignsPageData struct {
 }
 
 type ModerationLogPageData struct {
-	BaseData
+	Base        Base
 	Entries     []ModerationLogEntry
 	CurrentPage int
 	HasMore     bool
@@ -435,7 +435,7 @@ func (a *App) serverError(w http.ResponseWriter, r *http.Request, msg string, er
 
 func (a *App) notFound(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
-	a.render(w, "not_found", a.baseData(r))
+	a.render(w, "not_found", struct{ Base Base }{Base: a.baseData(r)})
 }
 
 var slogans = []string{
@@ -445,14 +445,14 @@ var slogans = []string{
 	"collecting shiny things",
 }
 
-func (a *App) baseData(r *http.Request) BaseData {
+func (a *App) baseData(r *http.Request) Base {
 	if current, ok := auth.UserFromContext(r.Context()); ok {
 		slogan := slogans[rand.Intn(len(slogans))]
 		var unread int64
 		if count, err := a.Queries.CountUnreadReplies(r.Context(), current.User.ID); err == nil {
 			unread = count
 		}
-		return BaseData{
+		return Base{
 			IsLoggedIn:     true,
 			IsModerator:    current.User.IsModerator,
 			EmailConfirmed: current.User.EmailConfirmedAt.Valid,
@@ -462,7 +462,7 @@ func (a *App) baseData(r *http.Request) BaseData {
 			UnreadReplies:  unread,
 		}
 	}
-	return BaseData{DevMode: a.DevMode}
+	return Base{DevMode: a.DevMode}
 }
 
 func (a *App) render(w http.ResponseWriter, name string, data any) {

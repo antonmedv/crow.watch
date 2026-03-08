@@ -55,7 +55,7 @@ func (a *App) invitePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "invite", InvitePageData{
-		BaseData:    a.baseData(r),
+		Base:        a.baseData(r),
 		Tab:         tab,
 		Invitations: rows,
 	})
@@ -204,7 +204,7 @@ func (a *App) renderInvitePage(w http.ResponseWriter, r *http.Request, tab, emai
 	}
 
 	data := InvitePageData{
-		BaseData:    a.baseData(r),
+		Base:        a.baseData(r),
 		Tab:         tab,
 		Email:       email,
 		InviteURL:   inviteURL,

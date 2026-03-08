@@ -66,7 +66,7 @@ func (a *App) editStoryPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData:             a.baseData(r),
+		Base:                 a.baseData(r),
 		Tab:                  tab,
 		Title:                row.Title,
 		Body:                 row.Body.String,
@@ -382,7 +382,7 @@ func (a *App) renderEditError(w http.ResponseWriter, r *http.Request, current au
 	}
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData:  a.baseData(r),
+		Base:      a.baseData(r),
 		Tab:       tab,
 		Title:     title,
 		Body:      body,

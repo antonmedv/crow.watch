@@ -21,7 +21,7 @@ func (a *App) loginPage(w http.ResponseWriter, r *http.Request) {
 	if tab != "register" {
 		tab = "login"
 	}
-	a.render(w, "login", LoginPageData{BaseData: a.baseData(r), Tab: tab})
+	a.render(w, "login", LoginPageData{Base: a.baseData(r), Tab: tab})
 }
 
 func (a *App) login(w http.ResponseWriter, r *http.Request) {
@@ -31,14 +31,14 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseForm(); err != nil {
-		a.render(w, "login", LoginPageData{BaseData: a.baseData(r), Tab: "login", Error: "Invalid login request."})
+		a.render(w, "login", LoginPageData{Base: a.baseData(r), Tab: "login", Error: "Invalid login request."})
 		return
 	}
 
 	identifier := strings.TrimSpace(r.FormValue("identifier"))
 	password := r.FormValue("password")
 
-	rateLimitErr := LoginPageData{BaseData: a.baseData(r), Tab: "login", Identifier: identifier, Error: "Too many login attempts. Please try again later."}
+	rateLimitErr := LoginPageData{Base: a.baseData(r), Tab: "login", Identifier: identifier, Error: "Too many login attempts. Please try again later."}
 
 	if a.LoginIPLimiter != nil {
 		ip, _, _ := net.SplitHostPort(r.RemoteAddr)
@@ -61,14 +61,14 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) {
 	user, err := a.Queries.GetUserByLogin(r.Context(), identifier)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			a.render(w, "login", LoginPageData{BaseData: a.baseData(r), Tab: "login", Identifier: identifier, Error: "Invalid e-mail/username and/or password."})
+			a.render(w, "login", LoginPageData{Base: a.baseData(r), Tab: "login", Identifier: identifier, Error: "Invalid e-mail/username and/or password."})
 			return
 		}
 		a.serverError(w, r, "get user by login", err)
 		return
 	}
 
-	invalidErr := LoginPageData{BaseData: a.baseData(r), Tab: "login", Identifier: identifier, Error: "Invalid e-mail/username and/or password."}
+	invalidErr := LoginPageData{Base: a.baseData(r), Tab: "login", Identifier: identifier, Error: "Invalid e-mail/username and/or password."}
 
 	if user.BannedAt.Valid || user.DeletedAt.Valid || user.PasswordDigest == "*" {
 		a.render(w, "login", invalidErr)

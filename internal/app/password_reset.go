@@ -21,18 +21,18 @@ import (
 const resetEmailCooldown = 15 * time.Minute
 
 func (a *App) forgotPasswordPage(w http.ResponseWriter, r *http.Request) {
-	a.render(w, "forgot_password", ForgotPasswordPageData{BaseData: a.baseData(r)})
+	a.render(w, "forgot_password", ForgotPasswordPageData{Base: a.baseData(r)})
 }
 
 func (a *App) forgotPassword(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		a.render(w, "forgot_password", ForgotPasswordPageData{BaseData: a.baseData(r), Error: "Invalid request."})
+		a.render(w, "forgot_password", ForgotPasswordPageData{Base: a.baseData(r), Error: "Invalid request."})
 		return
 	}
 
 	email := strings.TrimSpace(r.FormValue("email"))
 	if email == "" {
-		a.render(w, "forgot_password", ForgotPasswordPageData{BaseData: a.baseData(r), Email: email, Error: "Please enter your e-mail address."})
+		a.render(w, "forgot_password", ForgotPasswordPageData{Base: a.baseData(r), Email: email, Error: "Please enter your e-mail address."})
 		return
 	}
 
@@ -41,7 +41,7 @@ func (a *App) forgotPassword(w http.ResponseWriter, r *http.Request) {
 	user, err := a.Queries.GetUserByLogin(r.Context(), email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			a.render(w, "forgot_password", ForgotPasswordPageData{BaseData: a.baseData(r), Success: successMsg})
+			a.render(w, "forgot_password", ForgotPasswordPageData{Base: a.baseData(r), Success: successMsg})
 			return
 		}
 		a.serverError(w, r, "get user for password reset", err)
@@ -50,13 +50,13 @@ func (a *App) forgotPassword(w http.ResponseWriter, r *http.Request) {
 
 	// Skip banned, deleted, wiped, or unconfirmed-email accounts silently.
 	if user.BannedAt.Valid || user.DeletedAt.Valid || user.PasswordDigest == "*" || !user.EmailConfirmedAt.Valid {
-		a.render(w, "forgot_password", ForgotPasswordPageData{BaseData: a.baseData(r), Success: successMsg})
+		a.render(w, "forgot_password", ForgotPasswordPageData{Base: a.baseData(r), Success: successMsg})
 		return
 	}
 
 	// Rate-limit: skip if a reset email was already sent recently.
 	if user.PasswordResetTokenCreatedAt.Valid && time.Since(user.PasswordResetTokenCreatedAt.Time) < resetEmailCooldown {
-		a.render(w, "forgot_password", ForgotPasswordPageData{BaseData: a.baseData(r), Success: successMsg})
+		a.render(w, "forgot_password", ForgotPasswordPageData{Base: a.baseData(r), Success: successMsg})
 		return
 	}
 
@@ -104,7 +104,7 @@ func (a *App) forgotPassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	a.render(w, "forgot_password", ForgotPasswordPageData{BaseData: a.baseData(r), Success: successMsg})
+	a.render(w, "forgot_password", ForgotPasswordPageData{Base: a.baseData(r), Success: successMsg})
 }
 
 func (a *App) resetPasswordPage(w http.ResponseWriter, r *http.Request) {
@@ -113,12 +113,12 @@ func (a *App) resetPasswordPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/forgot-password", http.StatusSeeOther)
 		return
 	}
-	a.render(w, "reset_password", ResetPasswordPageData{BaseData: a.baseData(r), Token: token})
+	a.render(w, "reset_password", ResetPasswordPageData{Base: a.baseData(r), Token: token})
 }
 
 func (a *App) resetPassword(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		a.render(w, "reset_password", ResetPasswordPageData{BaseData: a.baseData(r), Error: "Invalid request."})
+		a.render(w, "reset_password", ResetPasswordPageData{Base: a.baseData(r), Error: "Invalid request."})
 		return
 	}
 
@@ -132,15 +132,15 @@ func (a *App) resetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if password == "" {
-		a.render(w, "reset_password", ResetPasswordPageData{BaseData: a.baseData(r), Token: token, Error: "Please enter a new password."})
+		a.render(w, "reset_password", ResetPasswordPageData{Base: a.baseData(r), Token: token, Error: "Please enter a new password."})
 		return
 	}
 	if len(password) > 72 {
-		a.render(w, "reset_password", ResetPasswordPageData{BaseData: a.baseData(r), Token: token, Error: "Password must be 72 bytes or fewer."})
+		a.render(w, "reset_password", ResetPasswordPageData{Base: a.baseData(r), Token: token, Error: "Password must be 72 bytes or fewer."})
 		return
 	}
 	if password != confirmation {
-		a.render(w, "reset_password", ResetPasswordPageData{BaseData: a.baseData(r), Token: token, Error: "Passwords do not match."})
+		a.render(w, "reset_password", ResetPasswordPageData{Base: a.baseData(r), Token: token, Error: "Passwords do not match."})
 		return
 	}
 
@@ -149,7 +149,7 @@ func (a *App) resetPassword(w http.ResponseWriter, r *http.Request) {
 	user, err := a.Queries.GetUserByPasswordResetTokenHash(r.Context(), pgtype.Text{String: tokenHash, Valid: true})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			a.render(w, "reset_password", ResetPasswordPageData{BaseData: a.baseData(r), Token: token, Error: "This reset link is invalid or has expired."})
+			a.render(w, "reset_password", ResetPasswordPageData{Base: a.baseData(r), Token: token, Error: "This reset link is invalid or has expired."})
 			return
 		}
 		a.serverError(w, r, "get user by reset token", err)

@@ -74,7 +74,7 @@
         <tbody>
           {{ if .Category }}
             <tr class="tags-table__category">
-              <td colspan="{{ if $.IsLoggedIn }}3{{ else }}2{{ end }}">
+              <td colspan="{{ if $.Base.IsLoggedIn }}3{{ else }}2{{ end }}">
                 {{ .Category }}
               </td>
             </tr>
@@ -89,7 +89,7 @@
                 >
               </td>
               <td class="tags-table__desc">{{ .Description }}</td>
-              {{ if $.IsLoggedIn }}
+              {{ if $.Base.IsLoggedIn }}
                 <td class="tags-table__hide">
                   <button
                     class="hide-tag-btn"

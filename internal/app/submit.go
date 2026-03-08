@@ -41,7 +41,7 @@ func (a *App) submitPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "submit", SubmitPageData{
-		BaseData:  a.baseData(r),
+		Base:      a.baseData(r),
 		Tab:       tab,
 		TagGroups: toTagGroups(tags, current.User.IsModerator),
 	})
@@ -273,7 +273,7 @@ func (a *App) submitStory(w http.ResponseWriter, r *http.Request) {
 func (a *App) renderSubmitError(w http.ResponseWriter, r *http.Request, current auth.AuthenticatedUser, tab, rawURL, title, body string, selectedIDs []int64, errs map[string]string, generalErr string) {
 	allTags, _ := a.Queries.ListActiveTagsWithCategory(r.Context())
 	a.render(w, "submit", SubmitPageData{
-		BaseData:  a.baseData(r),
+		Base:      a.baseData(r),
 		Tab:       tab,
 		URL:       rawURL,
 		Title:     title,
@@ -288,7 +288,7 @@ func (a *App) renderSubmitError(w http.ResponseWriter, r *http.Request, current 
 func (a *App) renderSubmitDuplicate(w http.ResponseWriter, r *http.Request, current auth.AuthenticatedUser, tab, rawURL, title, body string, selectedIDs []int64, dupURL string) {
 	allTags, _ := a.Queries.ListActiveTagsWithCategory(r.Context())
 	a.render(w, "submit", SubmitPageData{
-		BaseData:     a.baseData(r),
+		Base:         a.baseData(r),
 		Tab:          tab,
 		URL:          rawURL,
 		Title:        title,
