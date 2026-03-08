@@ -269,6 +269,15 @@
         >.
       </div>
     {{ end }}
+    {{ if .Duplicates }}
+      <div class="story-duplicate-notice">
+        Duplicates:
+        {{ range $i, $d := .Duplicates }}
+          {{- if $i }}, {{ end -}}
+          <a href="/x/{{ $d.ShortCode }}/">{{ $d.Title }}</a>
+        {{- end }}
+      </div>
+    {{ end }}
     {{ if and .Body (not .Story.DeletedAt) }}
       <div class="story-body markdown-body">{{ .Body }}</div>
     {{ end }}

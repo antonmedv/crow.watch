@@ -137,11 +137,17 @@ type FlagCount struct {
 	Count  int
 }
 
+type DuplicateStory struct {
+	ShortCode string
+	Title     string
+}
+
 type StoryPageData struct {
 	BaseData
-	Story    StoryItem
-	Body     template.HTML
-	Comments []*CommentNode
+	Story      StoryItem
+	Body       template.HTML
+	Comments   []*CommentNode
+	Duplicates []DuplicateStory
 }
 
 type TagOption struct {

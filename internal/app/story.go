@@ -227,10 +227,24 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 		body = markdown.Render(row.Body.String)
 	}
 
+	var duplicates []DuplicateStory
+	dupRows, err := a.Queries.ListDuplicatesOf(r.Context(), row.ID)
+	if err != nil {
+		a.serverError(w, r, "list duplicates", err)
+		return
+	}
+	for _, d := range dupRows {
+		duplicates = append(duplicates, DuplicateStory{
+			ShortCode: d.ShortCode,
+			Title:     d.Title,
+		})
+	}
+
 	a.render(w, "story", StoryPageData{
-		BaseData: a.baseData(r),
-		Story:    item,
-		Body:     body,
-		Comments: comments,
+		BaseData:   a.baseData(r),
+		Story:      item,
+		Body:       body,
+		Comments:   comments,
+		Duplicates: duplicates,
 	})
 }

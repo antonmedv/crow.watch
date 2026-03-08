@@ -130,6 +130,13 @@ UPDATE stories SET duplicate_of_id = @duplicate_of_id, updated_at = now() WHERE 
 -- name: UnmarkStoryDuplicate :exec
 UPDATE stories SET duplicate_of_id = NULL, updated_at = now() WHERE id = @id;
 
+-- name: ListDuplicatesOf :many
+SELECT s.id, s.short_code, s.title, s.created_at
+FROM stories s
+WHERE s.duplicate_of_id = @story_id::bigint
+  AND s.deleted_at IS NULL
+ORDER BY s.created_at DESC;
+
 -- name: GetTagsByNames :many
 SELECT id, tag, description, category_id, privileged, is_media, active, hotness_mod, created_at, updated_at
 FROM tags

@@ -296,6 +296,46 @@ func (q *Queries) GetTagsByNames(ctx context.Context, names []string) ([]Tag, er
 	return items, nil
 }
 
+const listDuplicatesOf = `-- name: ListDuplicatesOf :many
+SELECT s.id, s.short_code, s.title, s.created_at
+FROM stories s
+WHERE s.duplicate_of_id = $1::bigint
+  AND s.deleted_at IS NULL
+ORDER BY s.created_at DESC
+`
+
+type ListDuplicatesOfRow struct {
+	ID        int64
+	ShortCode string
+	Title     string
+	CreatedAt pgtype.Timestamptz
+}
+
+func (q *Queries) ListDuplicatesOf(ctx context.Context, storyID int64) ([]ListDuplicatesOfRow, error) {
+	rows, err := q.db.Query(ctx, listDuplicatesOf, storyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListDuplicatesOfRow
+	for rows.Next() {
+		var i ListDuplicatesOfRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ShortCode,
+			&i.Title,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listStories = `-- name: ListStories :many
 SELECT
     s.id,
