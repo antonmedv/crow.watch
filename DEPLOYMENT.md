@@ -9,7 +9,7 @@ Production crowment for crow.watch on a single Linux server (Ubuntu) with Docker
 - Docker and Docker Compose installed
 - Nginx installed on the host (`apt install nginx`)
 
-## 1. Server Hardening
+## Server Hardening
 
 ### Create a crow user
 
@@ -59,7 +59,7 @@ apt install unattended-upgrades
 dpkg-reconfigure -plow unattended-upgrades
 ```
 
-## 2. Deploy Files
+## Deploy Files
 
 Copy `docker-compose.yml` and `.env` to the server:
 
@@ -94,7 +94,7 @@ HOST_PORT=127.0.0.1:8080
 
 Important: `HOST_PORT=127.0.0.1:8080` ensures the app is only reachable through Nginx, not directly from the internet.
 
-## 3. Nginx
+## Nginx
 
 ### Install Certbot
 
@@ -144,6 +144,20 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
 
+    location /static/ {
+        alias /var/www/crow.watch/static/;
+        expires 1y;
+        add_header Cache-Control "public, immutable" always;
+        access_log off;
+    }
+
+    location = /favicon.png {
+        alias /var/www/crow.watch/static/favicon.png;
+        expires 1y;
+        add_header Cache-Control "public, immutable" always;
+        access_log off;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host $host;
@@ -184,7 +198,19 @@ systemctl reload nginx
 
 Certbot auto-renews via a systemd timer. Verify: `systemctl status certbot.timer`
 
-## 4. Start the Application
+## Static Files
+
+Create the directory for Nginx to serve static files:
+
+```bash
+sudo mkdir -p /var/www/crow.watch/static
+sudo chown crow:crow /var/www/crow.watch/static
+```
+
+The app container automatically exports embedded static files to this directory on startup via the `STATIC_DIR` env var
+and a bind mount in `docker-compose.yml`. No manual sync needed.
+
+## Start the Application
 
 ```bash
 cd ~/crow.watch
@@ -200,13 +226,13 @@ docker compose logs -f backup    # backup logs (should show immediate backup on 
 docker compose logs migrate      # migration output
 ```
 
-## 5. Create First User
+## Create First User
 
 ```bash
 docker compose run --rm cmd useradm add -username admin -email admin@crow.watch
 ```
 
-## 6. Admin Commands
+## Admin Commands
 
 ```bash
 # Database shell
@@ -230,26 +256,10 @@ docker compose pull migrate
 docker compose up -d migrate
 ```
 
-## 7. Updating
+## Updating
 
 ```bash
 cd ~/crow.watch
 docker compose pull
 docker compose up -d
-```
-
-## 8. Backups
-
-Backups run daily at 3am UTC (configurable via `BACKUP_SCHEDULE`). Each backup is a gzipped `pg_dump` uploaded to Linode
-Object Storage. Backups older than 30 days are automatically deleted.
-
-### Restore from backup
-
-```bash
-# Download the backup
-linode-cli obj get crow-watch-backups backups/crow_watch_2026-02-28_030000.sql.gz
-
-# Restore
-gunzip -c crow_watch_2026-02-28_030000.sql.gz | \
-  docker compose exec -T db psql -U crow -d crow_watch
 ```

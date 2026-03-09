@@ -11,6 +11,7 @@ services:
       ZOHO_TOKEN: ${ZOHO_TOKEN:-}
       FROM_EMAIL: ${FROM_EMAIL:-}
       APP_URL: ${APP_URL:-}
+      STATIC_DIR: /static
     ports:
       - "${HOST_PORT:-8080}:8080"
     networks:
@@ -20,6 +21,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    volumes:
+      - /var/www/crow.watch/static:/static
     read_only: true
     tmpfs:
       - /tmp
