@@ -148,6 +148,7 @@ func main() {
 		LoginAcctLimiter: loginAcctLimiter,
 		InviteLimiter:    inviteLimiter,
 		Captcha:          captchaStore,
+		Visitors:         app.NewVisitorCounter(),
 	}
 
 	addr := envOrDefault("ADDR", ":8080")

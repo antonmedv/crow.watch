@@ -42,6 +42,7 @@ type App struct {
 	LoginAcctLimiter *ratelimit.Limiter
 	InviteLimiter    *ratelimit.Limiter
 	Captcha          *captcha.Store
+	Visitors         *VisitorCounter
 }
 
 type Base struct {
@@ -415,6 +416,9 @@ func (sr *statusRecorder) Unwrap() http.ResponseWriter {
 
 func (a *App) requestLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if a.Visitors != nil {
+			a.Visitors.Record(clientIP(r))
+		}
 		start := time.Now()
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sr, r)

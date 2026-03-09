@@ -8,8 +8,9 @@ import (
 )
 
 type ModStatsPageData struct {
-	Base  Base
-	Stats store.GetSiteStatsRow
+	Base           Base
+	Stats          store.GetSiteStatsRow
+	UniqueVisitors int
 }
 
 func (a *App) modStatsPage(w http.ResponseWriter, r *http.Request) {
@@ -25,8 +26,14 @@ func (a *App) modStatsPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var visitors int
+	if a.Visitors != nil {
+		visitors = a.Visitors.Count()
+	}
+
 	a.render(w, "mod_stats", ModStatsPageData{
-		Base:  a.baseData(r),
-		Stats: stats,
+		Base:           a.baseData(r),
+		Stats:          stats,
+		UniqueVisitors: visitors,
 	})
 }
