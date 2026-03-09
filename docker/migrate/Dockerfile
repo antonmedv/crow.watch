@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS build
+FROM golang:1.25.8-alpine AS build
 
 RUN go install github.com/pressly/goose/v3/cmd/goose@v3.26.0
 
