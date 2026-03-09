@@ -47,5 +47,5 @@ func (a *App) userStoriesPage(w http.ResponseWriter, r *http.Request) {
 
 	data.Stories = stories
 	data.HasMore = hasMore
-	a.render(w, "user-stories", data)
+	a.render(w, "user_stories", data)
 }
