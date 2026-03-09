@@ -11,7 +11,6 @@ services:
       ZOHO_TOKEN: ${ZOHO_TOKEN:-}
       FROM_EMAIL: ${FROM_EMAIL:-}
       APP_URL: ${APP_URL:-}
-      STATIC_DIR: /static
     ports:
       - "${HOST_PORT:-8080}:8080"
     networks:
@@ -21,8 +20,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    volumes:
-      - /var/www/crow.watch/static:/static
+      static:
+        condition: service_completed_successfully
     read_only: true
     tmpfs:
       - /tmp
@@ -69,6 +68,12 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  static:
+    image: ghcr.io/antonmedv/crow-watch/static:latest
+    volumes:
+      - /var/www/crow.watch/static:/out
+    restart: "no"
 
   migrate:
     image: ghcr.io/antonmedv/crow-watch/migrate:latest

@@ -207,8 +207,7 @@ sudo mkdir -p /var/www/crow.watch/static
 sudo chown crow:crow /var/www/crow.watch/static
 ```
 
-The app container automatically exports embedded static files to this directory on startup via the `STATIC_DIR` env var
-and a bind mount in `docker-compose.yml`. No manual sync needed.
+The `static` init container copies files from the image to `/var/www/crow.watch/static` on every deploy.
 
 ## Start the Application
 

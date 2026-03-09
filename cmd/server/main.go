@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -66,14 +65,6 @@ func main() {
 			logger.Error("static fs", "error", err)
 			os.Exit(1)
 		}
-	}
-
-	if dir := os.Getenv("STATIC_DIR"); dir != "" && !devMode {
-		if err := exportStatic(staticFS, dir); err != nil {
-			logger.Error("export static files", "error", err)
-			os.Exit(1)
-		}
-		logger.Info("exported static files", "dir", dir)
 	}
 
 	var staticHashes map[string]string
@@ -216,21 +207,4 @@ func envOrDefault(key, fallback string) string {
 		return v
 	}
 	return fallback
-}
-
-func exportStatic(staticFS fs.FS, dir string) error {
-	return fs.WalkDir(staticFS, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		target := filepath.Join(dir, path)
-		if d.IsDir() {
-			return os.MkdirAll(target, 0o755)
-		}
-		data, err := fs.ReadFile(staticFS, path)
-		if err != nil {
-			return err
-		}
-		return os.WriteFile(target, data, 0o644)
-	})
 }
