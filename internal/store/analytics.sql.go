@@ -313,6 +313,86 @@ func (q *Queries) GetLiveTopReferrers(ctx context.Context, arg GetLiveTopReferre
 	return items, nil
 }
 
+const getTopCommenters = `-- name: GetTopCommenters :many
+SELECT u.username, COUNT(*)::int AS comments
+FROM comments c
+JOIN users u ON u.id = c.user_id
+WHERE c.created_at >= $1::timestamptz AND c.deleted_at IS NULL
+GROUP BY u.username
+ORDER BY comments DESC
+LIMIT $2::int
+`
+
+type GetTopCommentersParams struct {
+	Since      pgtype.Timestamptz
+	MaxResults int32
+}
+
+type GetTopCommentersRow struct {
+	Username string
+	Comments int32
+}
+
+func (q *Queries) GetTopCommenters(ctx context.Context, arg GetTopCommentersParams) ([]GetTopCommentersRow, error) {
+	rows, err := q.db.Query(ctx, getTopCommenters, arg.Since, arg.MaxResults)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopCommentersRow
+	for rows.Next() {
+		var i GetTopCommentersRow
+		if err := rows.Scan(&i.Username, &i.Comments); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTopContributors = `-- name: GetTopContributors :many
+SELECT u.username, COUNT(*)::int AS stories
+FROM stories s
+JOIN users u ON u.id = s.user_id
+WHERE s.created_at >= $1::timestamptz AND s.deleted_at IS NULL
+GROUP BY u.username
+ORDER BY stories DESC
+LIMIT $2::int
+`
+
+type GetTopContributorsParams struct {
+	Since      pgtype.Timestamptz
+	MaxResults int32
+}
+
+type GetTopContributorsRow struct {
+	Username string
+	Stories  int32
+}
+
+func (q *Queries) GetTopContributors(ctx context.Context, arg GetTopContributorsParams) ([]GetTopContributorsRow, error) {
+	rows, err := q.db.Query(ctx, getTopContributors, arg.Since, arg.MaxResults)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopContributorsRow
+	for rows.Next() {
+		var i GetTopContributorsRow
+		if err := rows.Scan(&i.Username, &i.Stories); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTopPagesRange = `-- name: GetTopPagesRange :many
 SELECT
     path,
@@ -397,6 +477,33 @@ func (q *Queries) GetTopReferrersRange(ctx context.Context, arg GetTopReferrersR
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUserActivityStats = `-- name: GetUserActivityStats :one
+SELECT
+    (SELECT COUNT(DISTINCT user_id)::int FROM sessions WHERE last_seen_at >= $1::timestamptz) AS active_users,
+    (SELECT COUNT(*)::int FROM users WHERE created_at >= $1::timestamptz AND deleted_at IS NULL) AS new_users,
+    (SELECT COUNT(*)::int FROM stories WHERE created_at >= $1::timestamptz AND deleted_at IS NULL) AS new_stories,
+    (SELECT COUNT(*)::int FROM comments WHERE created_at >= $1::timestamptz AND deleted_at IS NULL) AS new_comments
+`
+
+type GetUserActivityStatsRow struct {
+	ActiveUsers int32
+	NewUsers    int32
+	NewStories  int32
+	NewComments int32
+}
+
+func (q *Queries) GetUserActivityStats(ctx context.Context, since pgtype.Timestamptz) (GetUserActivityStatsRow, error) {
+	row := q.db.QueryRow(ctx, getUserActivityStats, since)
+	var i GetUserActivityStatsRow
+	err := row.Scan(
+		&i.ActiveUsers,
+		&i.NewUsers,
+		&i.NewStories,
+		&i.NewComments,
+	)
+	return i, err
 }
 
 const insertPageView = `-- name: InsertPageView :exec

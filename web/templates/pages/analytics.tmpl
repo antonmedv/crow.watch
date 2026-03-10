@@ -204,6 +204,22 @@
       <div class="stat-card__value">{{ .Stats.Visitors }}</div>
       <div class="stat-card__label">Unique visitors</div>
     </div>
+    <div class="stat-card">
+      <div class="stat-card__value">{{ .UserActivity.ActiveUsers }}</div>
+      <div class="stat-card__label">Active users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__value">{{ .UserActivity.NewUsers }}</div>
+      <div class="stat-card__label">New signups</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__value">{{ .UserActivity.NewStories }}</div>
+      <div class="stat-card__label">Stories</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__value">{{ .UserActivity.NewComments }}</div>
+      <div class="stat-card__label">Comments</div>
+    </div>
   </div>
 
   {{ if .Chart }}
@@ -256,6 +272,38 @@
         </table>
       {{ else }}
         <div class="empty-state">No referrer data yet.</div>
+      {{ end }}
+    </div>
+
+    <div class="analytics-panel">
+      <div class="analytics-panel__title">Top Contributors</div>
+      {{ if .TopContributors }}
+        <table class="analytics-table">
+          {{ range .TopContributors }}
+            <tr>
+              <td><a href="/u/{{ .Username }}">{{ .Username }}</a></td>
+              <td>{{ .Count }} {{ pluralize .Count "story" "stories" }}</td>
+            </tr>
+          {{ end }}
+        </table>
+      {{ else }}
+        <div class="empty-state">No stories yet.</div>
+      {{ end }}
+    </div>
+
+    <div class="analytics-panel">
+      <div class="analytics-panel__title">Top Commenters</div>
+      {{ if .TopCommenters }}
+        <table class="analytics-table">
+          {{ range .TopCommenters }}
+            <tr>
+              <td><a href="/u/{{ .Username }}">{{ .Username }}</a></td>
+              <td>{{ .Count }} {{ pluralize .Count "comment" "comments" }}</td>
+            </tr>
+          {{ end }}
+        </table>
+      {{ else }}
+        <div class="empty-state">No comments yet.</div>
       {{ end }}
     </div>
 

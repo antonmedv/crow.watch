@@ -126,3 +126,28 @@ SET hits = EXCLUDED.hits;
 -- name: PurgePageViews :execrows
 DELETE FROM page_views
 WHERE created_at < @before::timestamptz;
+
+-- name: GetUserActivityStats :one
+SELECT
+    (SELECT COUNT(DISTINCT user_id)::int FROM sessions WHERE last_seen_at >= @since::timestamptz) AS active_users,
+    (SELECT COUNT(*)::int FROM users WHERE created_at >= @since::timestamptz AND deleted_at IS NULL) AS new_users,
+    (SELECT COUNT(*)::int FROM stories WHERE created_at >= @since::timestamptz AND deleted_at IS NULL) AS new_stories,
+    (SELECT COUNT(*)::int FROM comments WHERE created_at >= @since::timestamptz AND deleted_at IS NULL) AS new_comments;
+
+-- name: GetTopContributors :many
+SELECT u.username, COUNT(*)::int AS stories
+FROM stories s
+JOIN users u ON u.id = s.user_id
+WHERE s.created_at >= @since::timestamptz AND s.deleted_at IS NULL
+GROUP BY u.username
+ORDER BY stories DESC
+LIMIT @max_results::int;
+
+-- name: GetTopCommenters :many
+SELECT u.username, COUNT(*)::int AS comments
+FROM comments c
+JOIN users u ON u.id = c.user_id
+WHERE c.created_at >= @since::timestamptz AND c.deleted_at IS NULL
+GROUP BY u.username
+ORDER BY comments DESC
+LIMIT @max_results::int;

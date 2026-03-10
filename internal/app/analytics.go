@@ -12,20 +12,35 @@ import (
 )
 
 type AnalyticsPageData struct {
-	Base      Base
-	Period    string
-	Stats     AnalyticsStats
-	Chart     []ChartPoint
-	ChartMax  int
-	TopPages  []PageStat
-	Referrers []ReferrerStat
-	Devices   []BreakdownItem
-	Browsers  []BreakdownItem
+	Base            Base
+	Period          string
+	Stats           AnalyticsStats
+	Chart           []ChartPoint
+	ChartMax        int
+	TopPages        []PageStat
+	Referrers       []ReferrerStat
+	Devices         []BreakdownItem
+	Browsers        []BreakdownItem
+	UserActivity    UserActivityStats
+	TopContributors []UserStat
+	TopCommenters   []UserStat
 }
 
 type AnalyticsStats struct {
 	Views    int
 	Visitors int
+}
+
+type UserActivityStats struct {
+	ActiveUsers int
+	NewUsers    int
+	NewStories  int
+	NewComments int
+}
+
+type UserStat struct {
+	Username string
+	Count    int
 }
 
 type ChartPoint struct {
@@ -94,6 +109,17 @@ func (a *App) analyticsPage(w http.ResponseWriter, r *http.Request) {
 			data.ChartMax = pt.Views
 		}
 	}
+
+	var since time.Time
+	switch period {
+	case "today":
+		since = today
+	case "30d":
+		since = today.AddDate(0, 0, -29)
+	default:
+		since = today.AddDate(0, 0, -6)
+	}
+	data.UserActivity, data.TopContributors, data.TopCommenters = a.userAnalytics(r, since)
 
 	a.render(w, "analytics", data)
 }
@@ -219,6 +245,40 @@ func (a *App) liveBreakdowns(r *http.Request, since time.Time) ([]BreakdownItem,
 	}
 
 	return devices, browsers
+}
+
+func (a *App) userAnalytics(r *http.Request, since time.Time) (UserActivityStats, []UserStat, []UserStat) {
+	sinceTS := pgtype.Timestamptz{Time: since, Valid: true}
+
+	var activity UserActivityStats
+	if row, err := a.Queries.GetUserActivityStats(r.Context(), sinceTS); err == nil {
+		activity = UserActivityStats{
+			ActiveUsers: int(row.ActiveUsers),
+			NewUsers:    int(row.NewUsers),
+			NewStories:  int(row.NewStories),
+			NewComments: int(row.NewComments),
+		}
+	}
+
+	var contributors []UserStat
+	if rows, err := a.Queries.GetTopContributors(r.Context(), store.GetTopContributorsParams{
+		Since: sinceTS, MaxResults: 10,
+	}); err == nil {
+		for _, row := range rows {
+			contributors = append(contributors, UserStat{Username: row.Username, Count: int(row.Stories)})
+		}
+	}
+
+	var commenters []UserStat
+	if rows, err := a.Queries.GetTopCommenters(r.Context(), store.GetTopCommentersParams{
+		Since: sinceTS, MaxResults: 10,
+	}); err == nil {
+		for _, row := range rows {
+			commenters = append(commenters, UserStat{Username: row.Username, Count: int(row.Comments)})
+		}
+	}
+
+	return activity, contributors, commenters
 }
 
 func toBreakdown[T any](rows []T, extract func(T) (string, int)) []BreakdownItem {
