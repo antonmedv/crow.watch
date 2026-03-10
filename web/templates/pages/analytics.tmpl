@@ -117,7 +117,7 @@
       white-space: nowrap;
       writing-mode: vertical-rl;
       transform: rotate(180deg);
-      max-height: 48px;
+      height: 32px;
       overflow: hidden;
     }
 
@@ -215,17 +215,17 @@
     <div class="period-tabs">
       <a
         href="/mod/analytics?period=today"
-        class="period-tab{{ if eq .Period "today" }} period-tab--active{{ end }}"
+        class="period-tab{{ if eq .Period "today" }}period-tab--active{{ end }}"
         >Today</a
       >
       <a
         href="/mod/analytics?period=7d"
-        class="period-tab{{ if eq .Period "7d" }} period-tab--active{{ end }}"
+        class="period-tab{{ if eq .Period "7d" }}period-tab--active{{ end }}"
         >7 days</a
       >
       <a
         href="/mod/analytics?period=30d"
-        class="period-tab{{ if eq .Period "30d" }} period-tab--active{{ end }}"
+        class="period-tab{{ if eq .Period "30d" }}period-tab--active{{ end }}"
         >30 days</a
       >
     </div>
@@ -260,6 +260,7 @@
       </div>
     </div>
   {{ end }}
+
 
   <div class="analytics-grid">
     <div class="analytics-panel">
@@ -301,7 +302,9 @@
           <div class="breakdown-item">
             <div class="breakdown-header">
               <span>{{ .Name }}</span>
-              <span class="breakdown-percent">{{ printf "%.0f" .Percent }}%</span>
+              <span class="breakdown-percent"
+                >{{ printf "%.0f" .Percent }}%</span
+              >
             </div>
             <div class="breakdown-bar">
               <div
@@ -323,7 +326,9 @@
           <div class="breakdown-item">
             <div class="breakdown-header">
               <span>{{ .Name }}</span>
-              <span class="breakdown-percent">{{ printf "%.0f" .Percent }}%</span>
+              <span class="breakdown-percent"
+                >{{ printf "%.0f" .Percent }}%</span
+              >
             </div>
             <div class="breakdown-bar">
               <div
