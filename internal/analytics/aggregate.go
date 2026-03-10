@@ -11,8 +11,6 @@ import (
 	"crow.watch/internal/store"
 )
 
-const purgeRetention = 365 * 24 * time.Hour
-
 // Aggregate rolls up raw page_views into daily_stats and daily_referrers for the given date.
 func Aggregate(ctx context.Context, queries *store.Queries, date time.Time) error {
 	dayStart := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
@@ -76,14 +74,15 @@ func RunDailyAggregation(queries *store.Queries, log *slog.Logger, stop <-chan s
 		log.Info("analytics aggregated", "date", key)
 		lastAggregated = key
 
-		deleted, err := Purge(ctx, queries, purgeRetention)
-		if err != nil {
-			log.Error("analytics purge", "error", err)
-			return
-		}
-		if deleted > 0 {
-			log.Info("analytics purged", "deleted", deleted)
-		}
+		//const purgeRetention = 365 * 24 * time.Hour
+		//deleted, err := Purge(ctx, queries, purgeRetention)
+		//if err != nil {
+		//	log.Error("analytics purge", "error", err)
+		//	return
+		//}
+		//if deleted > 0 {
+		//	log.Info("analytics purged", "deleted", deleted)
+		//}
 	}
 
 	// Run immediately on startup.

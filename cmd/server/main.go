@@ -132,7 +132,15 @@ func main() {
 	inviteLimiter.StartCleanup(5*time.Minute, shutdownDone)
 	captchaStore.StartCleanup(5*time.Minute, shutdownDone)
 
-	analyticsSecret := envOrDefault("ANALYTICS_SECRET", "crow-analytics-default-key")
+	analyticsSecret := os.Getenv("ANALYTICS_SECRET")
+	if analyticsSecret == "" {
+		if devMode {
+			analyticsSecret = "dev-only-analytics-secret"
+		} else {
+			logger.Error("ANALYTICS_SECRET is required")
+			os.Exit(1)
+		}
+	}
 	collector := analytics.NewCollector(queries, analyticsSecret, logger)
 
 	a := &app.App{
@@ -197,6 +205,7 @@ func main() {
 		if err := srv.Shutdown(shutdownCtx); err != nil {
 			logger.Error("shutdown", "error", err)
 		}
+		collector.Close()
 	}()
 
 	logger.Info("server starting", "addr", addr)

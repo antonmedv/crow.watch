@@ -16,6 +16,11 @@ import (
 	"crow.watch/internal/store"
 )
 
+const (
+	recordBuffer = 1024
+	numWorkers   = 2
+)
+
 // Collector records page view events.
 type Collector struct {
 	queries   *store.Queries
@@ -25,6 +30,9 @@ type Collector struct {
 	mu      sync.Mutex
 	daySalt string
 	dayDate string
+
+	recordCh chan store.InsertPageViewParams
+	wg       sync.WaitGroup
 }
 
 // NewCollector creates a new analytics collector.
@@ -33,9 +41,33 @@ func NewCollector(queries *store.Queries, secretKey string, log *slog.Logger) *C
 		queries:   queries,
 		log:       log,
 		secretKey: []byte(secretKey),
+		recordCh:  make(chan store.InsertPageViewParams, recordBuffer),
 	}
 	c.rotateSalt()
+
+	c.wg.Add(numWorkers)
+	for range numWorkers {
+		go c.worker()
+	}
+
 	return c
+}
+
+// Close drains pending page views and stops workers.
+func (c *Collector) Close() {
+	close(c.recordCh)
+	c.wg.Wait()
+}
+
+func (c *Collector) worker() {
+	defer c.wg.Done()
+	for params := range c.recordCh {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		if err := c.queries.InsertPageView(ctx, params); err != nil {
+			c.log.Error("record page view", "error", err, "path", params.Path)
+		}
+		cancel()
+	}
 }
 
 func (c *Collector) rotateSalt() {
@@ -62,10 +94,10 @@ func (c *Collector) VisitorID(ip, userAgent string) string {
 	h.Write([]byte(ip))
 	h.Write([]byte(userAgent))
 	h.Write([]byte(c.salt()))
-	return hex.EncodeToString(h.Sum(nil))[:16]
+	return hex.EncodeToString(h.Sum(nil))[:32]
 }
 
-// Record stores a page view event in the background.
+// Record stores a page view event via a buffered worker pool.
 func (c *Collector) Record(r *http.Request) {
 	ip := clientIP(r)
 	ua := r.UserAgent()
@@ -74,19 +106,19 @@ func (c *Collector) Record(r *http.Request) {
 	parsed := ParseUA(ua)
 	visitorID := c.VisitorID(ip, ua)
 
-	go func() {
-		if err := c.queries.InsertPageView(context.Background(), store.InsertPageViewParams{
-			Path:      path,
-			VisitorID: visitorID,
-			Referrer:  referrer,
-			Device:    parsed.Device,
-			Browser:   parsed.Browser,
-			Os:        parsed.OS,
-			IsBot:     parsed.IsBot,
-		}); err != nil {
-			c.log.Error("record page view", "error", err, "path", path)
-		}
-	}()
+	select {
+	case c.recordCh <- store.InsertPageViewParams{
+		Path:      path,
+		VisitorID: visitorID,
+		Referrer:  referrer,
+		Device:    parsed.Device,
+		Browser:   parsed.Browser,
+		Os:        parsed.OS,
+		IsBot:     parsed.IsBot,
+	}:
+	default:
+		c.log.Warn("analytics buffer full, dropping page view", "path", path)
+	}
 }
 
 // ShouldTrack returns true if the request should be tracked.
@@ -107,12 +139,14 @@ func ShouldTrack(r *http.Request) bool {
 
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		if ip := strings.TrimSpace(strings.SplitN(xff, ",", 2)[0]); ip != "" {
+		if ip := strings.TrimSpace(strings.SplitN(xff, ",", 2)[0]); ip != "" && net.ParseIP(ip) != nil {
 			return ip
 		}
 	}
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		return strings.TrimSpace(xri)
+		if ip := strings.TrimSpace(xri); net.ParseIP(ip) != nil {
+			return ip
+		}
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -131,7 +165,7 @@ func extractReferrerDomain(rawRef string) string {
 	}
 	host := strings.ToLower(u.Hostname())
 	// Strip self-referrals — if it's our own site, treat as direct
-	if host == "crow.watch" || host == "www.crow.watch" {
+	if host == "crow.watch" || strings.HasSuffix(host, ".crow.watch") {
 		return ""
 	}
 	return host

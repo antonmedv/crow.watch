@@ -9,21 +9,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func newTestCollector() *Collector {
+	return NewCollector(nil, "test-secret", slog.Default())
+}
+
 func TestVisitorID_Deterministic(t *testing.T) {
-	c := NewCollector(nil, "test-secret", slog.Default())
+	c := newTestCollector()
+	defer c.Close()
 	id1 := c.VisitorID("1.2.3.4", "Mozilla/5.0")
 	id2 := c.VisitorID("1.2.3.4", "Mozilla/5.0")
 	assert.Equal(t, id1, id2)
 }
 
 func TestVisitorID_Length(t *testing.T) {
-	c := NewCollector(nil, "test-secret", slog.Default())
+	c := newTestCollector()
+	defer c.Close()
 	id := c.VisitorID("1.2.3.4", "Mozilla/5.0")
-	assert.Len(t, id, 16)
+	assert.Len(t, id, 32)
 }
 
 func TestVisitorID_DifferentInputs(t *testing.T) {
-	c := NewCollector(nil, "test-secret", slog.Default())
+	c := newTestCollector()
+	defer c.Close()
 	id1 := c.VisitorID("1.2.3.4", "Mozilla/5.0")
 	id2 := c.VisitorID("5.6.7.8", "Mozilla/5.0")
 	id3 := c.VisitorID("1.2.3.4", "Chrome/120")
@@ -34,6 +41,8 @@ func TestVisitorID_DifferentInputs(t *testing.T) {
 func TestVisitorID_DifferentSecrets(t *testing.T) {
 	c1 := NewCollector(nil, "secret-a", slog.Default())
 	c2 := NewCollector(nil, "secret-b", slog.Default())
+	defer c1.Close()
+	defer c2.Close()
 	id1 := c1.VisitorID("1.2.3.4", "Mozilla/5.0")
 	id2 := c2.VisitorID("1.2.3.4", "Mozilla/5.0")
 	assert.NotEqual(t, id1, id2)
@@ -82,6 +91,7 @@ func TestClientIP(t *testing.T) {
 		{"x-forwarded-for chain", "9.9.9.9:1234", "1.2.3.4, 5.6.7.8", "", "1.2.3.4"},
 		{"x-real-ip", "9.9.9.9:1234", "", "1.2.3.4", "1.2.3.4"},
 		{"xff takes precedence over xri", "9.9.9.9:1234", "1.1.1.1", "2.2.2.2", "1.1.1.1"},
+		{"invalid xff falls through to remote addr", "9.9.9.9:1234", "not-an-ip", "", "9.9.9.9"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -110,6 +120,7 @@ func TestExtractReferrerDomain(t *testing.T) {
 		{"http", "http://github.com/", "github.com"},
 		{"self crow.watch", "https://crow.watch/newest", ""},
 		{"self www.crow.watch", "https://www.crow.watch/x/abc/story", ""},
+		{"self subdomain", "https://api.crow.watch/v1/test", ""},
 		{"invalid url", "not a url ::::", ""},
 		{"uppercase", "https://NEWS.YCOMBINATOR.COM/", "news.ycombinator.com"},
 	}
@@ -121,7 +132,6 @@ func TestExtractReferrerDomain(t *testing.T) {
 }
 
 func TestAnalyticsMiddleware_SkipsNonTrackable(t *testing.T) {
-	// Verify the middleware calls next handler regardless
 	called := false
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
@@ -130,8 +140,6 @@ func TestAnalyticsMiddleware_SkipsNonTrackable(t *testing.T) {
 
 	r := httptest.NewRequest("POST", "/login", nil)
 	w := httptest.NewRecorder()
-	// ShouldTrack returns false for POST, so no recording happens
-	// but the handler should still be called
 	handler.ServeHTTP(w, r)
 	assert.True(t, called)
 	assert.Equal(t, http.StatusOK, w.Code)
