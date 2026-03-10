@@ -11,42 +11,6 @@
       margin-bottom: 24px;
     }
 
-    .period-tabs {
-      display: flex;
-      gap: 4px;
-    }
-
-    .period-tab {
-      padding: 6px 14px;
-      font: inherit;
-      font-size: 14px;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      background: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    .period-tab:hover {
-      color: var(--text);
-      text-decoration: none;
-    }
-
-    .period-tab:first-child {
-      border-radius: 6px 0 0 6px;
-    }
-
-    .period-tab:last-child {
-      border-radius: 0 6px 6px 0;
-    }
-
-    .period-tab--active {
-      background: var(--text);
-      color: var(--bg);
-      border-color: var(--text);
-    }
-
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -212,20 +176,20 @@
 {{ define "content" }}
   <div class="analytics-header">
     <h1 class="page-title" style="margin: 0">Analytics</h1>
-    <div class="period-tabs">
+    <div class="tabs">
       <a
         href="/mod/analytics?period=today"
-        class="period-tab{{ if eq .Period "today" }}period-tab--active{{ end }}"
+        class="{{ classes "tabs__tab" (when (eq .Period "today") "active") }}"
         >Today</a
       >
       <a
         href="/mod/analytics?period=7d"
-        class="period-tab{{ if eq .Period "7d" }}period-tab--active{{ end }}"
+        class="{{ classes "tabs__tab" (when (eq .Period "7d") "active") }}"
         >7 days</a
       >
       <a
         href="/mod/analytics?period=30d"
-        class="period-tab{{ if eq .Period "30d" }}period-tab--active{{ end }}"
+        class="{{ classes "tabs__tab" (when (eq .Period "30d") "active") }}"
         >30 days</a
       >
     </div>
