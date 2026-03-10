@@ -108,25 +108,27 @@ func TestClientIP(t *testing.T) {
 	}
 }
 
-func TestExtractReferrerDomain(t *testing.T) {
+func TestCleanReferrer(t *testing.T) {
 	tests := []struct {
 		name string
 		ref  string
 		want string
 	}{
 		{"empty", "", ""},
-		{"simple", "https://news.ycombinator.com/item?id=123", "news.ycombinator.com"},
-		{"with path", "https://www.reddit.com/r/golang/comments/abc", "www.reddit.com"},
-		{"http", "http://github.com/", "github.com"},
+		{"strips query string", "https://news.ycombinator.com/item?id=123", "news.ycombinator.com/item"},
+		{"with path", "https://www.reddit.com/r/golang/comments/abc", "www.reddit.com/r/golang/comments/abc"},
+		{"root path", "http://github.com/", "github.com"},
 		{"self crow.watch", "https://crow.watch/newest", ""},
 		{"self www.crow.watch", "https://www.crow.watch/x/abc/story", ""},
 		{"self subdomain", "https://api.crow.watch/v1/test", ""},
 		{"invalid url", "not a url ::::", ""},
 		{"uppercase", "https://NEWS.YCOMBINATOR.COM/", "news.ycombinator.com"},
+		{"github repo", "https://github.com/anthropics/claude-code", "github.com/anthropics/claude-code"},
+		{"no path", "https://example.com", "example.com"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, extractReferrerDomain(tt.ref))
+			assert.Equal(t, tt.want, cleanReferrer(tt.ref))
 		})
 	}
 }

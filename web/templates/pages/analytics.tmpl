@@ -131,6 +131,67 @@
       max-width: 300px;
     }
 
+    .referrer-group + .referrer-group {
+      border-top: 1px solid var(--border);
+    }
+
+    .referrer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 4px 0;
+      font-size: 14px;
+    }
+
+    .referrer-row__hits {
+      color: var(--text-muted);
+      white-space: nowrap;
+      padding-left: 12px;
+    }
+
+    details.referrer-group > summary {
+      list-style: none;
+      cursor: pointer;
+    }
+
+    details.referrer-group > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.referrer-group > summary .referrer-row__domain::before {
+      content: "+";
+      display: inline-block;
+      width: 12px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    details.referrer-group[open] > summary .referrer-row__domain::before {
+      content: "-";
+    }
+
+    .referrer-sublist {
+      padding: 2px 0 4px 16px;
+    }
+
+    .referrer-subrow {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 2px 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .referrer-subrow__path {
+      word-break: break-all;
+    }
+
+    .referrer-subrow__hits {
+      white-space: nowrap;
+      padding-left: 12px;
+    }
+
     .breakdown-item {
       margin-bottom: 8px;
     }
@@ -285,14 +346,33 @@
     <div class="analytics-panel">
       <div class="analytics-panel__title">Top Referrers</div>
       {{ if .Referrers }}
-        <table class="analytics-table">
-          {{ range .Referrers }}
-            <tr>
-              <td>{{ .Domain }}</td>
-              <td>{{ .Hits }}</td>
-            </tr>
+        {{ range .Referrers }}
+          {{ if .URLs }}
+            <details class="referrer-group">
+              <summary>
+                <div class="referrer-row">
+                  <span class="referrer-row__domain">{{ .Domain }}</span>
+                  <span class="referrer-row__hits">{{ .Hits }}</span>
+                </div>
+              </summary>
+              <div class="referrer-sublist">
+                {{ range .URLs }}
+                  <div class="referrer-subrow">
+                    <span class="referrer-subrow__path">{{ .Path }}</span>
+                    <span class="referrer-subrow__hits">{{ .Hits }}</span>
+                  </div>
+                {{ end }}
+              </div>
+            </details>
+          {{ else }}
+            <div class="referrer-group">
+              <div class="referrer-row">
+                <span>{{ .Domain }}</span>
+                <span class="referrer-row__hits">{{ .Hits }}</span>
+              </div>
+            </div>
           {{ end }}
-        </table>
+        {{ end }}
       {{ else }}
         <div class="empty-state">No referrer data yet.</div>
       {{ end }}

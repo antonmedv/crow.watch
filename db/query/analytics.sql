@@ -24,13 +24,13 @@ LIMIT @max_results::int;
 
 -- name: GetLiveTopReferrers :many
 SELECT
-    referrer AS referrer_domain,
+    split_part(referrer, '/', 1) AS referrer_domain,
     COUNT(*)::int AS hits
 FROM page_views
 WHERE created_at >= @since::timestamptz
   AND NOT is_bot
   AND referrer != ''
-GROUP BY referrer
+GROUP BY split_part(referrer, '/', 1)
 ORDER BY hits DESC
 LIMIT @max_results::int;
 
@@ -94,6 +94,29 @@ GROUP BY referrer_domain
 ORDER BY hits DESC
 LIMIT @max_results::int;
 
+-- name: GetLiveReferrerURLs :many
+SELECT
+    split_part(referrer, '/', 1) AS referrer_domain,
+    referrer AS referrer_url,
+    COUNT(*)::int AS hits
+FROM page_views
+WHERE created_at >= @since::timestamptz
+  AND NOT is_bot
+  AND referrer LIKE '%/%'
+GROUP BY referrer
+ORDER BY split_part(referrer, '/', 1), hits DESC;
+
+-- name: GetReferrerURLsRange :many
+SELECT
+    referrer_domain,
+    referrer_url,
+    SUM(hits)::int AS hits
+FROM daily_referrers
+WHERE date >= @start_date::date AND date <= @end_date::date
+  AND referrer_url != referrer_domain
+GROUP BY referrer_domain, referrer_url
+ORDER BY referrer_domain, hits DESC;
+
 -- name: AggregatePageViews :exec
 INSERT INTO daily_stats (date, path, views, visitors)
 SELECT
@@ -109,18 +132,18 @@ ON CONFLICT (date, path) DO UPDATE
 SET views = EXCLUDED.views, visitors = EXCLUDED.visitors;
 
 -- name: AggregateReferrers :exec
-INSERT INTO daily_referrers (date, referrer_domain, path, hits)
+INSERT INTO daily_referrers (date, referrer_domain, referrer_url, hits)
 SELECT
     @target_date::date,
+    split_part(referrer, '/', 1),
     referrer,
-    path,
     COUNT(*)::int
 FROM page_views
 WHERE created_at >= @day_start::timestamptz AND created_at < @day_end::timestamptz
   AND NOT is_bot
   AND referrer != ''
-GROUP BY referrer, path
-ON CONFLICT (date, referrer_domain, path) DO UPDATE
+GROUP BY referrer
+ON CONFLICT (date, referrer_domain, referrer_url) DO UPDATE
 SET hits = EXCLUDED.hits;
 
 -- name: PurgePageViews :execrows

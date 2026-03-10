@@ -38,18 +38,18 @@ func (q *Queries) AggregatePageViews(ctx context.Context, arg AggregatePageViews
 }
 
 const aggregateReferrers = `-- name: AggregateReferrers :exec
-INSERT INTO daily_referrers (date, referrer_domain, path, hits)
+INSERT INTO daily_referrers (date, referrer_domain, referrer_url, hits)
 SELECT
     $1::date,
+    split_part(referrer, '/', 1),
     referrer,
-    path,
     COUNT(*)::int
 FROM page_views
 WHERE created_at >= $2::timestamptz AND created_at < $3::timestamptz
   AND NOT is_bot
   AND referrer != ''
-GROUP BY referrer, path
-ON CONFLICT (date, referrer_domain, path) DO UPDATE
+GROUP BY referrer
+ON CONFLICT (date, referrer_domain, referrer_url) DO UPDATE
 SET hits = EXCLUDED.hits
 `
 
@@ -270,6 +270,45 @@ func (q *Queries) GetLiveDeviceBreakdown(ctx context.Context, since pgtype.Times
 	return items, nil
 }
 
+const getLiveReferrerURLs = `-- name: GetLiveReferrerURLs :many
+SELECT
+    split_part(referrer, '/', 1) AS referrer_domain,
+    referrer AS referrer_url,
+    COUNT(*)::int AS hits
+FROM page_views
+WHERE created_at >= $1::timestamptz
+  AND NOT is_bot
+  AND referrer LIKE '%/%'
+GROUP BY referrer
+ORDER BY split_part(referrer, '/', 1), hits DESC
+`
+
+type GetLiveReferrerURLsRow struct {
+	ReferrerDomain string
+	ReferrerUrl    string
+	Hits           int32
+}
+
+func (q *Queries) GetLiveReferrerURLs(ctx context.Context, since pgtype.Timestamptz) ([]GetLiveReferrerURLsRow, error) {
+	rows, err := q.db.Query(ctx, getLiveReferrerURLs, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetLiveReferrerURLsRow
+	for rows.Next() {
+		var i GetLiveReferrerURLsRow
+		if err := rows.Scan(&i.ReferrerDomain, &i.ReferrerUrl, &i.Hits); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLiveStats = `-- name: GetLiveStats :one
 SELECT
     COUNT(*)::int AS views,
@@ -337,13 +376,13 @@ func (q *Queries) GetLiveTopPages(ctx context.Context, arg GetLiveTopPagesParams
 
 const getLiveTopReferrers = `-- name: GetLiveTopReferrers :many
 SELECT
-    referrer AS referrer_domain,
+    split_part(referrer, '/', 1) AS referrer_domain,
     COUNT(*)::int AS hits
 FROM page_views
 WHERE created_at >= $1::timestamptz
   AND NOT is_bot
   AND referrer != ''
-GROUP BY referrer
+GROUP BY split_part(referrer, '/', 1)
 ORDER BY hits DESC
 LIMIT $2::int
 `
@@ -368,6 +407,49 @@ func (q *Queries) GetLiveTopReferrers(ctx context.Context, arg GetLiveTopReferre
 	for rows.Next() {
 		var i GetLiveTopReferrersRow
 		if err := rows.Scan(&i.ReferrerDomain, &i.Hits); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getReferrerURLsRange = `-- name: GetReferrerURLsRange :many
+SELECT
+    referrer_domain,
+    referrer_url,
+    SUM(hits)::int AS hits
+FROM daily_referrers
+WHERE date >= $1::date AND date <= $2::date
+  AND referrer_url != referrer_domain
+GROUP BY referrer_domain, referrer_url
+ORDER BY referrer_domain, hits DESC
+`
+
+type GetReferrerURLsRangeParams struct {
+	StartDate pgtype.Date
+	EndDate   pgtype.Date
+}
+
+type GetReferrerURLsRangeRow struct {
+	ReferrerDomain string
+	ReferrerUrl    string
+	Hits           int32
+}
+
+func (q *Queries) GetReferrerURLsRange(ctx context.Context, arg GetReferrerURLsRangeParams) ([]GetReferrerURLsRangeRow, error) {
+	rows, err := q.db.Query(ctx, getReferrerURLsRange, arg.StartDate, arg.EndDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetReferrerURLsRangeRow
+	for rows.Next() {
+		var i GetReferrerURLsRangeRow
+		if err := rows.Scan(&i.ReferrerDomain, &i.ReferrerUrl, &i.Hits); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

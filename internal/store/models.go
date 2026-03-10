@@ -65,7 +65,7 @@ type CommentVote struct {
 type DailyReferrer struct {
 	Date           pgtype.Date
 	ReferrerDomain string
-	Path           string
+	ReferrerUrl    string
 	Hits           int32
 }
 

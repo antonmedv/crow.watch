@@ -283,9 +283,9 @@ CREATE TABLE daily_stats (
 CREATE TABLE daily_referrers (
     date            DATE NOT NULL,
     referrer_domain TEXT NOT NULL,
-    path            TEXT NOT NULL,
+    referrer_url    TEXT NOT NULL DEFAULT '',
     hits            INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (date, referrer_domain, path)
+    PRIMARY KEY (date, referrer_domain, referrer_url)
 );
 
 CREATE TABLE daily_user_stats (

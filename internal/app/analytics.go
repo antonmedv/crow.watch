@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -20,7 +21,7 @@ type AnalyticsPageData struct {
 	UserChart       []UserChartPoint
 	UserChartMax    int
 	TopPages        []PageStat
-	Referrers       []ReferrerStat
+	Referrers       []ReferrerGroup
 	Devices         []BreakdownItem
 	Browsers        []BreakdownItem
 	UserActivity    UserActivityStats
@@ -62,9 +63,15 @@ type PageStat struct {
 	Visitors int
 }
 
-type ReferrerStat struct {
+type ReferrerGroup struct {
 	Domain string
 	Hits   int
+	URLs   []ReferrerURL
+}
+
+type ReferrerURL struct {
+	Path string
+	Hits int
 }
 
 type BreakdownItem struct {
@@ -149,7 +156,7 @@ func (a *App) analyticsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (a *App) liveAnalytics(r *http.Request, since time.Time) (AnalyticsStats, []PageStat, []ReferrerStat, []BreakdownItem, []BreakdownItem) {
+func (a *App) liveAnalytics(r *http.Request, since time.Time) (AnalyticsStats, []PageStat, []ReferrerGroup, []BreakdownItem, []BreakdownItem) {
 	sinceTS := pgtype.Timestamptz{Time: since, Valid: true}
 
 	var stats AnalyticsStats
@@ -166,13 +173,12 @@ func (a *App) liveAnalytics(r *http.Request, since time.Time) (AnalyticsStats, [
 		}
 	}
 
-	var referrers []ReferrerStat
-	if rows, err := a.Queries.GetLiveTopReferrers(r.Context(), store.GetLiveTopReferrersParams{
+	var referrers []ReferrerGroup
+	if domains, err := a.Queries.GetLiveTopReferrers(r.Context(), store.GetLiveTopReferrersParams{
 		Since: sinceTS, MaxResults: 10,
 	}); err == nil {
-		for _, row := range rows {
-			referrers = append(referrers, ReferrerStat{Domain: row.ReferrerDomain, Hits: int(row.Hits)})
-		}
+		urls, _ := a.Queries.GetLiveReferrerURLs(r.Context(), sinceTS)
+		referrers = buildReferrerGroups(domains, urls)
 	}
 
 	var devices []BreakdownItem
@@ -188,7 +194,7 @@ func (a *App) liveAnalytics(r *http.Request, since time.Time) (AnalyticsStats, [
 	return stats, pages, referrers, devices, browsers
 }
 
-func (a *App) rangeAnalytics(r *http.Request, start, end time.Time) (AnalyticsStats, []ChartPoint, []PageStat, []ReferrerStat) {
+func (a *App) rangeAnalytics(r *http.Request, start, end time.Time) (AnalyticsStats, []ChartPoint, []PageStat, []ReferrerGroup) {
 	startDate := pgtype.Date{Time: start, Valid: true}
 	endDate := pgtype.Date{Time: end, Valid: true}
 
@@ -235,13 +241,14 @@ func (a *App) rangeAnalytics(r *http.Request, start, end time.Time) (AnalyticsSt
 		}
 	}
 
-	var referrers []ReferrerStat
-	if rows, err := a.Queries.GetTopReferrersRange(r.Context(), store.GetTopReferrersRangeParams{
+	var referrers []ReferrerGroup
+	if domains, err := a.Queries.GetTopReferrersRange(r.Context(), store.GetTopReferrersRangeParams{
 		StartDate: startDate, EndDate: endDate, MaxResults: 10,
 	}); err == nil {
-		for _, row := range rows {
-			referrers = append(referrers, ReferrerStat{Domain: row.ReferrerDomain, Hits: int(row.Hits)})
-		}
+		urls, _ := a.Queries.GetReferrerURLsRange(r.Context(), store.GetReferrerURLsRangeParams{
+			StartDate: startDate, EndDate: endDate,
+		})
+		referrers = buildReferrerGroupsRange(domains, urls)
 	}
 
 	return stats, chart, pages, referrers
@@ -319,6 +326,44 @@ func (a *App) userAnalytics(r *http.Request, since time.Time) (UserActivityStats
 	}
 
 	return activity, contributors, commenters
+}
+
+func buildReferrerGroups(domains []store.GetLiveTopReferrersRow, urls []store.GetLiveReferrerURLsRow) []ReferrerGroup {
+	urlsByDomain := make(map[string][]ReferrerURL)
+	for _, u := range urls {
+		urlsByDomain[u.ReferrerDomain] = append(urlsByDomain[u.ReferrerDomain], ReferrerURL{
+			Path: strings.TrimPrefix(u.ReferrerUrl, u.ReferrerDomain),
+			Hits: int(u.Hits),
+		})
+	}
+	groups := make([]ReferrerGroup, 0, len(domains))
+	for _, d := range domains {
+		groups = append(groups, ReferrerGroup{
+			Domain: d.ReferrerDomain,
+			Hits:   int(d.Hits),
+			URLs:   urlsByDomain[d.ReferrerDomain],
+		})
+	}
+	return groups
+}
+
+func buildReferrerGroupsRange(domains []store.GetTopReferrersRangeRow, urls []store.GetReferrerURLsRangeRow) []ReferrerGroup {
+	urlsByDomain := make(map[string][]ReferrerURL)
+	for _, u := range urls {
+		urlsByDomain[u.ReferrerDomain] = append(urlsByDomain[u.ReferrerDomain], ReferrerURL{
+			Path: strings.TrimPrefix(u.ReferrerUrl, u.ReferrerDomain),
+			Hits: int(u.Hits),
+		})
+	}
+	groups := make([]ReferrerGroup, 0, len(domains))
+	for _, d := range domains {
+		groups = append(groups, ReferrerGroup{
+			Domain: d.ReferrerDomain,
+			Hits:   int(d.Hits),
+			URLs:   urlsByDomain[d.ReferrerDomain],
+		})
+	}
+	return groups
 }
 
 func toBreakdown[T any](rows []T, extract func(T) (string, int)) []BreakdownItem {

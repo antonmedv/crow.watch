@@ -102,7 +102,7 @@ func (c *Collector) Record(r *http.Request) {
 	ip := clientIP(r)
 	ua := r.UserAgent()
 	path := r.URL.Path
-	referrer := extractReferrerDomain(r.Header.Get("Referer"))
+	referrer := cleanReferrer(r.Header.Get("Referer"))
 	parsed := ParseUA(ua)
 	visitorID := c.VisitorID(ip, ua)
 
@@ -155,7 +155,9 @@ func clientIP(r *http.Request) string {
 	return host
 }
 
-func extractReferrerDomain(rawRef string) string {
+// cleanReferrer extracts host/path from a raw Referer header value.
+// Self-referrals are filtered out. Query strings are stripped for privacy.
+func cleanReferrer(rawRef string) string {
 	if rawRef == "" {
 		return ""
 	}
@@ -164,9 +166,12 @@ func extractReferrerDomain(rawRef string) string {
 		return ""
 	}
 	host := strings.ToLower(u.Hostname())
-	// Strip self-referrals — if it's our own site, treat as direct
-	if host == "crow.watch" || strings.HasSuffix(host, ".crow.watch") {
+	if host == "" || host == "crow.watch" || strings.HasSuffix(host, ".crow.watch") {
 		return ""
 	}
-	return host
+	p := u.Path
+	if p == "" || p == "/" {
+		return host
+	}
+	return host + p
 }
