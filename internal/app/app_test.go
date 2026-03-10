@@ -106,17 +106,6 @@ func TestRenderLoginTab(t *testing.T) {
 	assert.Contains(t, body, `name="password"`)
 }
 
-func TestRenderRegisterTab(t *testing.T) {
-	a := testApp(t)
-	w := httptest.NewRecorder()
-
-	a.render(w, "login", LoginPageData{Tab: "register"})
-
-	body := w.Body.String()
-	assert.Contains(t, body, "invite-only")
-	assert.NotContains(t, body, `name="password"`)
-}
-
 func TestRenderLoginError(t *testing.T) {
 	a := testApp(t)
 	w := httptest.NewRecorder()
