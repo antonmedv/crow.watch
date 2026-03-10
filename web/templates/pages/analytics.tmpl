@@ -1,0 +1,341 @@
+{{ define "title" }}Analytics | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .analytics-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .period-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .period-tab {
+      padding: 6px 14px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .period-tab:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .period-tab:first-child {
+      border-radius: 6px 0 0 6px;
+    }
+
+    .period-tab:last-child {
+      border-radius: 0 6px 6px 0;
+    }
+
+    .period-tab--active {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .stat-card__value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .stat-card__label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .chart-container {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 120px;
+      min-width: fit-content;
+    }
+
+    .bar-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      min-width: 24px;
+    }
+
+    .bar {
+      width: 100%;
+      min-height: 2px;
+      background: var(--primary);
+      border-radius: 2px 2px 0 0;
+      opacity: 0.7;
+    }
+
+    .bar-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      max-height: 48px;
+      overflow: hidden;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .analytics-panel {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .analytics-panel__title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .analytics-table td {
+      padding: 4px 0;
+      vertical-align: top;
+    }
+
+    .analytics-table td:last-child {
+      text-align: right;
+      color: var(--text-muted);
+      white-space: nowrap;
+      padding-left: 12px;
+    }
+
+    .analytics-table .path-cell {
+      word-break: break-all;
+      max-width: 300px;
+    }
+
+    .breakdown-item {
+      margin-bottom: 8px;
+    }
+
+    .breakdown-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 2px;
+    }
+
+    .breakdown-percent {
+      color: var(--text-muted);
+    }
+
+    .breakdown-bar {
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .breakdown-bar__fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .empty-state {
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 12px 0;
+    }
+
+    @media (max-width: 640px) {
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bar-label {
+        display: none;
+      }
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <div class="analytics-header">
+    <h1 class="page-title" style="margin: 0">Analytics</h1>
+    <div class="period-tabs">
+      <a
+        href="/mod/analytics?period=today"
+        class="period-tab{{ if eq .Period "today" }} period-tab--active{{ end }}"
+        >Today</a
+      >
+      <a
+        href="/mod/analytics?period=7d"
+        class="period-tab{{ if eq .Period "7d" }} period-tab--active{{ end }}"
+        >7 days</a
+      >
+      <a
+        href="/mod/analytics?period=30d"
+        class="period-tab{{ if eq .Period "30d" }} period-tab--active{{ end }}"
+        >30 days</a
+      >
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card__value">{{ .Stats.Views }}</div>
+      <div class="stat-card__label">Page views</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card__value">{{ .Stats.Visitors }}</div>
+      <div class="stat-card__label">Unique visitors</div>
+    </div>
+  </div>
+
+  {{ if .Chart }}
+    <div class="chart-container">
+      <div class="chart-title">Traffic</div>
+      <div class="bar-chart">
+        {{ $max := .ChartMax }}
+        {{ range .Chart }}
+          <div class="bar-group">
+            <div
+              class="bar"
+              style="height: {{ chartPct .Views $max }}%"
+              title="{{ .Label }}: {{ .Views }} views, {{ .Visitors }} visitors"
+            ></div>
+            <span class="bar-label">{{ .Label }}</span>
+          </div>
+        {{ end }}
+      </div>
+    </div>
+  {{ end }}
+
+  <div class="analytics-grid">
+    <div class="analytics-panel">
+      <div class="analytics-panel__title">Top Pages</div>
+      {{ if .TopPages }}
+        <table class="analytics-table">
+          {{ range .TopPages }}
+            <tr>
+              <td class="path-cell">{{ .Path }}</td>
+              <td>{{ .Views }}</td>
+            </tr>
+          {{ end }}
+        </table>
+      {{ else }}
+        <div class="empty-state">No data yet.</div>
+      {{ end }}
+    </div>
+
+    <div class="analytics-panel">
+      <div class="analytics-panel__title">Top Referrers</div>
+      {{ if .Referrers }}
+        <table class="analytics-table">
+          {{ range .Referrers }}
+            <tr>
+              <td>{{ .Domain }}</td>
+              <td>{{ .Hits }}</td>
+            </tr>
+          {{ end }}
+        </table>
+      {{ else }}
+        <div class="empty-state">No referrer data yet.</div>
+      {{ end }}
+    </div>
+
+    <div class="analytics-panel">
+      <div class="analytics-panel__title">Devices</div>
+      {{ if .Devices }}
+        {{ range .Devices }}
+          <div class="breakdown-item">
+            <div class="breakdown-header">
+              <span>{{ .Name }}</span>
+              <span class="breakdown-percent">{{ printf "%.0f" .Percent }}%</span>
+            </div>
+            <div class="breakdown-bar">
+              <div
+                class="breakdown-bar__fill"
+                style="width: {{ printf "%.1f" .Percent }}%"
+              ></div>
+            </div>
+          </div>
+        {{ end }}
+      {{ else }}
+        <div class="empty-state">No device data yet.</div>
+      {{ end }}
+    </div>
+
+    <div class="analytics-panel">
+      <div class="analytics-panel__title">Browsers</div>
+      {{ if .Browsers }}
+        {{ range .Browsers }}
+          <div class="breakdown-item">
+            <div class="breakdown-header">
+              <span>{{ .Name }}</span>
+              <span class="breakdown-percent">{{ printf "%.0f" .Percent }}%</span>
+            </div>
+            <div class="breakdown-bar">
+              <div
+                class="breakdown-bar__fill"
+                style="width: {{ printf "%.1f" .Percent }}%"
+              ></div>
+            </div>
+          </div>
+        {{ end }}
+      {{ else }}
+        <div class="empty-state">No browser data yet.</div>
+      {{ end }}
+    </div>
+  </div>
+{{ end }}

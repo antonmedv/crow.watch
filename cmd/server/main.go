@@ -14,6 +14,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"crow.watch/internal/analytics"
 	"crow.watch/internal/app"
 	"crow.watch/internal/auth"
 	"crow.watch/internal/captcha"
@@ -131,6 +132,9 @@ func main() {
 	inviteLimiter.StartCleanup(5*time.Minute, rateLimitDone)
 	captchaStore.StartCleanup(5*time.Minute, rateLimitDone)
 
+	analyticsSecret := envOrDefault("ANALYTICS_SECRET", "crow-analytics-default-key")
+	collector := analytics.NewCollector(queries, analyticsSecret, logger)
+
 	a := &app.App{
 		Pool:             pool,
 		Queries:          queries,
@@ -148,6 +152,7 @@ func main() {
 		LoginAcctLimiter: loginAcctLimiter,
 		InviteLimiter:    inviteLimiter,
 		Captcha:          captchaStore,
+		Analytics:        collector,
 	}
 
 	addr := envOrDefault("ADDR", ":8080")

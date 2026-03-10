@@ -18,6 +18,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"crow.watch/internal/analytics"
 	"crow.watch/internal/auth"
 	"crow.watch/internal/captcha"
 	"crow.watch/internal/email"
@@ -42,6 +43,7 @@ type App struct {
 	LoginAcctLimiter *ratelimit.Limiter
 	InviteLimiter    *ratelimit.Limiter
 	Captcha          *captcha.Store
+	Analytics        *analytics.Collector
 }
 
 type Base struct {
@@ -354,6 +356,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("POST /x/{code}/unmark-duplicate", a.unmarkDuplicate)
 	mux.HandleFunc("GET /mod/log", a.moderationLogPage)
 	mux.HandleFunc("GET /mod/log/page/{page}", a.moderationLogPage)
+	mux.HandleFunc("GET /mod/analytics", a.analyticsPage)
 	mux.HandleFunc("GET /api/tags", a.apiListTags)
 	mux.HandleFunc("POST /api/story", a.apiSubmitStory)
 
@@ -361,7 +364,7 @@ func (a *App) Routes() http.Handler {
 		mux.Handle("GET /__dev/reload", a.DevReload)
 	}
 
-	return a.securityHeaders(a.requestLog(a.Sessions.AuthenticateRequest(mux)))
+	return a.securityHeaders(a.requestLog(a.analyticsMiddleware(a.Sessions.AuthenticateRequest(mux))))
 }
 
 func (a *App) securityHeaders(next http.Handler) http.Handler {
@@ -543,6 +546,12 @@ func ParseTemplates(fsys fs.FS, staticHashes map[string]string, devMode bool) (m
 				return yes
 			}
 			return no
+		},
+		"chartPct": func(value, max int) int {
+			if max == 0 {
+				return 0
+			}
+			return value * 100 / max
 		},
 		"add":      func(a, b int) int { return a + b },
 		"subtract": func(a, b int) int { return a - b },

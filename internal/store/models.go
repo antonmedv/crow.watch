@@ -62,6 +62,20 @@ type CommentVote struct {
 	CreatedAt pgtype.Timestamptz
 }
 
+type DailyReferrer struct {
+	Date           pgtype.Date
+	ReferrerDomain string
+	Path           string
+	Hits           int32
+}
+
+type DailyStat struct {
+	Date     pgtype.Date
+	Path     string
+	Views    int32
+	Visitors int32
+}
+
 type Domain struct {
 	ID         int64
 	Domain     string
@@ -112,6 +126,18 @@ type Origin struct {
 	StoryCount int32
 	CreatedAt  pgtype.Timestamptz
 	UpdatedAt  pgtype.Timestamptz
+}
+
+type PageView struct {
+	ID        int64
+	Path      string
+	VisitorID string
+	Referrer  string
+	Device    string
+	Browser   string
+	Os        string
+	IsBot     bool
+	CreatedAt pgtype.Timestamptz
 }
 
 type Session struct {
