@@ -126,11 +126,11 @@ func main() {
 	loginAcctLimiter := ratelimit.New(5, 15*time.Minute)
 	inviteLimiter := ratelimit.New(20, time.Hour)
 	captchaStore := captcha.New(5 * time.Minute)
-	rateLimitDone := make(chan struct{})
-	loginIPLimiter.StartCleanup(5*time.Minute, rateLimitDone)
-	loginAcctLimiter.StartCleanup(5*time.Minute, rateLimitDone)
-	inviteLimiter.StartCleanup(5*time.Minute, rateLimitDone)
-	captchaStore.StartCleanup(5*time.Minute, rateLimitDone)
+	shutdownDone := make(chan struct{})
+	loginIPLimiter.StartCleanup(5*time.Minute, shutdownDone)
+	loginAcctLimiter.StartCleanup(5*time.Minute, shutdownDone)
+	inviteLimiter.StartCleanup(5*time.Minute, shutdownDone)
+	captchaStore.StartCleanup(5*time.Minute, shutdownDone)
 
 	analyticsSecret := envOrDefault("ANALYTICS_SECRET", "crow-analytics-default-key")
 	collector := analytics.NewCollector(queries, analyticsSecret, logger)
@@ -174,11 +174,13 @@ func main() {
 				if err := queries.DeleteExpiredSessions(context.Background()); err != nil {
 					logger.Error("delete expired sessions", "error", err)
 				}
-			case <-rateLimitDone:
+			case <-shutdownDone:
 				return
 			}
 		}
 	}()
+
+	go analytics.RunDailyAggregation(queries, logger, shutdownDone)
 
 	shutdownCh := make(chan os.Signal, 1)
 	signal.Notify(shutdownCh, syscall.SIGINT, syscall.SIGTERM)
@@ -187,7 +189,7 @@ func main() {
 		sig := <-shutdownCh
 		logger.Info("shutdown signal received", "signal", sig.String())
 
-		close(rateLimitDone)
+		close(shutdownDone)
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
