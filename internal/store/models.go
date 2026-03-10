@@ -76,6 +76,14 @@ type DailyStat struct {
 	Visitors int32
 }
 
+type DailyUserStat struct {
+	Date        pgtype.Date
+	ActiveUsers int32
+	NewUsers    int32
+	NewStories  int32
+	NewComments int32
+}
+
 type Domain struct {
 	ID         int64
 	Domain     string

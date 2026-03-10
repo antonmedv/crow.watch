@@ -64,6 +64,33 @@ func (q *Queries) AggregateReferrers(ctx context.Context, arg AggregateReferrers
 	return err
 }
 
+const aggregateUserStats = `-- name: AggregateUserStats :exec
+INSERT INTO daily_user_stats (date, active_users, new_users, new_stories, new_comments)
+VALUES (
+    $1::date,
+    (SELECT COUNT(DISTINCT user_id)::int FROM sessions WHERE last_seen_at >= $2::timestamptz AND last_seen_at < $3::timestamptz),
+    (SELECT COUNT(*)::int FROM users WHERE created_at >= $2::timestamptz AND created_at < $3::timestamptz AND deleted_at IS NULL),
+    (SELECT COUNT(*)::int FROM stories WHERE created_at >= $2::timestamptz AND created_at < $3::timestamptz AND deleted_at IS NULL),
+    (SELECT COUNT(*)::int FROM comments WHERE created_at >= $2::timestamptz AND created_at < $3::timestamptz AND deleted_at IS NULL)
+)
+ON CONFLICT (date) DO UPDATE
+SET active_users = EXCLUDED.active_users,
+    new_users = EXCLUDED.new_users,
+    new_stories = EXCLUDED.new_stories,
+    new_comments = EXCLUDED.new_comments
+`
+
+type AggregateUserStatsParams struct {
+	TargetDate pgtype.Date
+	DayStart   pgtype.Timestamptz
+	DayEnd     pgtype.Timestamptz
+}
+
+func (q *Queries) AggregateUserStats(ctx context.Context, arg AggregateUserStatsParams) error {
+	_, err := q.db.Exec(ctx, aggregateUserStats, arg.TargetDate, arg.DayStart, arg.DayEnd)
+	return err
+}
+
 const getDailyStatsRange = `-- name: GetDailyStatsRange :many
 SELECT
     date,
@@ -129,6 +156,44 @@ func (q *Queries) GetDailyStatsTotals(ctx context.Context, arg GetDailyStatsTota
 	var i GetDailyStatsTotalsRow
 	err := row.Scan(&i.Views, &i.Visitors)
 	return i, err
+}
+
+const getDailyUserStatsRange = `-- name: GetDailyUserStatsRange :many
+SELECT date, active_users, new_users, new_stories, new_comments
+FROM daily_user_stats
+WHERE date >= $1::date AND date <= $2::date
+ORDER BY date
+`
+
+type GetDailyUserStatsRangeParams struct {
+	StartDate pgtype.Date
+	EndDate   pgtype.Date
+}
+
+func (q *Queries) GetDailyUserStatsRange(ctx context.Context, arg GetDailyUserStatsRangeParams) ([]DailyUserStat, error) {
+	rows, err := q.db.Query(ctx, getDailyUserStatsRange, arg.StartDate, arg.EndDate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DailyUserStat
+	for rows.Next() {
+		var i DailyUserStat
+		if err := rows.Scan(
+			&i.Date,
+			&i.ActiveUsers,
+			&i.NewUsers,
+			&i.NewStories,
+			&i.NewComments,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getLiveBrowserBreakdown = `-- name: GetLiveBrowserBreakdown :many

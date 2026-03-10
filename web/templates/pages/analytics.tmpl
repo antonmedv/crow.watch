@@ -75,6 +75,10 @@
       opacity: 0.7;
     }
 
+    .bar--users {
+      background: var(--link);
+    }
+
     .bar-label {
       font-size: 10px;
       color: var(--text-muted);
@@ -233,6 +237,25 @@
               class="bar"
               style="height: {{ chartPct .Views $max }}%"
               title="{{ .Label }}: {{ .Views }} views, {{ .Visitors }} visitors"
+            ></div>
+            <span class="bar-label">{{ .Label }}</span>
+          </div>
+        {{ end }}
+      </div>
+    </div>
+  {{ end }}
+
+  {{ if .UserChart }}
+    <div class="chart-container">
+      <div class="chart-title">Active Users</div>
+      <div class="bar-chart">
+        {{ $umax := .UserChartMax }}
+        {{ range .UserChart }}
+          <div class="bar-group">
+            <div
+              class="bar bar--users"
+              style="height: {{ chartPct .ActiveUsers $umax }}%"
+              title="{{ .Label }}: {{ .ActiveUsers }} active users"
             ></div>
             <span class="bar-label">{{ .Label }}</span>
           </div>

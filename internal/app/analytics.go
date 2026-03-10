@@ -17,6 +17,8 @@ type AnalyticsPageData struct {
 	Stats           AnalyticsStats
 	Chart           []ChartPoint
 	ChartMax        int
+	UserChart       []UserChartPoint
+	UserChartMax    int
 	TopPages        []PageStat
 	Referrers       []ReferrerStat
 	Devices         []BreakdownItem
@@ -47,6 +49,11 @@ type ChartPoint struct {
 	Label    string
 	Views    int
 	Visitors int
+}
+
+type UserChartPoint struct {
+	Label       string
+	ActiveUsers int
 }
 
 type PageStat struct {
@@ -120,6 +127,15 @@ func (a *App) analyticsPage(w http.ResponseWriter, r *http.Request) {
 		since = today.AddDate(0, 0, -6)
 	}
 	data.UserActivity, data.TopContributors, data.TopCommenters = a.userAnalytics(r, since)
+
+	if period != "today" {
+		data.UserChart = a.userChart(r, since, today)
+		for _, pt := range data.UserChart {
+			if pt.ActiveUsers > data.UserChartMax {
+				data.UserChartMax = pt.ActiveUsers
+			}
+		}
+	}
 
 	a.render(w, "analytics", data)
 }
@@ -245,6 +261,30 @@ func (a *App) liveBreakdowns(r *http.Request, since time.Time) ([]BreakdownItem,
 	}
 
 	return devices, browsers
+}
+
+func (a *App) userChart(r *http.Request, start, end time.Time) []UserChartPoint {
+	startDate := pgtype.Date{Time: start, Valid: true}
+	endDate := pgtype.Date{Time: end, Valid: true}
+
+	rows, err := a.Queries.GetDailyUserStatsRange(r.Context(), store.GetDailyUserStatsRangeParams{
+		StartDate: startDate, EndDate: endDate,
+	})
+	if err != nil {
+		return nil
+	}
+
+	dayMap := make(map[string]int, len(rows))
+	for _, row := range rows {
+		dayMap[row.Date.Time.Format("Jan 2")] = int(row.ActiveUsers)
+	}
+
+	var chart []UserChartPoint
+	for d := start; !d.After(end); d = d.AddDate(0, 0, 1) {
+		key := d.Format("Jan 2")
+		chart = append(chart, UserChartPoint{Label: key, ActiveUsers: dayMap[key]})
+	}
+	return chart
 }
 
 func (a *App) userAnalytics(r *http.Request, since time.Time) (UserActivityStats, []UserStat, []UserStat) {

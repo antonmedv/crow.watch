@@ -127,6 +127,27 @@ SET hits = EXCLUDED.hits;
 DELETE FROM page_views
 WHERE created_at < @before::timestamptz;
 
+-- name: AggregateUserStats :exec
+INSERT INTO daily_user_stats (date, active_users, new_users, new_stories, new_comments)
+VALUES (
+    @target_date::date,
+    (SELECT COUNT(DISTINCT user_id)::int FROM sessions WHERE last_seen_at >= @day_start::timestamptz AND last_seen_at < @day_end::timestamptz),
+    (SELECT COUNT(*)::int FROM users WHERE created_at >= @day_start::timestamptz AND created_at < @day_end::timestamptz AND deleted_at IS NULL),
+    (SELECT COUNT(*)::int FROM stories WHERE created_at >= @day_start::timestamptz AND created_at < @day_end::timestamptz AND deleted_at IS NULL),
+    (SELECT COUNT(*)::int FROM comments WHERE created_at >= @day_start::timestamptz AND created_at < @day_end::timestamptz AND deleted_at IS NULL)
+)
+ON CONFLICT (date) DO UPDATE
+SET active_users = EXCLUDED.active_users,
+    new_users = EXCLUDED.new_users,
+    new_stories = EXCLUDED.new_stories,
+    new_comments = EXCLUDED.new_comments;
+
+-- name: GetDailyUserStatsRange :many
+SELECT date, active_users, new_users, new_stories, new_comments
+FROM daily_user_stats
+WHERE date >= @start_date::date AND date <= @end_date::date
+ORDER BY date;
+
 -- name: GetUserActivityStats :one
 SELECT
     (SELECT COUNT(DISTINCT user_id)::int FROM sessions WHERE last_seen_at >= @since::timestamptz) AS active_users,

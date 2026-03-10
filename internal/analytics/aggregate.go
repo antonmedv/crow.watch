@@ -38,6 +38,14 @@ func Aggregate(ctx context.Context, queries *store.Queries, date time.Time) erro
 		return fmt.Errorf("aggregate referrers: %w", err)
 	}
 
+	if err := queries.AggregateUserStats(ctx, store.AggregateUserStatsParams{
+		TargetDate: targetDate,
+		DayStart:   start,
+		DayEnd:     end,
+	}); err != nil {
+		return fmt.Errorf("aggregate user stats: %w", err)
+	}
+
 	return nil
 }
 
