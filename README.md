@@ -11,7 +11,7 @@
 
 ---
 
-Invite-only link aggregator and discussion platform for people who build tech. Share great links, cool code, and new tools.
+A link aggregator and discussion platform for people who build tech. Share great links, cool code, and new tools.
 
 ### Stack
 

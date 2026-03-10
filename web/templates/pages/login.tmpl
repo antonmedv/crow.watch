@@ -20,27 +20,15 @@
         >
         <a
           class="{{ classes "tabs__tab" (when (eq .Tab "register") "active") }}"
-          href="/login?tab=register"
+          href="https://crow.watch/join/welcome"
           >Register</a
         >
       </nav>
       <div class="auth-card__body">
         {{ if eq .Tab "register" }}
           <p class="register-note">
-            Crow Watch is invite-only. To create an account you need an
-            invitation link from an existing member.
-          </p>
-          <p style="font-weight: 600; font-size: 17px;">
-            But Crow Watch needs an initial user-base. If you are interested in
-            joining, please
-            <a
-              style="color: var(--primary); text-decoration: underline;"
-              href="https://crow.watch/join/welcome"
-              >register</a
-            >!
-            <svg style="vertical-align: middle;" width="20" height="20">
-              <use href="#icon-crow"></use>
-            </svg>
+            {{/* Crow Watch is invite-only. To create an account you need an */}}
+            {{/* invitation link from an existing member. */}}
           </p>
         {{ else }}
           {{ if .Error }}<p class="error" role="alert">{{ .Error }}</p>{{ end }}
