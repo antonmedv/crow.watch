@@ -59,24 +59,20 @@ apt install unattended-upgrades
 dpkg-reconfigure -plow unattended-upgrades
 ```
 
-## Deploy Files
-
-Copy `docker-compose.yml` and `.env` to the server:
+## Clone the Repository
 
 ```bash
-mkdir -p ~/crow.watch
-scp docker-compose.yml crow@<server-ip>:~/crow.watch/
+cd ~
+git clone https://github.com/antonmedv/crow-watch.git crow.watch
+cd crow.watch
 ```
 
-On the server, create and edit `.env`:
+Create and edit `.env` with production values. See [.env.example](.env.example).
 
 ```bash
-cd ~/crow.watch
 cp .env.example .env
 chmod 600 .env
 ```
-
-Edit `.env` with production values. See [.env.example](.env.example).
 
 ```bash
 # Public URL — used in emails and redirects
@@ -209,15 +205,15 @@ sudo chown crow:crow /var/www/crow.watch/static
 
 The `static` init container copies files from the image to `/var/www/crow.watch/static` on every deploy.
 
-## Start the Application
+## Build and Start
 
 ```bash
 cd ~/crow.watch
-docker compose pull
+docker compose build
 docker compose up -d
 ```
 
-This pulls pre-built images from GHCR and starts `db`, `migrate`, `app`, and `backup`. Check logs:
+This builds all images locally and starts `db`, `migrate`, `app`, and `backup`. Check logs:
 
 ```bash
 docker compose logs -f app       # app logs
@@ -249,16 +245,22 @@ docker compose run --rm cmd storyseed
 
 # Trigger a manual backup
 docker compose exec backup backup.sh
-
-# Re-run migrations (pull latest image first)
-docker compose pull migrate
-docker compose up -d migrate
 ```
 
 ## Updating
 
+Pull the latest code, rebuild, and restart:
+
 ```bash
 cd ~/crow.watch
-docker compose pull
+./scripts/deploy.sh
+```
+
+Or manually:
+
+```bash
+git pull
+docker compose build
 docker compose up -d
+docker image prune -f
 ```
