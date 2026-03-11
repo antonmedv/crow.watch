@@ -208,10 +208,13 @@ func (a *App) rangeAnalytics(r *http.Request, start, end time.Time) (AnalyticsSt
 	// Add today's live stats
 	todayStart := time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, time.UTC)
 	sinceTS := pgtype.Timestamptz{Time: todayStart, Valid: true}
+	var todayViews, todayVisitors int
 	if row, err := a.Queries.GetLiveStats(r.Context(), sinceTS); err == nil {
-		stats.Views += int(row.Views)
-		stats.Visitors += int(row.Visitors)
+		todayViews = int(row.Views)
+		todayVisitors = int(row.Visitors)
 	}
+	stats.Views += todayViews
+	stats.Visitors += todayVisitors
 
 	var chart []ChartPoint
 	if rows, err := a.Queries.GetDailyStatsRange(r.Context(), store.GetDailyStatsRangeParams{
@@ -230,6 +233,12 @@ func (a *App) rangeAnalytics(r *http.Request, start, end time.Time) (AnalyticsSt
 				chart = append(chart, ChartPoint{Label: key})
 			}
 		}
+	}
+
+	// Add today's live stats to today's chart point
+	if len(chart) > 0 {
+		chart[len(chart)-1].Views += todayViews
+		chart[len(chart)-1].Visitors += todayVisitors
 	}
 
 	var pages []PageStat

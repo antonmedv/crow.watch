@@ -130,6 +130,8 @@ func ShouldTrack(r *http.Request) bool {
 	if strings.HasPrefix(path, "/static/") ||
 		strings.HasPrefix(path, "/api/") ||
 		strings.HasPrefix(path, "/__dev/") ||
+		path == "/mod/analytics" ||
+		path == "/favicon.ico" ||
 		path == "/favicon.png" ||
 		strings.HasPrefix(path, "/captcha/") {
 		return false

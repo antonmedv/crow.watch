@@ -51,24 +51,27 @@
     }
 
     .bar-chart {
-      display: flex;
-      align-items: flex-end;
-      gap: 2px;
-      height: 120px;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 4px;
+      height: 140px;
       min-width: fit-content;
     }
 
-    .bar-group {
+    .bar-chart__bars {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      flex: 1;
-      min-width: 24px;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .bar-chart__labels {
+      display: flex;
+      gap: 2px;
     }
 
     .bar {
-      width: 100%;
+      flex: 1;
+      min-width: 24px;
       min-height: 2px;
       background: var(--primary);
       border-radius: 2px 2px 0 0;
@@ -80,13 +83,16 @@
     }
 
     .bar-label {
+      flex: 1;
+      min-width: 24px;
       font-size: 10px;
       color: var(--text-muted);
       white-space: nowrap;
       writing-mode: vertical-rl;
       transform: rotate(180deg);
-      height: 32px;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
 
     .analytics-grid {
@@ -291,17 +297,21 @@
     <div class="chart-container">
       <div class="chart-title">Traffic</div>
       <div class="bar-chart">
-        {{ $max := .ChartMax }}
-        {{ range .Chart }}
-          <div class="bar-group">
+        <div class="bar-chart__bars">
+          {{ $max := .ChartMax }}
+          {{ range .Chart }}
             <div
               class="bar"
               style="height: {{ chartPct .Views $max }}%"
               title="{{ .Label }}: {{ .Views }} views, {{ .Visitors }} visitors"
             ></div>
+          {{ end }}
+        </div>
+        <div class="bar-chart__labels">
+          {{ range .Chart }}
             <span class="bar-label">{{ .Label }}</span>
-          </div>
-        {{ end }}
+          {{ end }}
+        </div>
       </div>
     </div>
   {{ end }}
@@ -310,17 +320,21 @@
     <div class="chart-container">
       <div class="chart-title">Active Users</div>
       <div class="bar-chart">
-        {{ $umax := .UserChartMax }}
-        {{ range .UserChart }}
-          <div class="bar-group">
+        <div class="bar-chart__bars">
+          {{ $umax := .UserChartMax }}
+          {{ range .UserChart }}
             <div
               class="bar bar--users"
               style="height: {{ chartPct .ActiveUsers $umax }}%"
               title="{{ .Label }}: {{ .ActiveUsers }} active users"
             ></div>
+          {{ end }}
+        </div>
+        <div class="bar-chart__labels">
+          {{ range .UserChart }}
             <span class="bar-label">{{ .Label }}</span>
-          </div>
-        {{ end }}
+          {{ end }}
+        </div>
       </div>
     </div>
   {{ end }}
