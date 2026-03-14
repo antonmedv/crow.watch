@@ -10,6 +10,7 @@
   --tag-text: #5c5747;
   --tag-media-bg: #fce8e6;
   --tag-media-text: #c5221f;
+  --comment-target: #fff9db;
   --font-monospace:
     ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono,
     monospace;
@@ -27,6 +28,7 @@
     --tag-text: #a0a0a0;
     --tag-media-bg: #2d1a1a;
     --tag-media-text: #f28b82;
+    --comment-target: #332b00;
   }
 }
 
@@ -41,6 +43,7 @@
   --tag-text: #5c5747;
   --tag-media-bg: #fce8e6;
   --tag-media-text: #c5221f;
+  --comment-target: #fff9db;
 }
 
 [data-theme="dark"] {
@@ -54,6 +57,7 @@
   --tag-text: #a0a0a0;
   --tag-media-bg: #2d1a1a;
   --tag-media-text: #f28b82;
+  --comment-target: #332b00;
 }
 
 [data-theme="black"] {
@@ -67,6 +71,7 @@
   --tag-text: #999999;
   --tag-media-bg: #261212;
   --tag-media-text: #f28b82;
+  --comment-target: #2a2200;
 }
 
 [data-theme="green"] {
@@ -81,6 +86,7 @@
   --tag-text: #33aa22;
   --tag-media-bg: #1a2a11;
   --tag-media-text: #55dd44;
+  --comment-target: #0d2a0d;
 }
 
 [data-theme="orange"] {
@@ -97,6 +103,7 @@
   --tag-media-text: #ff6600;
   --site-container-bg: #f6f6ef;
   --story-title-weight: 400;
+  --comment-target: #f7f7e1;
 }
 
 [data-theme="purple"] {
@@ -111,6 +118,7 @@
   --tag-text: #b49ccc;
   --tag-media-bg: #2d1540;
   --tag-media-text: #d8a0f0;
+  --comment-target: #2a1840;
 }
 
 *,

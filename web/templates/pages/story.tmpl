@@ -119,6 +119,10 @@
       background: color-mix(in srgb, var(--primary) 5%, transparent);
     }
 
+    .comment:has(.comment__byline:target) {
+      background: var(--comment-target);
+    }
+
     .comment--deleted {
       opacity: 0.6;
     }
