@@ -133,6 +133,9 @@ func ShouldTrack(r *http.Request) bool {
 		path == "/mod/analytics" ||
 		path == "/favicon.ico" ||
 		path == "/favicon.png" ||
+		path == "/apple-touch-icon.png" ||
+		path == "/apple-touch-icon-precomposed.png" ||
+		path == "/robots.txt" ||
 		strings.HasPrefix(path, "/captcha/") {
 		return false
 	}

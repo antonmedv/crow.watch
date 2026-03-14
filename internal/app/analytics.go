@@ -300,6 +300,15 @@ func (a *App) userChart(r *http.Request, start, end time.Time) []UserChartPoint 
 		key := d.Format("Jan 2")
 		chart = append(chart, UserChartPoint{Label: key, ActiveUsers: dayMap[key]})
 	}
+
+	// Add today's live active users to the last chart point
+	if len(chart) > 0 {
+		todayStart := pgtype.Timestamptz{Time: end, Valid: true}
+		if row, err := a.Queries.GetUserActivityStats(r.Context(), todayStart); err == nil {
+			chart[len(chart)-1].ActiveUsers += int(row.ActiveUsers)
+		}
+	}
+
 	return chart
 }
 
