@@ -12,28 +12,45 @@ import (
 )
 
 const createComment = `-- name: CreateComment :one
-INSERT INTO comments (story_id, user_id, parent_id, body, depth)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, story_id, user_id, parent_id, body, depth, upvotes, downvotes, created_at, updated_at, deleted_at
+INSERT INTO comments (story_id, user_id, parent_id, body, depth, short_code)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at
 `
 
 type CreateCommentParams struct {
-	StoryID  int64
-	UserID   int64
-	ParentID pgtype.Int8
-	Body     string
-	Depth    int32
+	StoryID   int64
+	UserID    int64
+	ParentID  pgtype.Int8
+	Body      string
+	Depth     int32
+	ShortCode string
 }
 
-func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (Comment, error) {
+type CreateCommentRow struct {
+	ID        int64
+	StoryID   int64
+	UserID    int64
+	ParentID  pgtype.Int8
+	Body      string
+	Depth     int32
+	ShortCode string
+	Upvotes   int32
+	Downvotes int32
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+	DeletedAt pgtype.Timestamptz
+}
+
+func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (CreateCommentRow, error) {
 	row := q.db.QueryRow(ctx, createComment,
 		arg.StoryID,
 		arg.UserID,
 		arg.ParentID,
 		arg.Body,
 		arg.Depth,
+		arg.ShortCode,
 	)
-	var i Comment
+	var i CreateCommentRow
 	err := row.Scan(
 		&i.ID,
 		&i.StoryID,
@@ -41,6 +58,7 @@ func (q *Queries) CreateComment(ctx context.Context, arg CreateCommentParams) (C
 		&i.ParentID,
 		&i.Body,
 		&i.Depth,
+		&i.ShortCode,
 		&i.Upvotes,
 		&i.Downvotes,
 		&i.CreatedAt,
@@ -60,14 +78,29 @@ func (q *Queries) DecrementStoryCommentCount(ctx context.Context, id int64) erro
 }
 
 const getCommentByID = `-- name: GetCommentByID :one
-SELECT id, story_id, user_id, parent_id, body, depth, upvotes, downvotes, created_at, updated_at, deleted_at
+SELECT id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at
 FROM comments
 WHERE id = $1
 `
 
-func (q *Queries) GetCommentByID(ctx context.Context, id int64) (Comment, error) {
+type GetCommentByIDRow struct {
+	ID        int64
+	StoryID   int64
+	UserID    int64
+	ParentID  pgtype.Int8
+	Body      string
+	Depth     int32
+	ShortCode string
+	Upvotes   int32
+	Downvotes int32
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+	DeletedAt pgtype.Timestamptz
+}
+
+func (q *Queries) GetCommentByID(ctx context.Context, id int64) (GetCommentByIDRow, error) {
 	row := q.db.QueryRow(ctx, getCommentByID, id)
-	var i Comment
+	var i GetCommentByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.StoryID,
@@ -75,6 +108,7 @@ func (q *Queries) GetCommentByID(ctx context.Context, id int64) (Comment, error)
 		&i.ParentID,
 		&i.Body,
 		&i.Depth,
+		&i.ShortCode,
 		&i.Upvotes,
 		&i.Downvotes,
 		&i.CreatedAt,
@@ -101,6 +135,7 @@ SELECT
     c.parent_id,
     c.body,
     c.depth,
+    c.short_code,
     c.upvotes,
     c.downvotes,
     c.created_at,
@@ -120,6 +155,7 @@ type ListCommentsByStoryRow struct {
 	ParentID  pgtype.Int8
 	Body      string
 	Depth     int32
+	ShortCode string
 	Upvotes   int32
 	Downvotes int32
 	CreatedAt pgtype.Timestamptz
@@ -144,6 +180,7 @@ func (q *Queries) ListCommentsByStory(ctx context.Context, storyID int64) ([]Lis
 			&i.ParentID,
 			&i.Body,
 			&i.Depth,
+			&i.ShortCode,
 			&i.Upvotes,
 			&i.Downvotes,
 			&i.CreatedAt,

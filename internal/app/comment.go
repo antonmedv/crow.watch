@@ -26,6 +26,7 @@ var flagReasons = []string{"off-topic", "troll", "unkind", "spam"}
 
 type CommentNode struct {
 	ID          int64
+	ShortCode   string
 	StoryID     int64
 	UserID      int64
 	ParentID    int64
@@ -95,6 +96,7 @@ func buildCommentTree(rows []store.ListCommentsByStoryRow, opts buildTreeOpts) [
 
 		node := &CommentNode{
 			ID:          r.ID,
+			ShortCode:   r.ShortCode,
 			StoryID:     r.StoryID,
 			UserID:      r.UserID,
 			Username:    r.Username,
@@ -221,11 +223,12 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 	qtx := a.Queries.WithTx(tx)
 
 	comment, err := qtx.CreateComment(r.Context(), store.CreateCommentParams{
-		StoryID:  story.ID,
-		UserID:   current.User.ID,
-		ParentID: parentID,
-		Body:     body,
-		Depth:    depth,
+		StoryID:   story.ID,
+		UserID:    current.User.ID,
+		ParentID:  parentID,
+		Body:      body,
+		Depth:     depth,
+		ShortCode: generateShortCode(),
 	})
 	if err != nil {
 		a.serverError(w, r, "create comment", err)
@@ -247,7 +250,7 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 	// Recalculate downvotes: this user's comment may neutralize a hide+flag penalty
 	_ = a.Queries.RecalculateStoryDownvotes(r.Context(), story.ID)
 
-	http.Redirect(w, r, storyPath(story.ShortCode, story.Title)+"#comment-"+strconv.FormatInt(comment.ID, 10), http.StatusSeeOther)
+	http.Redirect(w, r, storyPath(story.ShortCode, story.Title)+"#c_"+comment.ShortCode, http.StatusSeeOther)
 }
 
 func (a *App) editComment(w http.ResponseWriter, r *http.Request) {
@@ -304,7 +307,7 @@ func (a *App) editComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, storyPath(story.ShortCode, story.Title)+"#comment-"+strconv.FormatInt(commentID, 10), http.StatusSeeOther)
+	http.Redirect(w, r, storyPath(story.ShortCode, story.Title)+"#c_"+comment.ShortCode, http.StatusSeeOther)
 }
 
 func (a *App) deleteComment(w http.ResponseWriter, r *http.Request) {

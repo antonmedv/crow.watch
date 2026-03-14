@@ -147,6 +147,7 @@ CREATE TABLE comments (
     user_id BIGINT NOT NULL REFERENCES users(id),
     parent_id BIGINT REFERENCES comments(id) ON DELETE CASCADE,
     body TEXT NOT NULL,
+    short_code CHAR(6) NOT NULL,
     depth INT NOT NULL DEFAULT 0 CHECK (depth >= 0 AND depth <= 10),
     upvotes INT NOT NULL DEFAULT 0,
     downvotes INT NOT NULL DEFAULT 0,
@@ -158,6 +159,7 @@ CREATE TABLE comments (
 CREATE INDEX idx_comments_story_id ON comments(story_id);
 CREATE INDEX idx_comments_user_id ON comments(user_id);
 CREATE INDEX idx_comments_parent_id ON comments(parent_id);
+CREATE UNIQUE INDEX comments_short_code_unique ON comments (short_code);
 
 CREATE TABLE comment_votes (
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

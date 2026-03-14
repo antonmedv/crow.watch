@@ -53,7 +53,7 @@
               >{{ .CommentAuthor }}</a
             >
             replied on
-            <a href="{{ .StoryPath }}#comment-{{ .CommentID }}"
+            <a href="{{ .StoryPath }}#c_{{ .CommentShortCode }}"
               >{{ .StoryTitle }}</a
             >
             <span class="reply-item__time">{{ timeAgo .CreatedAt }}</span>

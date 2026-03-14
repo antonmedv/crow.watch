@@ -41,6 +41,7 @@ type Comment struct {
 	UserID    int64
 	ParentID  pgtype.Int8
 	Body      string
+	ShortCode string
 	Depth     int32
 	Upvotes   int32
 	Downvotes int32

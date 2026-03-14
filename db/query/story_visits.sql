@@ -11,6 +11,7 @@ WHERE user_id = @user_id AND story_id = @story_id;
 -- name: ListReplies :many
 SELECT
     c.id AS comment_id,
+    c.short_code AS comment_short_code,
     c.body,
     c.created_at,
     c.deleted_at,

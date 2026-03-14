@@ -1,10 +1,10 @@
 -- name: CreateComment :one
-INSERT INTO comments (story_id, user_id, parent_id, body, depth)
-VALUES (@story_id, @user_id, @parent_id, @body, @depth)
-RETURNING id, story_id, user_id, parent_id, body, depth, upvotes, downvotes, created_at, updated_at, deleted_at;
+INSERT INTO comments (story_id, user_id, parent_id, body, depth, short_code)
+VALUES (@story_id, @user_id, @parent_id, @body, @depth, @short_code)
+RETURNING id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at;
 
 -- name: GetCommentByID :one
-SELECT id, story_id, user_id, parent_id, body, depth, upvotes, downvotes, created_at, updated_at, deleted_at
+SELECT id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at
 FROM comments
 WHERE id = @id;
 
@@ -16,6 +16,7 @@ SELECT
     c.parent_id,
     c.body,
     c.depth,
+    c.short_code,
     c.upvotes,
     c.downvotes,
     c.created_at,
@@ -40,4 +41,3 @@ UPDATE stories SET comment_count = comment_count + 1 WHERE id = @id;
 
 -- name: DecrementStoryCommentCount :exec
 UPDATE stories SET comment_count = comment_count - 1 WHERE id = @id AND comment_count > 0;
-

@@ -50,6 +50,7 @@ func (q *Queries) GetStoryVisit(ctx context.Context, arg GetStoryVisitParams) (p
 const listReplies = `-- name: ListReplies :many
 SELECT
     c.id AS comment_id,
+    c.short_code AS comment_short_code,
     c.body,
     c.created_at,
     c.deleted_at,
@@ -70,14 +71,15 @@ LIMIT 50
 `
 
 type ListRepliesRow struct {
-	CommentID      int64
-	Body           string
-	CreatedAt      pgtype.Timestamptz
-	DeletedAt      pgtype.Timestamptz
-	CommentAuthor  string
-	StoryTitle     string
-	StoryShortCode string
-	IsUnread       bool
+	CommentID        int64
+	CommentShortCode string
+	Body             string
+	CreatedAt        pgtype.Timestamptz
+	DeletedAt        pgtype.Timestamptz
+	CommentAuthor    string
+	StoryTitle       string
+	StoryShortCode   string
+	IsUnread         bool
 }
 
 func (q *Queries) ListReplies(ctx context.Context, userID int64) ([]ListRepliesRow, error) {
@@ -91,6 +93,7 @@ func (q *Queries) ListReplies(ctx context.Context, userID int64) ([]ListRepliesR
 		var i ListRepliesRow
 		if err := rows.Scan(
 			&i.CommentID,
+			&i.CommentShortCode,
 			&i.Body,
 			&i.CreatedAt,
 			&i.DeletedAt,
