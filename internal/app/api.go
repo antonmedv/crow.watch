@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 
+	"time"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -329,4 +331,272 @@ func (a *App) apiSubmitStory(w http.ResponseWriter, r *http.Request) {
 	a.recordIP(r, user.ID, "story")
 
 	writeJSON(w, http.StatusOK, map[string]string{"url": storyPath(shortCode, req.Title)})
+}
+
+func (a *App) apiListNewestStories(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	stories, err := a.Queries.ListStories(ctx, store.ListStoriesParams{
+		HideDeleted: true,
+		StoryLimit:  25,
+	})
+	if err != nil {
+		a.Log.Error("api list newest stories", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+
+	type apiStoryTag struct {
+		Tag     string `json:"tag"`
+		IsMedia bool   `json:"is_media"`
+	}
+	type apiStory struct {
+		ShortCode    string        `json:"short_code"`
+		Title        string        `json:"title"`
+		URL          string        `json:"url,omitempty"`
+		Username     string        `json:"username"`
+		Domain       string        `json:"domain,omitempty"`
+		Tags         []apiStoryTag `json:"tags"`
+		Upvotes      int           `json:"upvotes"`
+		CommentCount int           `json:"comment_count"`
+		CreatedAt    time.Time     `json:"created_at"`
+	}
+
+	result := make([]apiStory, 0, len(stories))
+	for _, s := range stories {
+		tagRows, err := a.Queries.GetStoryTags(ctx, s.ID)
+		if err != nil {
+			a.Log.Error("api get story tags", "error", err, "story_id", s.ID)
+			continue
+		}
+		tags := make([]apiStoryTag, len(tagRows))
+		for i, t := range tagRows {
+			tags[i] = apiStoryTag{Tag: t.Tag, IsMedia: t.IsMedia}
+		}
+
+		domain := s.Domain.String
+		if s.Origin.Valid {
+			domain = s.Origin.String
+		}
+
+		result = append(result, apiStory{
+			ShortCode:    s.ShortCode,
+			Title:        s.Title,
+			URL:          s.Url.String,
+			Username:     s.Username,
+			Domain:       domain,
+			Tags:         tags,
+			Upvotes:      int(s.Upvotes),
+			CommentCount: int(s.CommentCount),
+			CreatedAt:    s.CreatedAt.Time,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+type apiCommentNode struct {
+	ShortCode string           `json:"short_code"`
+	Body      string           `json:"body"`
+	Username  string           `json:"username"`
+	Depth     int              `json:"depth"`
+	Upvotes   int              `json:"upvotes"`
+	CreatedAt time.Time        `json:"created_at"`
+	Children  []apiCommentNode `json:"children"`
+}
+
+func buildAPICommentTree(rows []store.ListCommentsByStoryRow) []apiCommentNode {
+	type node struct {
+		data     apiCommentNode
+		children []*node
+	}
+
+	nodeMap := make(map[int64]*node, len(rows))
+	var roots []*node
+
+	for _, r := range rows {
+		body := r.Body
+		if r.DeletedAt.Valid {
+			body = "[deleted]"
+		}
+		n := &node{
+			data: apiCommentNode{
+				ShortCode: r.ShortCode,
+				Body:      body,
+				Username:  r.Username,
+				Depth:     int(r.Depth),
+				Upvotes:   int(r.Upvotes),
+				CreatedAt: r.CreatedAt.Time,
+			},
+		}
+		nodeMap[r.ID] = n
+
+		if r.ParentID.Valid {
+			if parent, ok := nodeMap[r.ParentID.Int64]; ok {
+				parent.children = append(parent.children, n)
+			} else {
+				roots = append(roots, n)
+			}
+		} else {
+			roots = append(roots, n)
+		}
+	}
+
+	var flatten func(nodes []*node) []apiCommentNode
+	flatten = func(nodes []*node) []apiCommentNode {
+		result := make([]apiCommentNode, len(nodes))
+		for i, n := range nodes {
+			result[i] = n.data
+			result[i].Children = flatten(n.children)
+		}
+		return result
+	}
+
+	return flatten(roots)
+}
+
+func (a *App) apiListComments(w http.ResponseWriter, r *http.Request) {
+	code := r.PathValue("code")
+	if len(code) != 6 {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "Story not found."})
+		return
+	}
+
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "Story not found."})
+			return
+		}
+		a.Log.Error("api get story", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+
+	rows, err := a.Queries.ListCommentsByStory(r.Context(), story.ID)
+	if err != nil {
+		a.Log.Error("api list comments", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, buildAPICommentTree(rows))
+}
+
+func (a *App) apiCreateComment(w http.ResponseWriter, r *http.Request) {
+	user, _, ok := a.apiKeyUserFromRequest(w, r)
+	if !ok {
+		return
+	}
+
+	code := r.PathValue("code")
+	if len(code) != 6 {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "Story not found."})
+		return
+	}
+
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "Story not found."})
+			return
+		}
+		a.Log.Error("api get story for comment", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+
+	var req struct {
+		Body            string `json:"body"`
+		ParentShortCode string `json:"parent_short_code"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON body."})
+		return
+	}
+
+	req.Body = strings.TrimSpace(req.Body)
+
+	type fieldErrors map[string]string
+	errs := make(fieldErrors)
+
+	if req.Body == "" {
+		errs["body"] = "Comment body is required."
+	} else if len(req.Body) > maxCommentLength {
+		errs["body"] = "Comment body must be 10,000 characters or fewer."
+	}
+
+	var parentID pgtype.Int8
+	var depth int32
+	if req.ParentShortCode != "" {
+		parent, err := a.Queries.GetCommentByShortCode(r.Context(), req.ParentShortCode)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				errs["parent_short_code"] = "Parent comment not found."
+			} else {
+				a.Log.Error("api get parent comment", "error", err)
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+				return
+			}
+		} else {
+			if parent.StoryID != story.ID {
+				errs["parent_short_code"] = "Parent comment does not belong to this story."
+			} else if parent.Depth >= int32(maxCommentDepth) {
+				errs["parent_short_code"] = "Maximum nesting depth reached."
+			} else {
+				parentID = pgtype.Int8{Int64: parent.ID, Valid: true}
+				depth = parent.Depth + 1
+			}
+		}
+	}
+
+	if len(errs) > 0 {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]any{"errors": errs})
+		return
+	}
+
+	tx, err := a.Pool.Begin(r.Context())
+	if err != nil {
+		a.Log.Error("api begin comment transaction", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+	defer tx.Rollback(r.Context())
+
+	qtx := a.Queries.WithTx(tx)
+
+	comment, err := qtx.CreateComment(r.Context(), store.CreateCommentParams{
+		StoryID:   story.ID,
+		UserID:    user.ID,
+		ParentID:  parentID,
+		Body:      req.Body,
+		Depth:     depth,
+		ShortCode: generateShortCode(),
+	})
+	if err != nil {
+		a.Log.Error("api create comment", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+
+	if err := qtx.IncrementStoryCommentCount(r.Context(), story.ID); err != nil {
+		a.Log.Error("api increment comment count", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+
+	if err := tx.Commit(r.Context()); err != nil {
+		a.Log.Error("api commit comment transaction", "error", err)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
+		return
+	}
+
+	a.recordIP(r, user.ID, "comment")
+
+	_ = a.Queries.RecalculateStoryDownvotes(r.Context(), story.ID)
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"short_code": comment.ShortCode,
+		"url":        storyPath(story.ShortCode, story.Title) + "#c_" + comment.ShortCode,
+	})
 }

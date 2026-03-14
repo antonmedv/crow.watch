@@ -118,6 +118,47 @@ func (q *Queries) GetCommentByID(ctx context.Context, id int64) (GetCommentByIDR
 	return i, err
 }
 
+const getCommentByShortCode = `-- name: GetCommentByShortCode :one
+SELECT id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at
+FROM comments
+WHERE short_code = $1
+`
+
+type GetCommentByShortCodeRow struct {
+	ID        int64
+	StoryID   int64
+	UserID    int64
+	ParentID  pgtype.Int8
+	Body      string
+	Depth     int32
+	ShortCode string
+	Upvotes   int32
+	Downvotes int32
+	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+	DeletedAt pgtype.Timestamptz
+}
+
+func (q *Queries) GetCommentByShortCode(ctx context.Context, shortCode string) (GetCommentByShortCodeRow, error) {
+	row := q.db.QueryRow(ctx, getCommentByShortCode, shortCode)
+	var i GetCommentByShortCodeRow
+	err := row.Scan(
+		&i.ID,
+		&i.StoryID,
+		&i.UserID,
+		&i.ParentID,
+		&i.Body,
+		&i.Depth,
+		&i.ShortCode,
+		&i.Upvotes,
+		&i.Downvotes,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const incrementStoryCommentCount = `-- name: IncrementStoryCommentCount :exec
 UPDATE stories SET comment_count = comment_count + 1 WHERE id = $1
 `

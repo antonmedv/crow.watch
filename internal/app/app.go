@@ -359,6 +359,9 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("GET /mod/analytics", a.analyticsPage)
 	mux.HandleFunc("GET /api/tags", a.apiListTags)
 	mux.HandleFunc("POST /api/story", a.apiSubmitStory)
+	mux.HandleFunc("GET /api/stories/newest", a.apiListNewestStories)
+	mux.HandleFunc("GET /api/stories/{code}/comments", a.apiListComments)
+	mux.HandleFunc("POST /api/stories/{code}/comments", a.apiCreateComment)
 
 	if a.DevReload != nil {
 		mux.Handle("GET /__dev/reload", a.DevReload)

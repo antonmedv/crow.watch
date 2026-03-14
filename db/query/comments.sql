@@ -28,6 +28,11 @@ JOIN users AS u ON u.id = c.user_id
 WHERE c.story_id = @story_id
 ORDER BY c.created_at ASC;
 
+-- name: GetCommentByShortCode :one
+SELECT id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at
+FROM comments
+WHERE short_code = @short_code;
+
 -- name: UpdateCommentBody :exec
 UPDATE comments SET body = @body, updated_at = now()
 WHERE id = @id;
