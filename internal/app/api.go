@@ -405,13 +405,13 @@ type apiCommentNode struct {
 	Children  []apiCommentNode `json:"children"`
 }
 
-func buildAPICommentTree(rows []store.ListCommentsByStoryRow) []apiCommentNode {
+func buildAPICommentTree(rows []store.ListCommentsByStoryCodeRow) []apiCommentNode {
 	type node struct {
 		data     apiCommentNode
 		children []*node
 	}
 
-	nodeMap := make(map[int64]*node, len(rows))
+	nodeMap := make(map[string]*node, len(rows))
 	var roots []*node
 
 	for _, r := range rows {
@@ -429,10 +429,10 @@ func buildAPICommentTree(rows []store.ListCommentsByStoryRow) []apiCommentNode {
 				CreatedAt: r.CreatedAt.Time,
 			},
 		}
-		nodeMap[r.ID] = n
+		nodeMap[r.ShortCode] = n
 
-		if r.ParentID.Valid {
-			if parent, ok := nodeMap[r.ParentID.Int64]; ok {
+		if r.ParentShortCode.Valid {
+			if parent, ok := nodeMap[r.ParentShortCode.String]; ok {
 				parent.children = append(parent.children, n)
 			} else {
 				roots = append(roots, n)
@@ -462,22 +462,19 @@ func (a *App) apiListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": "Story not found."})
-			return
-		}
-		a.Log.Error("api get story", "error", err)
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
-		return
-	}
-
-	rows, err := a.Queries.ListCommentsByStory(r.Context(), story.ID)
+	rows, err := a.Queries.ListCommentsByStoryCode(r.Context(), code)
 	if err != nil {
 		a.Log.Error("api list comments", "error", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Internal server error."})
 		return
+	}
+
+	if len(rows) == 0 {
+		exists, err := a.Queries.StoryExistsByCode(r.Context(), code)
+		if err != nil || !exists {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "Story not found."})
+			return
+		}
 	}
 
 	writeJSON(w, http.StatusOK, buildAPICommentTree(rows))

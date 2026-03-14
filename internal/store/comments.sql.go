@@ -239,6 +239,67 @@ func (q *Queries) ListCommentsByStory(ctx context.Context, storyID int64) ([]Lis
 	return items, nil
 }
 
+const listCommentsByStoryCode = `-- name: ListCommentsByStoryCode :many
+SELECT
+    c.short_code,
+    c.body,
+    c.depth,
+    c.upvotes,
+    c.downvotes,
+    c.created_at,
+    c.deleted_at,
+    u.username,
+    p.short_code AS parent_short_code
+FROM comments AS c
+JOIN users AS u ON u.id = c.user_id
+LEFT JOIN comments AS p ON p.id = c.parent_id
+JOIN stories AS s ON s.id = c.story_id
+WHERE s.short_code = $1
+ORDER BY c.created_at ASC
+`
+
+type ListCommentsByStoryCodeRow struct {
+	ShortCode       string
+	Body            string
+	Depth           int32
+	Upvotes         int32
+	Downvotes       int32
+	CreatedAt       pgtype.Timestamptz
+	DeletedAt       pgtype.Timestamptz
+	Username        string
+	ParentShortCode pgtype.Text
+}
+
+func (q *Queries) ListCommentsByStoryCode(ctx context.Context, storyShortCode string) ([]ListCommentsByStoryCodeRow, error) {
+	rows, err := q.db.Query(ctx, listCommentsByStoryCode, storyShortCode)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCommentsByStoryCodeRow
+	for rows.Next() {
+		var i ListCommentsByStoryCodeRow
+		if err := rows.Scan(
+			&i.ShortCode,
+			&i.Body,
+			&i.Depth,
+			&i.Upvotes,
+			&i.Downvotes,
+			&i.CreatedAt,
+			&i.DeletedAt,
+			&i.Username,
+			&i.ParentShortCode,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const softDeleteComment = `-- name: SoftDeleteComment :exec
 UPDATE comments SET deleted_at = now(), body = ''
 WHERE id = $1
@@ -247,6 +308,17 @@ WHERE id = $1
 func (q *Queries) SoftDeleteComment(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, softDeleteComment, id)
 	return err
+}
+
+const storyExistsByCode = `-- name: StoryExistsByCode :one
+SELECT EXISTS(SELECT 1 FROM stories WHERE short_code = $1 AND deleted_at IS NULL) AS exists
+`
+
+func (q *Queries) StoryExistsByCode(ctx context.Context, shortCode string) (bool, error) {
+	row := q.db.QueryRow(ctx, storyExistsByCode, shortCode)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const updateCommentBody = `-- name: UpdateCommentBody :exec

@@ -33,6 +33,27 @@ SELECT id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downv
 FROM comments
 WHERE short_code = @short_code;
 
+-- name: ListCommentsByStoryCode :many
+SELECT
+    c.short_code,
+    c.body,
+    c.depth,
+    c.upvotes,
+    c.downvotes,
+    c.created_at,
+    c.deleted_at,
+    u.username,
+    p.short_code AS parent_short_code
+FROM comments AS c
+JOIN users AS u ON u.id = c.user_id
+LEFT JOIN comments AS p ON p.id = c.parent_id
+JOIN stories AS s ON s.id = c.story_id
+WHERE s.short_code = @story_short_code
+ORDER BY c.created_at ASC;
+
+-- name: StoryExistsByCode :one
+SELECT EXISTS(SELECT 1 FROM stories WHERE short_code = @short_code AND deleted_at IS NULL) AS exists;
+
 -- name: UpdateCommentBody :exec
 UPDATE comments SET body = @body, updated_at = now()
 WHERE id = @id;
