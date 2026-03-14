@@ -76,6 +76,7 @@
         <nav class="site-nav">
           <a href="/" class="nav-logo" aria-label="Crow Watch">
             <svg
+              class="nav-logo__svg"
               xmlns="http://www.w3.org/2000/svg"
               width="36"
               height="36"
@@ -96,6 +97,15 @@
               />
               <circle cx="286" cy="187" r="16" fill="#242424" />
             </svg>
+            <video
+              class="nav-logo__video"
+              width="36"
+              height="36"
+              muted
+              playsinline
+              preload="none"
+              src="/static/logo.mp4"
+            ></video>
           </a>
           <div class="nav-content">
             <div class="nav-top">
@@ -259,6 +269,60 @@
               localStorage.setItem("theme", val)
               document.documentElement.setAttribute("data-theme", val)
             }
+          })
+        })()
+      </script>
+      <script>
+        ;(function () {
+          const logo = document.querySelector(".nav-logo")
+          const video = logo.querySelector(".nav-logo__video")
+          let playing = false
+          let idleTimer = null
+          let preloadTimer = null
+          function logoIsRed() {
+            const c = getComputedStyle(logo).color
+            const m = c.match(/\d+/g)
+            return m && +m[0] === 232 && +m[1] === 35 && +m[2] === 20
+          }
+          function resetIdle() {
+            clearTimeout(idleTimer)
+            clearTimeout(preloadTimer)
+            if (playing) return
+            preloadTimer = setTimeout(function () {
+              if (playing || !logoIsRed()) return
+              video.preload = "auto"
+              video.load()
+            }, 9000)
+            idleTimer = setTimeout(function () {
+              if (playing || !logoIsRed()) return
+              playing = true
+              video.currentTime = 0
+              logo.classList.add("nav-logo--playing")
+              video.play()
+            }, 10000)
+          }
+          document.addEventListener("mousemove", resetIdle)
+          document.addEventListener("keydown", resetIdle)
+          document.addEventListener("scroll", resetIdle, { passive: true })
+          resetIdle()
+          video.addEventListener("ended", function () {
+            setTimeout(function () {
+              let prev = null
+              ;(function step(ts) {
+                if (prev !== null) {
+                  video.currentTime -= (ts - prev) / 1000
+                }
+                prev = ts
+                if (video.currentTime <= 0) {
+                  video.currentTime = 0
+                  logo.classList.remove("nav-logo--playing")
+                  playing = false
+                  resetIdle()
+                  return
+                }
+                requestAnimationFrame(step)
+              })(performance.now())
+            }, 1500)
           })
         })()
       </script>

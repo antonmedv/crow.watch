@@ -201,8 +201,21 @@ a:hover {
   color: oklch(0.63 0.3 27);
 }
 
-.nav-logo svg {
+.nav-logo svg,
+.nav-logo video {
   border-radius: 6px;
+}
+
+.nav-logo__video {
+  display: none;
+}
+
+.nav-logo--playing .nav-logo__svg {
+  display: none;
+}
+
+.nav-logo--playing .nav-logo__video {
+  display: block;
 }
 
 .nav-content {
