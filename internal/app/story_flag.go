@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
+
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"crow.watch/internal/auth"
 	"crow.watch/internal/store"
@@ -19,9 +20,9 @@ func (a *App) flagStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storyID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: r.PathValue("code"), Valid: true}})
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
@@ -47,14 +48,14 @@ func (a *App) flagStory(w http.ResponseWriter, r *http.Request) {
 
 	if err := a.Queries.CreateStoryFlag(r.Context(), store.CreateStoryFlagParams{
 		UserID:  current.User.ID,
-		StoryID: storyID,
+		StoryID: story.ID,
 		Reason:  req.Reason,
 	}); err != nil {
 		a.serverError(w, r, "create story flag", err)
 		return
 	}
 
-	if err := a.Queries.RecalculateStoryDownvotes(r.Context(), storyID); err != nil {
+	if err := a.Queries.RecalculateStoryDownvotes(r.Context(), story.ID); err != nil {
 		a.serverError(w, r, "recalculate story downvotes", err)
 		return
 	}
@@ -70,21 +71,21 @@ func (a *App) unflagStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storyID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: r.PathValue("code"), Valid: true}})
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
 	if err := a.Queries.DeleteStoryFlag(r.Context(), store.DeleteStoryFlagParams{
 		UserID:  current.User.ID,
-		StoryID: storyID,
+		StoryID: story.ID,
 	}); err != nil {
 		a.serverError(w, r, "delete story flag", err)
 		return
 	}
 
-	if err := a.Queries.RecalculateStoryDownvotes(r.Context(), storyID); err != nil {
+	if err := a.Queries.RecalculateStoryDownvotes(r.Context(), story.ID); err != nil {
 		a.serverError(w, r, "recalculate story downvotes", err)
 		return
 	}

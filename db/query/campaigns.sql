@@ -27,4 +27,4 @@ ORDER BY c.created_at DESC;
 -- name: SetCampaignActive :exec
 UPDATE campaigns
 SET active = @active, updated_at = now()
-WHERE id = @id;
+WHERE lower(slug) = lower(@slug);

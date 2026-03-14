@@ -146,15 +146,15 @@ func (q *Queries) ListCampaigns(ctx context.Context) ([]ListCampaignsRow, error)
 const setCampaignActive = `-- name: SetCampaignActive :exec
 UPDATE campaigns
 SET active = $1, updated_at = now()
-WHERE id = $2
+WHERE lower(slug) = lower($2)
 `
 
 type SetCampaignActiveParams struct {
 	Active bool
-	ID     int64
+	Slug   string
 }
 
 func (q *Queries) SetCampaignActive(ctx context.Context, arg SetCampaignActiveParams) error {
-	_, err := q.db.Exec(ctx, setCampaignActive, arg.Active, arg.ID)
+	_, err := q.db.Exec(ctx, setCampaignActive, arg.Active, arg.Slug)
 	return err
 }

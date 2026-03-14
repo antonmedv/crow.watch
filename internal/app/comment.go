@@ -4,7 +4,6 @@ import (
 	"html/template"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -185,7 +184,7 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body := strings.TrimSpace(r.FormValue("body"))
-	parentIDStr := r.FormValue("parent_id")
+	parentCode := r.FormValue("parent_code")
 
 	if body == "" || len(body) > maxCommentLength {
 		http.Redirect(w, r, storyPath(story.ShortCode, story.Title), http.StatusSeeOther)
@@ -194,13 +193,8 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 
 	var parentID pgtype.Int8
 	var depth int32
-	if parentIDStr != "" {
-		pid, err := strconv.ParseInt(parentIDStr, 10, 64)
-		if err != nil {
-			http.Error(w, "bad request", http.StatusBadRequest)
-			return
-		}
-		parent, err := a.Queries.GetCommentByID(r.Context(), pid)
+	if parentCode != "" {
+		parent, err := a.Queries.GetCommentByShortCode(r.Context(), parentCode)
 		if err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
@@ -209,7 +203,7 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "max nesting depth reached", http.StatusBadRequest)
 			return
 		}
-		parentID = pgtype.Int8{Int64: pid, Valid: true}
+		parentID = pgtype.Int8{Int64: parent.ID, Valid: true}
 		depth = parent.Depth + 1
 	}
 
@@ -260,13 +254,7 @@ func (a *App) editComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
-
-	comment, err := a.Queries.GetCommentByID(r.Context(), commentID)
+	comment, err := a.Queries.GetCommentByShortCode(r.Context(), r.PathValue("code"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -295,7 +283,7 @@ func (a *App) editComment(w http.ResponseWriter, r *http.Request) {
 
 	if err := a.Queries.UpdateCommentBody(r.Context(), store.UpdateCommentBodyParams{
 		Body: body,
-		ID:   commentID,
+		ID:   comment.ID,
 	}); err != nil {
 		a.serverError(w, r, "update comment body", err)
 		return
@@ -317,13 +305,7 @@ func (a *App) deleteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
-
-	comment, err := a.Queries.GetCommentByID(r.Context(), commentID)
+	comment, err := a.Queries.GetCommentByShortCode(r.Context(), r.PathValue("code"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
@@ -348,7 +330,7 @@ func (a *App) deleteComment(w http.ResponseWriter, r *http.Request) {
 
 	qtx := a.Queries.WithTx(tx)
 
-	if err := qtx.SoftDeleteComment(r.Context(), commentID); err != nil {
+	if err := qtx.SoftDeleteComment(r.Context(), comment.ID); err != nil {
 		a.serverError(w, r, "soft delete comment", err)
 		return
 	}

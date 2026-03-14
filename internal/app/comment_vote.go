@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
 
 	"crow.watch/internal/auth"
 	"crow.watch/internal/store"
@@ -22,13 +21,7 @@ func (a *App) upvoteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
-		return
-	}
-
-	comment, err := a.Queries.GetCommentByID(r.Context(), commentID)
+	comment, err := a.Queries.GetCommentByShortCode(r.Context(), r.PathValue("code"))
 	if err != nil {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
@@ -40,7 +33,7 @@ func (a *App) upvoteComment(w http.ResponseWriter, r *http.Request) {
 
 	score, err := a.Queries.CreateCommentVote(r.Context(), store.CreateCommentVoteParams{
 		UserID:    current.User.ID,
-		CommentID: commentID,
+		CommentID: comment.ID,
 	})
 	if err != nil {
 		a.serverError(w, r, "create comment vote", err)
@@ -58,15 +51,15 @@ func (a *App) unvoteComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	comment, err := a.Queries.GetCommentByShortCode(r.Context(), r.PathValue("code"))
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
 	score, err := a.Queries.DeleteCommentVote(r.Context(), store.DeleteCommentVoteParams{
 		UserID:    current.User.ID,
-		CommentID: commentID,
+		CommentID: comment.ID,
 	})
 	if err != nil {
 		a.serverError(w, r, "delete comment vote", err)
@@ -84,9 +77,9 @@ func (a *App) flagComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	comment, err := a.Queries.GetCommentByShortCode(r.Context(), r.PathValue("code"))
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
@@ -112,7 +105,7 @@ func (a *App) flagComment(w http.ResponseWriter, r *http.Request) {
 
 	score, err := a.Queries.CreateCommentFlag(r.Context(), store.CreateCommentFlagParams{
 		UserID:    current.User.ID,
-		CommentID: commentID,
+		CommentID: comment.ID,
 		Reason:    req.Reason,
 	})
 	if err != nil {
@@ -131,15 +124,15 @@ func (a *App) unflagComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commentID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	comment, err := a.Queries.GetCommentByShortCode(r.Context(), r.PathValue("code"))
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
 	score, err := a.Queries.DeleteCommentFlag(r.Context(), store.DeleteCommentFlagParams{
 		UserID:    current.User.ID,
-		CommentID: commentID,
+		CommentID: comment.ID,
 	})
 	if err != nil {
 		a.serverError(w, r, "delete comment flag", err)

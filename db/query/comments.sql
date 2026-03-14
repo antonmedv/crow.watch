@@ -51,9 +51,6 @@ JOIN stories AS s ON s.id = c.story_id
 WHERE s.short_code = @story_short_code
 ORDER BY c.created_at ASC;
 
--- name: StoryExistsByCode :one
-SELECT EXISTS(SELECT 1 FROM stories WHERE short_code = @short_code AND deleted_at IS NULL) AS exists;
-
 -- name: UpdateCommentBody :exec
 UPDATE comments SET body = @body, updated_at = now()
 WHERE id = @id;

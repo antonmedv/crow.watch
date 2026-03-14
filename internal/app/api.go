@@ -470,8 +470,8 @@ func (a *App) apiListComments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(rows) == 0 {
-		exists, err := a.Queries.StoryExistsByCode(r.Context(), code)
-		if err != nil || !exists {
+		_, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
+		if err != nil {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "Story not found."})
 			return
 		}

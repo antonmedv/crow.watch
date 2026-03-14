@@ -5,10 +5,10 @@
     const btn = e.target.closest("[data-action=vote]")
     if (!btn || btn.hasAttribute("data-vote-disabled")) return
 
-    const storyId = btn.dataset.storyId
-    if (!storyId) return
+    const storyCode = btn.dataset.storyCode
+    if (!storyCode) return
     const voted = btn.dataset.voted === "true"
-    const url = `/stories/${storyId}${voted ? "/unvote" : "/upvote"}`
+    const url = `/stories/${storyCode}${voted ? "/unvote" : "/upvote"}`
 
     const res = await fetch(url, { method: "POST" })
     if (res.status === 401) {
@@ -18,7 +18,7 @@
     const data = await res.json()
     if (!data?.ok) return
     const score = document.querySelector(
-      `[data-role=vote-score][data-story-id="${storyId}"]`,
+      `[data-role=vote-score][data-story-code="${storyCode}"]`,
     )
     if (score) score.textContent = data.upvotes
     btn.dataset.voted = voted ? "false" : "true"

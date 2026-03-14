@@ -77,9 +77,9 @@
     var commentBtn = dropdown.querySelector("[data-action=comment-flag]")
 
     if (storyBtn) {
-      var storyId = storyBtn.dataset.storyId
+      var storyCode = storyBtn.dataset.storyCode
       var reason = option.dataset.reason
-      var res = await fetch("/stories/" + storyId + "/flag", {
+      var res = await fetch("/stories/" + storyCode + "/flag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: reason }),
@@ -95,7 +95,7 @@
         var unflagBtn = document.createElement("button")
         unflagBtn.className = "story-item__action story-unflag-btn"
         unflagBtn.setAttribute("data-action", "story-unflag")
-        unflagBtn.dataset.storyId = storyId
+        unflagBtn.dataset.storyCode = storyCode
         unflagBtn.textContent = "unflag"
         parent.replaceChild(unflagBtn, dropdown)
       }
@@ -104,9 +104,9 @@
     }
 
     if (commentBtn) {
-      var commentId = commentBtn.dataset.commentId
+      var commentCode = commentBtn.dataset.commentCode
       var reason = option.dataset.reason
-      var res = await fetch("/comments/" + commentId + "/flag", {
+      var res = await fetch("/comments/" + commentCode + "/flag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: reason }),
@@ -119,7 +119,7 @@
       if (data && data.ok) {
         // Update score
         var score = document.querySelector(
-          '[data-role=vote-score][data-comment-id="' + commentId + '"]',
+          '[data-role=vote-score][data-comment-code="' + commentCode + '"]',
         )
         if (score) score.textContent = data.score
         // Replace the dropdown with an unflag button
@@ -127,7 +127,7 @@
         var unflagBtn = document.createElement("button")
         unflagBtn.className = "comment__action comment-unflag-btn"
         unflagBtn.setAttribute("data-action", "comment-unflag")
-        unflagBtn.dataset.commentId = commentId
+        unflagBtn.dataset.commentCode = commentCode
         unflagBtn.textContent = "unflag"
         parent.replaceChild(unflagBtn, dropdown)
       }
@@ -141,8 +141,8 @@
     var btn = e.target.closest("[data-action=story-unflag]")
     if (!btn) return
 
-    var storyId = btn.dataset.storyId
-    var res = await fetch("/stories/" + storyId + "/unflag", {
+    var storyCode = btn.dataset.storyCode
+    var res = await fetch("/stories/" + storyCode + "/unflag", {
       method: "POST",
     })
     if (res.status === 401) {
@@ -161,8 +161,8 @@
     var btn = e.target.closest("[data-action=comment-unflag]")
     if (!btn) return
 
-    var commentId = btn.dataset.commentId
-    var res = await fetch("/comments/" + commentId + "/unflag", {
+    var commentCode = btn.dataset.commentCode
+    var res = await fetch("/comments/" + commentCode + "/unflag", {
       method: "POST",
     })
     if (res.status === 401) {
@@ -172,7 +172,7 @@
     var data = await res.json()
     if (data && data.ok) {
       var score = document.querySelector(
-        '[data-role=vote-score][data-comment-id="' + commentId + '"]',
+        '[data-role=vote-score][data-comment-code="' + commentCode + '"]',
       )
       if (score) score.textContent = data.score
       // Reload to restore dropdown
@@ -185,8 +185,8 @@
     var btn = e.target.closest("[data-action=story-hide]")
     if (!btn) return
 
-    var storyId = btn.dataset.storyId
-    var res = await fetch("/stories/" + storyId + "/hide", {
+    var storyCode = btn.dataset.storyCode
+    var res = await fetch("/stories/" + storyCode + "/hide", {
       method: "POST",
     })
     if (res.status === 401) {
@@ -210,8 +210,8 @@
     var btn = e.target.closest("[data-action=story-unhide]")
     if (!btn) return
 
-    var storyId = btn.dataset.storyId
-    var res = await fetch("/stories/" + storyId + "/unhide", {
+    var storyCode = btn.dataset.storyCode
+    var res = await fetch("/stories/" + storyCode + "/unhide", {
       method: "POST",
     })
     if (res.status === 401) {

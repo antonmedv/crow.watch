@@ -2,7 +2,6 @@ package app
 
 import (
 	"net/http"
-	"strconv"
 
 	"crow.watch/internal/auth"
 	"crow.watch/internal/store"
@@ -15,15 +14,15 @@ func (a *App) hideTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tagID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	tag, err := a.Queries.GetTagByName(r.Context(), r.PathValue("tag"))
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
 	if err := a.Queries.HideTag(r.Context(), store.HideTagParams{
 		UserID: current.User.ID,
-		TagID:  tagID,
+		TagID:  tag.ID,
 	}); err != nil {
 		a.serverError(w, r, "hide tag", err)
 		return
@@ -40,15 +39,15 @@ func (a *App) unhideTag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tagID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	tag, err := a.Queries.GetTagByName(r.Context(), r.PathValue("tag"))
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
 	if err := a.Queries.UnhideTag(r.Context(), store.UnhideTagParams{
 		UserID: current.User.ID,
-		TagID:  tagID,
+		TagID:  tag.ID,
 	}); err != nil {
 		a.serverError(w, r, "unhide tag", err)
 		return

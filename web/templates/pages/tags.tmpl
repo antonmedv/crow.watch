@@ -94,7 +94,7 @@
                   <button
                     class="hide-tag-btn"
                     data-action="hide-tag"
-                    data-tag-id="{{ .ID }}"
+                    data-tag-name="{{ .Tag }}"
                     data-hidden="{{ cond (inSlice .ID $.HiddenTagIDs) "true" "false" }}"
                   >
                     {{ if inSlice .ID $.HiddenTagIDs }}

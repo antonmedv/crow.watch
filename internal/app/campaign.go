@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
-	"strconv"
+
 	"strings"
 
 	"crow.watch/internal/auth"
@@ -147,17 +147,13 @@ func (a *App) toggleCampaign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil {
-		http.Redirect(w, r, "/mod/campaigns", http.StatusSeeOther)
-		return
-	}
+	slug := r.PathValue("slug")
 
 	active := r.FormValue("active") == "true"
 
-	err = a.Queries.SetCampaignActive(r.Context(), store.SetCampaignActiveParams{
+	err := a.Queries.SetCampaignActive(r.Context(), store.SetCampaignActiveParams{
 		Active: active,
-		ID:     id,
+		Slug:   slug,
 	})
 	if err != nil {
 		a.serverError(w, r, "toggle campaign", err)

@@ -3,7 +3,8 @@ package app
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
+
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"crow.watch/internal/auth"
 	"crow.watch/internal/store"
@@ -21,15 +22,15 @@ func (a *App) upvote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storyID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: r.PathValue("code"), Valid: true}})
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
 	upvotes, err := a.Queries.CreateVote(r.Context(), store.CreateVoteParams{
 		UserID:  current.User.ID,
-		StoryID: storyID,
+		StoryID: story.ID,
 	})
 	if err != nil {
 		a.serverError(w, r, "create vote", err)
@@ -47,15 +48,15 @@ func (a *App) unvote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	storyID, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: r.PathValue("code"), Valid: true}})
 	if err != nil {
-		http.Error(w, "bad request", http.StatusBadRequest)
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
 	upvotes, err := a.Queries.DeleteVote(r.Context(), store.DeleteVoteParams{
 		UserID:  current.User.ID,
-		StoryID: storyID,
+		StoryID: story.ID,
 	})
 	if err != nil {
 		a.serverError(w, r, "delete vote", err)

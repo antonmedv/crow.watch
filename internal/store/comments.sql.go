@@ -310,17 +310,6 @@ func (q *Queries) SoftDeleteComment(ctx context.Context, id int64) error {
 	return err
 }
 
-const storyExistsByCode = `-- name: StoryExistsByCode :one
-SELECT EXISTS(SELECT 1 FROM stories WHERE short_code = $1 AND deleted_at IS NULL) AS exists
-`
-
-func (q *Queries) StoryExistsByCode(ctx context.Context, shortCode string) (bool, error) {
-	row := q.db.QueryRow(ctx, storyExistsByCode, shortCode)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 const updateCommentBody = `-- name: UpdateCommentBody :exec
 UPDATE comments SET body = $1, updated_at = now()
 WHERE id = $2

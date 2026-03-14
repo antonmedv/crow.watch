@@ -138,7 +138,7 @@
                 <form
                   class="toggle-form"
                   method="post"
-                  action="/mod/campaigns/{{ .ID }}/toggle"
+                  action="/mod/campaigns/{{ .Slug }}/toggle"
                 >
                   {{ if .Active }}
                     <input type="hidden" name="active" value="false" />

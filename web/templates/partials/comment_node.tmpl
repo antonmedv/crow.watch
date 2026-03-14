@@ -1,16 +1,19 @@
 {{ define "comment-node" }}
   <li class="comments_subtree">
     <input
-      id="comment_folder_{{ .ID }}"
+      id="comment_folder_{{ .ShortCode }}"
       class="comment_folder_button"
       type="checkbox"
     />
     <div
-      id="comment-{{ .ID }}"
+      id="comment-{{ .ShortCode }}"
       class="{{ classes "comment" (when .IsUnread "comment--unread") (when .IsDeleted "comment--deleted") }}"
     >
       <div class="comment__voters">
-        <label for="comment_folder_{{ .ID }}" class="comment_folder"></label>
+        <label
+          for="comment_folder_{{ .ShortCode }}"
+          class="comment_folder"
+        ></label>
         {{ if and (not .IsDeleted) .IsLoggedIn }}
           {{ if .IsAuthor }}
             <span class="vote-btn vote-btn--disabled">
@@ -20,7 +23,7 @@
             <button
               class="{{ classes "vote-btn comment-vote-btn" (when .HasUpvoted "vote-btn--active") }}"
               data-action="comment-vote"
-              data-comment-id="{{ .ID }}"
+              data-comment-code="{{ .ShortCode }}"
               data-voted="{{ .HasUpvoted }}"
             >
               <svg class="icon"><use href="#icon-upvote"></use></svg>
@@ -34,7 +37,7 @@
         <span
           class="vote-score"
           data-role="vote-score"
-          data-comment-id="{{ .ID }}"
+          data-comment-code="{{ .ShortCode }}"
         >
           {{ cond (eq .Upvotes 0) "~" .Upvotes }}
         </span>
@@ -45,12 +48,16 @@
             <span class="comment__author comment__author--deleted">
               [deleted]
             </span>
-            <a href="#c_{{ .ShortCode }}" class="comment__time">{{ timeAgo .CreatedAt }}</a>
+            <a href="#c_{{ .ShortCode }}" class="comment__time"
+              >{{ timeAgo .CreatedAt }}</a
+            >
           {{ else }}
             <a href="/u/{{ .Username }}" class="comment__author">
               {{ .Username }}
             </a>
-            <a href="#c_{{ .ShortCode }}" class="comment__time">{{ timeAgo .CreatedAt }}</a>
+            <a href="#c_{{ .ShortCode }}" class="comment__time"
+              >{{ timeAgo .CreatedAt }}</a
+            >
             {{ if .IsUnread }}
               <span class="comment__unread">(unread)</span>
             {{ end }}
@@ -59,7 +66,7 @@
               <button
                 class="comment__action comment-edit-toggle"
                 data-action="comment-edit-toggle"
-                data-comment-id="{{ .ID }}"
+                data-comment-code="{{ .ShortCode }}"
               >
                 edit
               </button>
@@ -68,7 +75,7 @@
               <span class="comment__sep">|</span>
               <form
                 method="POST"
-                action="/comments/{{ .ID }}/delete"
+                action="/comments/{{ .ShortCode }}/delete"
                 class="comment-delete-form"
                 data-role="comment-delete-form"
               >
@@ -86,7 +93,7 @@
                 <button
                   class="comment__action comment-unflag-btn"
                   data-action="comment-unflag"
-                  data-comment-id="{{ .ID }}"
+                  data-comment-code="{{ .ShortCode }}"
                 >
                   unflag
                 </button>
@@ -95,7 +102,7 @@
                   <button
                     class="comment__action comment-flag-btn"
                     data-action="comment-flag"
-                    data-comment-id="{{ .ID }}"
+                    data-comment-code="{{ .ShortCode }}"
                   >
                     flag
                   </button>
@@ -126,7 +133,7 @@
               <button
                 class="comment__action comment-reply-btn"
                 data-action="comment-reply"
-                data-comment-id="{{ .ID }}"
+                data-comment-code="{{ .ShortCode }}"
                 data-story-code="{{ .StoryCode }}"
               >
                 reply
@@ -142,10 +149,10 @@
         {{ if .CanEdit }}
           <form
             method="POST"
-            action="/comments/{{ .ID }}/edit"
+            action="/comments/{{ .ShortCode }}/edit"
             class="comment-edit-form"
             data-role="comment-edit-form"
-            data-comment-id="{{ .ID }}"
+            data-comment-code="{{ .ShortCode }}"
             hidden
           >
             <textarea
@@ -162,7 +169,7 @@
                 type="button"
                 class="btn btn--secondary comment-edit-cancel"
                 data-action="comment-edit-cancel"
-                data-comment-id="{{ .ID }}"
+                data-comment-code="{{ .ShortCode }}"
               >
                 cancel
               </button>

@@ -28,7 +28,7 @@
         <button
           class="{{ classes "vote-btn" (when .HasUpvoted "vote-btn--active") }}"
           data-action="vote"
-          data-story-id="{{ .ID }}"
+          data-story-code="{{ .ShortCode }}"
           data-voted="{{ .HasUpvoted }}"
         >
           <svg class="icon"><use href="#icon-upvote"></use></svg>
@@ -42,7 +42,10 @@
           <svg class="icon"><use href="#icon-upvote"></use></svg>
         </span>
       {{ end }}
-      <span class="vote-score" data-role="vote-score" data-story-id="{{ .ID }}"
+      <span
+        class="vote-score"
+        data-role="vote-score"
+        data-story-code="{{ .ShortCode }}"
         >{{ .Upvotes }}</span
       >
     </div>
@@ -86,7 +89,7 @@
             <button
               class="story-item__action story-unflag-btn"
               data-action="story-unflag"
-              data-story-id="{{ .ID }}"
+              data-story-code="{{ .ShortCode }}"
             >
               unflag
             </button>
@@ -95,7 +98,7 @@
               <button
                 class="story-item__action story-flag-btn"
                 data-action="story-flag"
-                data-story-id="{{ .ID }}"
+                data-story-code="{{ .ShortCode }}"
               >
                 flag
               </button>
@@ -117,7 +120,7 @@
             <button
               class="story-item__action story-unhide-btn"
               data-action="story-unhide"
-              data-story-id="{{ .ID }}"
+              data-story-code="{{ .ShortCode }}"
             >
               unhide
             </button>
@@ -125,7 +128,7 @@
             <button
               class="story-item__action story-hide-btn"
               data-action="story-hide"
-              data-story-id="{{ .ID }}"
+              data-story-code="{{ .ShortCode }}"
             >
               hide
             </button>

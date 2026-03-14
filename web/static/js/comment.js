@@ -6,9 +6,9 @@
     var btn = e.target.closest("[data-action=comment-vote]")
     if (!btn) return
 
-    var commentId = btn.dataset.commentId
+    var commentCode = btn.dataset.commentCode
     var voted = btn.dataset.voted === "true"
-    var url = "/comments/" + commentId + (voted ? "/unvote" : "/upvote")
+    var url = "/comments/" + commentCode + (voted ? "/unvote" : "/upvote")
 
     var res = await fetch(url, { method: "POST" })
     if (res.status === 401) {
@@ -19,7 +19,7 @@
     if (!data || !data.ok) return
 
     var score = document.querySelector(
-      '[data-role=vote-score][data-comment-id="' + commentId + '"]',
+      '[data-role=vote-score][data-comment-code="' + commentCode + '"]',
     )
     if (score) score.textContent = data.score
     btn.dataset.voted = voted ? "false" : "true"
@@ -35,9 +35,9 @@
     var existing = document.querySelector("[data-role=reply-form]")
     if (existing) existing.remove()
 
-    var commentId = btn.dataset.commentId
+    var commentCode = btn.dataset.commentCode
     var storyCode = btn.dataset.storyCode
-    var subtree = document.getElementById("comment-" + commentId)
+    var subtree = document.getElementById("comment-" + commentCode)
     if (!subtree) return
     // Insert inside the li.comments_subtree, after the .comment div
     var li = subtree.closest(".comments_subtree")
@@ -51,8 +51,8 @@
 
     var hidden = document.createElement("input")
     hidden.type = "hidden"
-    hidden.name = "parent_id"
-    hidden.value = commentId
+    hidden.name = "parent_code"
+    hidden.value = commentCode
     form.appendChild(hidden)
 
     var textarea = document.createElement("textarea")
@@ -93,9 +93,9 @@
     var btn = e.target.closest("[data-action=comment-edit-toggle]")
     if (!btn) return
 
-    var commentId = btn.dataset.commentId
+    var commentCode = btn.dataset.commentCode
     var form = document.querySelector(
-      '[data-role=comment-edit-form][data-comment-id="' + commentId + '"]',
+      '[data-role=comment-edit-form][data-comment-code="' + commentCode + '"]',
     )
     if (form) {
       form.hidden = !form.hidden
@@ -110,9 +110,9 @@
     var btn = e.target.closest("[data-action=comment-edit-cancel]")
     if (!btn) return
 
-    var commentId = btn.dataset.commentId
+    var commentCode = btn.dataset.commentCode
     var form = document.querySelector(
-      '[data-role=comment-edit-form][data-comment-id="' + commentId + '"]',
+      '[data-role=comment-edit-form][data-comment-code="' + commentCode + '"]',
     )
     if (form) form.hidden = true
   })
