@@ -77,47 +77,6 @@ func (q *Queries) DecrementStoryCommentCount(ctx context.Context, id int64) erro
 	return err
 }
 
-const getCommentByID = `-- name: GetCommentByID :one
-SELECT id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at
-FROM comments
-WHERE id = $1
-`
-
-type GetCommentByIDRow struct {
-	ID        int64
-	StoryID   int64
-	UserID    int64
-	ParentID  pgtype.Int8
-	Body      string
-	Depth     int32
-	ShortCode string
-	Upvotes   int32
-	Downvotes int32
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
-	DeletedAt pgtype.Timestamptz
-}
-
-func (q *Queries) GetCommentByID(ctx context.Context, id int64) (GetCommentByIDRow, error) {
-	row := q.db.QueryRow(ctx, getCommentByID, id)
-	var i GetCommentByIDRow
-	err := row.Scan(
-		&i.ID,
-		&i.StoryID,
-		&i.UserID,
-		&i.ParentID,
-		&i.Body,
-		&i.Depth,
-		&i.ShortCode,
-		&i.Upvotes,
-		&i.Downvotes,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.DeletedAt,
-	)
-	return i, err
-}
-
 const getCommentByShortCode = `-- name: GetCommentByShortCode :one
 SELECT id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at
 FROM comments

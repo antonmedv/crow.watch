@@ -3,11 +3,6 @@ INSERT INTO comments (story_id, user_id, parent_id, body, depth, short_code)
 VALUES (@story_id, @user_id, @parent_id, @body, @depth, @short_code)
 RETURNING id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at;
 
--- name: GetCommentByID :one
-SELECT id, story_id, user_id, parent_id, body, depth, short_code, upvotes, downvotes, created_at, updated_at, deleted_at
-FROM comments
-WHERE id = @id;
-
 -- name: ListCommentsByStory :many
 SELECT
     c.id,
