@@ -30,15 +30,53 @@ func (a *App) modUserPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var ips []UserIP
+	ipRows, err := a.Queries.GetIPsByUserID(r.Context(), target.ID)
+	if err == nil {
+		for _, row := range ipRows {
+			ips = append(ips, UserIP{
+				IP:       row.IpAddress,
+				Action:   row.Action,
+				HitCount: row.HitCount,
+				LastSeen: row.LastSeenAt.Time,
+			})
+		}
+	}
+
+	var sharedUsers []SharedIPUser
+	sharedRows, err := a.Queries.GetUsersSharingIPsWith(r.Context(), target.ID)
+	if err == nil {
+		seen := map[string]bool{}
+		for _, row := range sharedRows {
+			key := row.IpAddress + "|" + row.Username
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			sharedUsers = append(sharedUsers, SharedIPUser{
+				IP:        row.IpAddress,
+				Username:  row.Username,
+				Campaign:  row.Campaign,
+				IsBanned:  row.BannedAt.Valid,
+				CreatedAt: row.UserCreatedAt.Time,
+			})
+		}
+	}
+
 	a.render(w, "mod_user", ModUserPageData{
-		Base:         a.baseData(r),
-		Username:     target.Username,
-		IsModerator:  target.IsModerator,
-		IsBanned:     target.BannedAt.Valid,
-		BanReason:    target.BanReason,
-		StoryCount:   target.StoryCount,
-		CommentCount: target.CommentCount,
-		CreatedAt:    target.CreatedAt.Time,
+		Base:           a.baseData(r),
+		Username:       target.Username,
+		Email:          target.Email,
+		EmailConfirmed: target.EmailConfirmedAt.Valid,
+		IsModerator:    target.IsModerator,
+		IsBanned:       target.BannedAt.Valid,
+		BanReason:      target.BanReason,
+		Campaign:       target.Campaign,
+		StoryCount:     target.StoryCount,
+		CommentCount:   target.CommentCount,
+		CreatedAt:      target.CreatedAt.Time,
+		IPs:            ips,
+		SharedIPUsers:  sharedUsers,
 	})
 }
 

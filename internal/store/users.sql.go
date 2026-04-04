@@ -295,9 +295,12 @@ const getUserForModeration = `-- name: GetUserForModeration :one
 SELECT
     u.id,
     u.username,
+    u.email,
     u.is_moderator,
     u.banned_at,
     u.ban_reason,
+    u.email_confirmed_at,
+    u.campaign,
     u.created_at,
     (SELECT count(*) FROM stories s WHERE s.user_id = u.id AND s.deleted_at IS NULL)::bigint AS story_count,
     (SELECT count(*) FROM comments c WHERE c.user_id = u.id AND c.deleted_at IS NULL)::bigint AS comment_count
@@ -308,14 +311,17 @@ LIMIT 1
 `
 
 type GetUserForModerationRow struct {
-	ID           int64
-	Username     string
-	IsModerator  bool
-	BannedAt     pgtype.Timestamptz
-	BanReason    string
-	CreatedAt    pgtype.Timestamptz
-	StoryCount   int64
-	CommentCount int64
+	ID               int64
+	Username         string
+	Email            string
+	IsModerator      bool
+	BannedAt         pgtype.Timestamptz
+	BanReason        string
+	EmailConfirmedAt pgtype.Timestamptz
+	Campaign         string
+	CreatedAt        pgtype.Timestamptz
+	StoryCount       int64
+	CommentCount     int64
 }
 
 func (q *Queries) GetUserForModeration(ctx context.Context, username string) (GetUserForModerationRow, error) {
@@ -324,9 +330,12 @@ func (q *Queries) GetUserForModeration(ctx context.Context, username string) (Ge
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.Email,
 		&i.IsModerator,
 		&i.BannedAt,
 		&i.BanReason,
+		&i.EmailConfirmedAt,
+		&i.Campaign,
 		&i.CreatedAt,
 		&i.StoryCount,
 		&i.CommentCount,

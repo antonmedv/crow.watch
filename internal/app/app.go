@@ -246,14 +246,34 @@ type RegisterPageData struct {
 }
 
 type ModUserPageData struct {
-	Base         Base
-	Username     string
-	IsModerator  bool
-	IsBanned     bool
-	BanReason    string
-	StoryCount   int64
-	CommentCount int64
-	CreatedAt    time.Time
+	Base           Base
+	Username       string
+	Email          string
+	EmailConfirmed bool
+	IsModerator    bool
+	IsBanned       bool
+	BanReason      string
+	Campaign       string
+	StoryCount     int64
+	CommentCount   int64
+	CreatedAt      time.Time
+	IPs            []UserIP
+	SharedIPUsers  []SharedIPUser
+}
+
+type UserIP struct {
+	IP       string
+	Action   string
+	HitCount int32
+	LastSeen time.Time
+}
+
+type SharedIPUser struct {
+	IP        string
+	Username  string
+	Campaign  string
+	IsBanned  bool
+	CreatedAt time.Time
 }
 
 type CampaignsPageData struct {

@@ -108,9 +108,12 @@ SELECT EXISTS(SELECT 1 FROM users WHERE lower(email) = lower(@email) AND id != @
 SELECT
     u.id,
     u.username,
+    u.email,
     u.is_moderator,
     u.banned_at,
     u.ban_reason,
+    u.email_confirmed_at,
+    u.campaign,
     u.created_at,
     (SELECT count(*) FROM stories s WHERE s.user_id = u.id AND s.deleted_at IS NULL)::bigint AS story_count,
     (SELECT count(*) FROM comments c WHERE c.user_id = u.id AND c.deleted_at IS NULL)::bigint AS comment_count

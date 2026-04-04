@@ -32,6 +32,28 @@
     .mod-ban-reason strong {
       color: #c00;
     }
+    .mod-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .mod-table th,
+    .mod-table td {
+      padding: 6px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .mod-table th {
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .mod-table code {
+      font-size: 13px;
+    }
     .btn--danger {
       background: #c00;
       border-color: #c00;
@@ -57,6 +79,61 @@
     <span>member since {{ .CreatedAt.Format "Jan 2006" }}</span>
     {{ if .IsModerator }}<span>moderator</span>{{ end }}
   </div>
+
+  <div class="mod-user-info">
+    <span>{{ .Email }}{{ if .EmailConfirmed }} (confirmed){{ else }} (unconfirmed){{ end }}</span>
+    {{ if .Campaign }}<span>campaign: {{ .Campaign }}</span>{{ end }}
+  </div>
+
+  {{ if .IPs }}
+    <h2 style="font-size: 16px; margin-bottom: 8px;">IP Addresses</h2>
+    <table class="mod-table">
+      <thead>
+        <tr>
+          <th>IP</th>
+          <th>Action</th>
+          <th>Hits</th>
+          <th>Last seen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .IPs }}
+          <tr>
+            <td><code>{{ .IP }}</code></td>
+            <td>{{ .Action }}</td>
+            <td>{{ .HitCount }}</td>
+            <td>{{ timeAgo .LastSeen }}</td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  {{ end }}
+
+  {{ if .SharedIPUsers }}
+    <h2 style="font-size: 16px; margin: 16px 0 8px;">Users Sharing IPs</h2>
+    <table class="mod-table">
+      <thead>
+        <tr>
+          <th>IP</th>
+          <th>User</th>
+          <th>Campaign</th>
+          <th>Joined</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range .SharedIPUsers }}
+          <tr>
+            <td><code>{{ .IP }}</code></td>
+            <td><a href="/u/{{ .Username }}">{{ .Username }}</a></td>
+            <td>{{ if .Campaign }}{{ .Campaign }}{{ else }}&mdash;{{ end }}</td>
+            <td>{{ .CreatedAt.Format "Jan 2006" }}</td>
+            <td>{{ if .IsBanned }}<span style="color: #c00;">banned</span>{{ else }}active{{ end }}</td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  {{ end }}
 
   <div class="mod-section">
     {{ if .IsBanned }}
