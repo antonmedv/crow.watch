@@ -102,6 +102,7 @@
         method="post"
         action="/mod/user/{{ .Username }}/delete-stories"
         style="margin-bottom: 12px;"
+        onsubmit="return confirm('Remove all {{ .StoryCount }} stories by {{ .Username }}?')"
       >
         <button class="btn btn--danger" type="submit">
           Remove all stories ({{ .StoryCount }})
@@ -113,7 +114,11 @@
       </p>
     {{ end }}
     {{ if gt .CommentCount 0 }}
-      <form method="post" action="/mod/user/{{ .Username }}/delete-comments">
+      <form
+        method="post"
+        action="/mod/user/{{ .Username }}/delete-comments"
+        onsubmit="return confirm('Remove all {{ .CommentCount }} comments by {{ .Username }}?')"
+      >
         <button class="btn btn--danger" type="submit">
           Remove all comments ({{ .CommentCount }})
         </button>
