@@ -29,6 +29,7 @@ SELECT
     u.password_digest,
     u.is_moderator,
     u.banned_at,
+    u.ban_reason,
     u.deleted_at,
     u.inviter_id,
     u.password_reset_token_hash,

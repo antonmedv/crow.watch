@@ -46,4 +46,9 @@
       >
     </p>
   {{ end }}
+  {{ if .Base.IsModerator }}
+    <p style="margin-top: 1rem;">
+      <a href="/mod/user/{{ .ProfileUsername }}">Moderate user</a>
+    </p>
+  {{ end }}
 {{ end }}

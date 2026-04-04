@@ -11,6 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const banUser = `-- name: BanUser :exec
+UPDATE users
+SET banned_at = now(), ban_reason = $1, updated_at = now()
+WHERE id = $2
+`
+
+type BanUserParams struct {
+	BanReason string
+	ID        int64
+}
+
+func (q *Queries) BanUser(ctx context.Context, arg BanUserParams) error {
+	_, err := q.db.Exec(ctx, banUser, arg.BanReason, arg.ID)
+	return err
+}
+
 const checkEmailExists = `-- name: CheckEmailExists :one
 SELECT EXISTS(SELECT 1 FROM users WHERE lower(email) = lower($1) AND id != $2) AS exists
 `
@@ -132,7 +148,7 @@ func (q *Queries) GetPublicProfile(ctx context.Context, username string) (GetPub
 }
 
 const getUserByEmailConfirmationTokenHash = `-- name: GetUserByEmailConfirmationTokenHash :one
-SELECT id, username, email, password_digest, is_moderator, banned_at, deleted_at, inviter_id, campaign, password_reset_token_hash, password_reset_token_created_at, email_confirmed_at, email_confirmation_token_hash, email_confirmation_token_created_at, unconfirmed_email, website, about, created_at, updated_at
+SELECT id, username, email, password_digest, is_moderator, banned_at, ban_reason, deleted_at, inviter_id, campaign, password_reset_token_hash, password_reset_token_created_at, email_confirmed_at, email_confirmation_token_hash, email_confirmation_token_created_at, unconfirmed_email, website, about, created_at, updated_at
 FROM users
 WHERE email_confirmation_token_hash = $1
   AND email_confirmation_token_created_at > now() - INTERVAL '24 hours'
@@ -149,6 +165,7 @@ func (q *Queries) GetUserByEmailConfirmationTokenHash(ctx context.Context, email
 		&i.PasswordDigest,
 		&i.IsModerator,
 		&i.BannedAt,
+		&i.BanReason,
 		&i.DeletedAt,
 		&i.InviterID,
 		&i.Campaign,
@@ -167,7 +184,7 @@ func (q *Queries) GetUserByEmailConfirmationTokenHash(ctx context.Context, email
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, email, password_digest, is_moderator, banned_at, deleted_at, inviter_id, campaign, password_reset_token_hash, password_reset_token_created_at, email_confirmed_at, email_confirmation_token_hash, email_confirmation_token_created_at, unconfirmed_email, website, about, created_at, updated_at
+SELECT id, username, email, password_digest, is_moderator, banned_at, ban_reason, deleted_at, inviter_id, campaign, password_reset_token_hash, password_reset_token_created_at, email_confirmed_at, email_confirmation_token_hash, email_confirmation_token_created_at, unconfirmed_email, website, about, created_at, updated_at
 FROM users
 WHERE id = $1
 LIMIT 1
@@ -183,6 +200,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.PasswordDigest,
 		&i.IsModerator,
 		&i.BannedAt,
+		&i.BanReason,
 		&i.DeletedAt,
 		&i.InviterID,
 		&i.Campaign,
@@ -201,7 +219,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 }
 
 const getUserByLogin = `-- name: GetUserByLogin :one
-SELECT id, username, email, password_digest, is_moderator, banned_at, deleted_at, inviter_id, campaign, password_reset_token_hash, password_reset_token_created_at, email_confirmed_at, email_confirmation_token_hash, email_confirmation_token_created_at, unconfirmed_email, website, about, created_at, updated_at
+SELECT id, username, email, password_digest, is_moderator, banned_at, ban_reason, deleted_at, inviter_id, campaign, password_reset_token_hash, password_reset_token_created_at, email_confirmed_at, email_confirmation_token_hash, email_confirmation_token_created_at, unconfirmed_email, website, about, created_at, updated_at
 FROM users
 WHERE (lower(email) = lower($1) AND email_confirmed_at IS NOT NULL)
    OR lower(username) = lower($1)
@@ -219,6 +237,7 @@ func (q *Queries) GetUserByLogin(ctx context.Context, login string) (User, error
 		&i.PasswordDigest,
 		&i.IsModerator,
 		&i.BannedAt,
+		&i.BanReason,
 		&i.DeletedAt,
 		&i.InviterID,
 		&i.Campaign,
@@ -237,7 +256,7 @@ func (q *Queries) GetUserByLogin(ctx context.Context, login string) (User, error
 }
 
 const getUserByPasswordResetTokenHash = `-- name: GetUserByPasswordResetTokenHash :one
-SELECT id, username, email, password_digest, is_moderator, banned_at, deleted_at, inviter_id, campaign, password_reset_token_hash, password_reset_token_created_at, email_confirmed_at, email_confirmation_token_hash, email_confirmation_token_created_at, unconfirmed_email, website, about, created_at, updated_at
+SELECT id, username, email, password_digest, is_moderator, banned_at, ban_reason, deleted_at, inviter_id, campaign, password_reset_token_hash, password_reset_token_created_at, email_confirmed_at, email_confirmation_token_hash, email_confirmation_token_created_at, unconfirmed_email, website, about, created_at, updated_at
 FROM users
 WHERE password_reset_token_hash = $1
   AND password_reset_token_created_at > now() - INTERVAL '24 hours'
@@ -254,6 +273,7 @@ func (q *Queries) GetUserByPasswordResetTokenHash(ctx context.Context, passwordR
 		&i.PasswordDigest,
 		&i.IsModerator,
 		&i.BannedAt,
+		&i.BanReason,
 		&i.DeletedAt,
 		&i.InviterID,
 		&i.Campaign,
@@ -267,6 +287,49 @@ func (q *Queries) GetUserByPasswordResetTokenHash(ctx context.Context, passwordR
 		&i.About,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserForModeration = `-- name: GetUserForModeration :one
+SELECT
+    u.id,
+    u.username,
+    u.is_moderator,
+    u.banned_at,
+    u.ban_reason,
+    u.created_at,
+    (SELECT count(*) FROM stories s WHERE s.user_id = u.id AND s.deleted_at IS NULL)::bigint AS story_count,
+    (SELECT count(*) FROM comments c WHERE c.user_id = u.id AND c.deleted_at IS NULL)::bigint AS comment_count
+FROM users u
+WHERE lower(u.username) = lower($1)
+  AND u.deleted_at IS NULL
+LIMIT 1
+`
+
+type GetUserForModerationRow struct {
+	ID           int64
+	Username     string
+	IsModerator  bool
+	BannedAt     pgtype.Timestamptz
+	BanReason    string
+	CreatedAt    pgtype.Timestamptz
+	StoryCount   int64
+	CommentCount int64
+}
+
+func (q *Queries) GetUserForModeration(ctx context.Context, username string) (GetUserForModerationRow, error) {
+	row := q.db.QueryRow(ctx, getUserForModeration, username)
+	var i GetUserForModerationRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.IsModerator,
+		&i.BannedAt,
+		&i.BanReason,
+		&i.CreatedAt,
+		&i.StoryCount,
+		&i.CommentCount,
 	)
 	return i, err
 }
@@ -324,6 +387,49 @@ type SetPasswordResetTokenHashParams struct {
 
 func (q *Queries) SetPasswordResetTokenHash(ctx context.Context, arg SetPasswordResetTokenHashParams) error {
 	_, err := q.db.Exec(ctx, setPasswordResetTokenHash, arg.PasswordResetTokenHash, arg.ID)
+	return err
+}
+
+const softDeleteCommentsByUser = `-- name: SoftDeleteCommentsByUser :one
+WITH deleted AS (
+    UPDATE comments SET deleted_at = now(), body = ''
+    WHERE user_id = $1 AND deleted_at IS NULL
+    RETURNING id
+)
+SELECT count(*)::bigint FROM deleted
+`
+
+func (q *Queries) SoftDeleteCommentsByUser(ctx context.Context, userID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, softDeleteCommentsByUser, userID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const softDeleteStoriesByUser = `-- name: SoftDeleteStoriesByUser :one
+WITH deleted AS (
+    UPDATE stories SET deleted_at = now(), updated_at = now()
+    WHERE user_id = $1 AND deleted_at IS NULL
+    RETURNING id
+)
+SELECT count(*)::bigint FROM deleted
+`
+
+func (q *Queries) SoftDeleteStoriesByUser(ctx context.Context, userID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, softDeleteStoriesByUser, userID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const unbanUser = `-- name: UnbanUser :exec
+UPDATE users
+SET banned_at = NULL, ban_reason = '', updated_at = now()
+WHERE id = $1
+`
+
+func (q *Queries) UnbanUser(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, unbanUser, id)
 	return err
 }
 

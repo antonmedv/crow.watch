@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5"
+
+	"crow.watch/internal/auth"
 )
 
 func (a *App) profilePage(w http.ResponseWriter, r *http.Request) {
@@ -17,6 +19,12 @@ func (a *App) profilePage(w http.ResponseWriter, r *http.Request) {
 	profile, err := a.Queries.GetPublicProfile(r.Context(), username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			// Moderators can still view banned user profiles
+			current, ok := auth.UserFromContext(r.Context())
+			if ok && current.User.IsModerator {
+				http.Redirect(w, r, "/mod/user/"+username, http.StatusSeeOther)
+				return
+			}
 			http.NotFound(w, r)
 			return
 		}

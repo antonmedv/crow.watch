@@ -1,0 +1,125 @@
+{{ define "title" }}Moderate {{ .Username }} | Crow Watch{{ end }}
+
+{{ define "head" }}
+  <style>
+    .mod-section {
+      margin-bottom: 32px;
+    }
+    .mod-section h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    .mod-section hr {
+      margin: 24px 0;
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+    .mod-user-info {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 24px;
+    }
+    .mod-user-info span:not(:last-child)::after {
+      content: "\00b7";
+      margin: 0 0.4em;
+    }
+    .mod-ban-reason {
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .mod-ban-reason strong {
+      color: #c00;
+    }
+    .btn--danger {
+      background: #c00;
+      border-color: #c00;
+      color: #fff;
+    }
+  </style>
+{{ end }}
+
+{{ define "content" }}
+  <h1 class="page-title">
+    Moderate <a href="/u/{{ .Username }}">{{ .Username }}</a>
+  </h1>
+
+  <div class="mod-user-info">
+    <span
+      >{{ .StoryCount }}
+      {{ if eq .StoryCount 1 }}story{{ else }}stories{{ end }}</span
+    >
+    <span
+      >{{ .CommentCount }}
+      {{ if eq .CommentCount 1 }}comment{{ else }}comments{{ end }}</span
+    >
+    <span>member since {{ .CreatedAt.Format "Jan 2006" }}</span>
+    {{ if .IsModerator }}<span>moderator</span>{{ end }}
+  </div>
+
+  <div class="mod-section">
+    {{ if .IsBanned }}
+      <h2>User is Banned</h2>
+      <div class="mod-ban-reason">
+        <strong>Reason:</strong> {{ .BanReason }}
+      </div>
+      <form method="post" action="/mod/user/{{ .Username }}/unban">
+        <button class="btn" type="submit">Unban User</button>
+      </form>
+    {{ else }}
+      <h2>Ban User</h2>
+      {{ if .IsModerator }}
+        <p style="color: var(--text-muted);">Cannot ban a moderator.</p>
+      {{ else }}
+        <form method="post" action="/mod/user/{{ .Username }}/ban">
+          <div class="field">
+            <label for="ban-reason">Reason</label>
+            <textarea
+              id="ban-reason"
+              name="reason"
+              class="field-input"
+              rows="2"
+              maxlength="500"
+              required
+              placeholder="Why is this user being banned?"
+            ></textarea>
+          </div>
+          <button class="btn btn--danger" type="submit">Ban User</button>
+        </form>
+      {{ end }}
+    {{ end }}
+  </div>
+
+  <hr
+    style="margin: 24px 0; border: none; border-top: 1px solid var(--border);"
+  />
+
+  <div class="mod-section">
+    <h2>Remove Content</h2>
+    {{ if gt .StoryCount 0 }}
+      <form
+        method="post"
+        action="/mod/user/{{ .Username }}/delete-stories"
+        style="margin-bottom: 12px;"
+      >
+        <button class="btn btn--danger" type="submit">
+          Remove all stories ({{ .StoryCount }})
+        </button>
+      </form>
+    {{ else }}
+      <p style="color: var(--text-muted); margin-bottom: 12px;">
+        No active stories.
+      </p>
+    {{ end }}
+    {{ if gt .CommentCount 0 }}
+      <form method="post" action="/mod/user/{{ .Username }}/delete-comments">
+        <button class="btn btn--danger" type="submit">
+          Remove all comments ({{ .CommentCount }})
+        </button>
+      </form>
+    {{ else }}
+      <p style="color: var(--text-muted);">No active comments.</p>
+    {{ end }}
+  </div>
+{{ end }}

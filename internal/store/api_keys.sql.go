@@ -60,6 +60,7 @@ SELECT
     u.password_digest,
     u.is_moderator,
     u.banned_at,
+    u.ban_reason,
     u.deleted_at,
     u.inviter_id,
     u.campaign,
@@ -86,6 +87,7 @@ type GetAPIKeyUserByTokenHashRow struct {
 	PasswordDigest                  string
 	IsModerator                     bool
 	BannedAt                        pgtype.Timestamptz
+	BanReason                       string
 	DeletedAt                       pgtype.Timestamptz
 	InviterID                       pgtype.Int8
 	Campaign                        string
@@ -112,6 +114,7 @@ func (q *Queries) GetAPIKeyUserByTokenHash(ctx context.Context, tokenHash string
 		&i.PasswordDigest,
 		&i.IsModerator,
 		&i.BannedAt,
+		&i.BanReason,
 		&i.DeletedAt,
 		&i.InviterID,
 		&i.Campaign,

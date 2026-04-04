@@ -92,6 +92,7 @@ SELECT
     u.password_digest,
     u.is_moderator,
     u.banned_at,
+    u.ban_reason,
     u.deleted_at,
     u.inviter_id,
     u.password_reset_token_hash,
@@ -119,6 +120,7 @@ type GetSessionUserByTokenHashRow struct {
 	PasswordDigest                  string
 	IsModerator                     bool
 	BannedAt                        pgtype.Timestamptz
+	BanReason                       string
 	DeletedAt                       pgtype.Timestamptz
 	InviterID                       pgtype.Int8
 	PasswordResetTokenHash          pgtype.Text
@@ -144,6 +146,7 @@ func (q *Queries) GetSessionUserByTokenHash(ctx context.Context, tokenHash strin
 		&i.PasswordDigest,
 		&i.IsModerator,
 		&i.BannedAt,
+		&i.BanReason,
 		&i.DeletedAt,
 		&i.InviterID,
 		&i.PasswordResetTokenHash,

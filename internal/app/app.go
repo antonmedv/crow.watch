@@ -245,6 +245,17 @@ type RegisterPageData struct {
 	CaptchaID      string
 }
 
+type ModUserPageData struct {
+	Base         Base
+	Username     string
+	IsModerator  bool
+	IsBanned     bool
+	BanReason    string
+	StoryCount   int64
+	CommentCount int64
+	CreatedAt    time.Time
+}
+
 type CampaignsPageData struct {
 	Base            Base
 	Campaigns       []CampaignRow
@@ -354,6 +365,11 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("POST /x/{code}/delete", a.deleteStory)
 	mux.HandleFunc("POST /x/{code}/mark-duplicate", a.markDuplicate)
 	mux.HandleFunc("POST /x/{code}/unmark-duplicate", a.unmarkDuplicate)
+	mux.HandleFunc("GET /mod/user/{username}", a.modUserPage)
+	mux.HandleFunc("POST /mod/user/{username}/ban", a.banUser)
+	mux.HandleFunc("POST /mod/user/{username}/unban", a.unbanUser)
+	mux.HandleFunc("POST /mod/user/{username}/delete-stories", a.deleteUserStories)
+	mux.HandleFunc("POST /mod/user/{username}/delete-comments", a.deleteUserComments)
 	mux.HandleFunc("GET /mod/log", a.moderationLogPage)
 	mux.HandleFunc("GET /mod/log/page/{page}", a.moderationLogPage)
 	mux.HandleFunc("GET /mod/analytics", a.analyticsPage)

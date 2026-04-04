@@ -5,6 +5,7 @@ CREATE TABLE users (
     password_digest TEXT NOT NULL,
     is_moderator BOOLEAN NOT NULL DEFAULT false,
     banned_at TIMESTAMPTZ,
+    ban_reason TEXT NOT NULL DEFAULT '',
     deleted_at TIMESTAMPTZ,
     inviter_id BIGINT REFERENCES users(id),
     campaign TEXT NOT NULL DEFAULT '',

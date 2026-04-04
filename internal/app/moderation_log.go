@@ -57,7 +57,8 @@ func (a *App) moderationLogPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) resolveModLogTarget(r *http.Request, targetType string, targetID int64) (link, title string) {
-	if targetType == "story" {
+	switch targetType {
+	case "story":
 		row, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ID: pgtype.Int8{Int64: targetID, Valid: true}})
 		if err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
@@ -66,6 +67,12 @@ func (a *App) resolveModLogTarget(r *http.Request, targetType string, targetID i
 			return "", "[error]"
 		}
 		return storyPath(row.ShortCode, row.Title), row.Title
+	case "user":
+		user, err := a.Queries.GetUserByID(r.Context(), targetID)
+		if err != nil {
+			return "", "[unknown user]"
+		}
+		return "/u/" + user.Username, user.Username
 	}
 	return "", ""
 }
@@ -89,6 +96,14 @@ func formatActionDescription(action string) string {
 			descriptions = append(descriptions, "marked as duplicate")
 		case "story.unmark_duplicate":
 			descriptions = append(descriptions, "unmarked as duplicate")
+		case "user.ban":
+			descriptions = append(descriptions, "banned user")
+		case "user.unban":
+			descriptions = append(descriptions, "unbanned user")
+		case "user.delete_stories":
+			descriptions = append(descriptions, "removed user stories")
+		case "user.delete_comments":
+			descriptions = append(descriptions, "removed user comments")
 		default:
 			descriptions = append(descriptions, strings.TrimSpace(p))
 		}

@@ -218,6 +218,7 @@ type User struct {
 	PasswordDigest                  string
 	IsModerator                     bool
 	BannedAt                        pgtype.Timestamptz
+	BanReason                       string
 	DeletedAt                       pgtype.Timestamptz
 	InviterID                       pgtype.Int8
 	Campaign                        string
