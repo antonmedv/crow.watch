@@ -43,6 +43,16 @@ func (q *Queries) CheckEmailExists(ctx context.Context, arg CheckEmailExistsPara
 	return exists, err
 }
 
+const clearDuplicateRefsToUserStories = `-- name: ClearDuplicateRefsToUserStories :exec
+UPDATE stories SET duplicate_of_id = NULL
+WHERE duplicate_of_id IN (SELECT s.id FROM stories s WHERE s.user_id = $1)
+`
+
+func (q *Queries) ClearDuplicateRefsToUserStories(ctx context.Context, userID int64) error {
+	_, err := q.db.Exec(ctx, clearDuplicateRefsToUserStories, userID)
+	return err
+}
+
 const clearPasswordResetTokenHash = `-- name: ClearPasswordResetTokenHash :exec
 UPDATE users
 SET password_reset_token_hash = NULL,
@@ -344,6 +354,36 @@ func (q *Queries) GetUserForModeration(ctx context.Context, username string) (Ge
 		&i.CommentCount,
 	)
 	return i, err
+}
+
+const hardDeleteCommentsByUser = `-- name: HardDeleteCommentsByUser :one
+WITH deleted AS (
+    DELETE FROM comments WHERE user_id = $1
+    RETURNING id
+)
+SELECT count(*)::bigint FROM deleted
+`
+
+func (q *Queries) HardDeleteCommentsByUser(ctx context.Context, userID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, hardDeleteCommentsByUser, userID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
+const hardDeleteStoriesByUser = `-- name: HardDeleteStoriesByUser :one
+WITH deleted AS (
+    DELETE FROM stories WHERE user_id = $1
+    RETURNING id
+)
+SELECT count(*)::bigint FROM deleted
+`
+
+func (q *Queries) HardDeleteStoriesByUser(ctx context.Context, userID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, hardDeleteStoriesByUser, userID)
+	var column_1 int64
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const setEmailChangeConfirmationToken = `-- name: SetEmailChangeConfirmationToken :exec

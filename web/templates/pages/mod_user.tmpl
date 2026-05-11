@@ -166,6 +166,18 @@
         </form>
       {{ end }}
     {{ end }}
+    {{ if not .IsModerator }}
+      <form
+        method="post"
+        action="/mod/user/{{ .Username }}/ban-purge"
+        style="margin-top: 12px;"
+        onsubmit="return confirm('Ban {{ .Username }} and HARD DELETE all their stories and comments? This cannot be undone.')"
+      >
+        <button class="btn btn--danger" type="submit">
+          Ban and Delete All User's Content
+        </button>
+      </form>
+    {{ end }}
   </div>
 
   <hr

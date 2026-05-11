@@ -148,3 +148,21 @@ WITH deleted AS (
     RETURNING id
 )
 SELECT count(*)::bigint FROM deleted;
+
+-- name: ClearDuplicateRefsToUserStories :exec
+UPDATE stories SET duplicate_of_id = NULL
+WHERE duplicate_of_id IN (SELECT s.id FROM stories s WHERE s.user_id = @user_id);
+
+-- name: HardDeleteStoriesByUser :one
+WITH deleted AS (
+    DELETE FROM stories WHERE user_id = @user_id
+    RETURNING id
+)
+SELECT count(*)::bigint FROM deleted;
+
+-- name: HardDeleteCommentsByUser :one
+WITH deleted AS (
+    DELETE FROM comments WHERE user_id = @user_id
+    RETURNING id
+)
+SELECT count(*)::bigint FROM deleted;

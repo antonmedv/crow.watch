@@ -388,6 +388,7 @@ func (a *App) Routes() http.Handler {
 	mux.HandleFunc("POST /x/{code}/unmark-duplicate", a.unmarkDuplicate)
 	mux.HandleFunc("GET /mod/user/{username}", a.modUserPage)
 	mux.HandleFunc("POST /mod/user/{username}/ban", a.banUser)
+	mux.HandleFunc("POST /mod/user/{username}/ban-purge", a.banAndPurgeUser)
 	mux.HandleFunc("POST /mod/user/{username}/unban", a.unbanUser)
 	mux.HandleFunc("POST /mod/user/{username}/delete-stories", a.deleteUserStories)
 	mux.HandleFunc("POST /mod/user/{username}/delete-comments", a.deleteUserComments)

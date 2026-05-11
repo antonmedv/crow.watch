@@ -216,6 +216,89 @@ func (a *App) unbanUser(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/mod/user/"+target.Username, http.StatusSeeOther)
 }
 
+func (a *App) banAndPurgeUser(w http.ResponseWriter, r *http.Request) {
+	current, ok := auth.UserFromContext(r.Context())
+	if !ok || !current.User.IsModerator {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	username := r.PathValue("username")
+	target, err := a.Queries.GetUserForModeration(r.Context(), username)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.NotFound(w, r)
+			return
+		}
+		a.serverError(w, r, "get user for moderation", err)
+		return
+	}
+
+	if target.IsModerator {
+		http.Error(w, "cannot ban a moderator", http.StatusForbidden)
+		return
+	}
+
+	tx, err := a.Pool.Begin(r.Context())
+	if err != nil {
+		a.serverError(w, r, "begin transaction", err)
+		return
+	}
+	defer tx.Rollback(r.Context())
+
+	qtx := a.Queries.WithTx(tx)
+
+	if !target.BannedAt.Valid {
+		if err := qtx.BanUser(r.Context(), store.BanUserParams{
+			BanReason: "spam (purged)",
+			ID:        target.ID,
+		}); err != nil {
+			a.serverError(w, r, "ban user", err)
+			return
+		}
+		if err := qtx.DeleteSessionsByUserID(r.Context(), target.ID); err != nil {
+			a.serverError(w, r, "delete sessions", err)
+			return
+		}
+	}
+
+	if err := qtx.ClearDuplicateRefsToUserStories(r.Context(), target.ID); err != nil {
+		a.serverError(w, r, "clear duplicate refs", err)
+		return
+	}
+
+	storyCount, err := qtx.HardDeleteStoriesByUser(r.Context(), target.ID)
+	if err != nil {
+		a.serverError(w, r, "hard delete user stories", err)
+		return
+	}
+
+	commentCount, err := qtx.HardDeleteCommentsByUser(r.Context(), target.ID)
+	if err != nil {
+		a.serverError(w, r, "hard delete user comments", err)
+		return
+	}
+
+	if _, err := qtx.CreateModerationLog(r.Context(), store.CreateModerationLogParams{
+		ModeratorID: current.User.ID,
+		Action:      "user.ban_and_purge",
+		TargetType:  "user",
+		TargetID:    target.ID,
+		Reason:      fmt.Sprintf("banned, purged %d stories and %d comments", storyCount, commentCount),
+		Metadata:    []byte(fmt.Sprintf(`{"username":%q,"stories":%d,"comments":%d}`, target.Username, storyCount, commentCount)),
+	}); err != nil {
+		a.serverError(w, r, "create moderation log", err)
+		return
+	}
+
+	if err := tx.Commit(r.Context()); err != nil {
+		a.serverError(w, r, "commit transaction", err)
+		return
+	}
+
+	http.Redirect(w, r, "/mod/user/"+target.Username, http.StatusSeeOther)
+}
+
 func (a *App) deleteUserStories(w http.ResponseWriter, r *http.Request) {
 	current, ok := auth.UserFromContext(r.Context())
 	if !ok || !current.User.IsModerator {
