@@ -128,7 +128,7 @@
                 {{ $f.Reason -}}
               {{- end }}
             {{ end }}
-            {{ if and .IsLoggedIn (not .IsMaxDepth) }}
+            {{ if and .IsLoggedIn .EmailConfirmed (not .IsMaxDepth) }}
               <span class="comment__sep">|</span>
               <button
                 class="comment__action comment-reply-btn"

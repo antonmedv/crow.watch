@@ -127,6 +127,7 @@ type SubmitPageData struct {
 	Reason               string
 	DuplicateOfShortCode string
 	DuplicateOfTitle     string
+	EmailUnconfirmed     bool
 }
 
 type TagGroup struct {

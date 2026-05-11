@@ -29,15 +29,24 @@ func (a *App) submitPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tab := r.URL.Query().Get("tab")
+	if tab != "text" {
+		tab = "link"
+	}
+
+	if !current.User.EmailConfirmedAt.Valid {
+		a.render(w, "submit", SubmitPageData{
+			Base:             a.baseData(r),
+			Tab:              tab,
+			EmailUnconfirmed: true,
+		})
+		return
+	}
+
 	tags, err := a.Queries.ListActiveTagsWithCategory(r.Context())
 	if err != nil {
 		a.serverError(w, r, "list active tags", err)
 		return
-	}
-
-	tab := r.URL.Query().Get("tab")
-	if tab != "text" {
-		tab = "link"
 	}
 
 	a.render(w, "submit", SubmitPageData{
@@ -51,6 +60,12 @@ func (a *App) submitStory(w http.ResponseWriter, r *http.Request) {
 	current, ok := auth.UserFromContext(r.Context())
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	if !current.User.EmailConfirmedAt.Valid {
+		a.renderSubmitError(w, r, current, "link", "", "", "", nil, nil,
+			"You must confirm your email address before submitting stories.")
 		return
 	}
 

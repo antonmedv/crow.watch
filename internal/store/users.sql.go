@@ -111,6 +111,7 @@ SELECT
     u.about,
     u.website,
     u.is_moderator,
+    u.email_confirmed_at,
     u.created_at,
     (SELECT count(*) FROM stories s WHERE s.user_id = u.id AND s.deleted_at IS NULL)::bigint AS story_count,
     inviter.username AS inviter_name
@@ -123,13 +124,14 @@ LIMIT 1
 `
 
 type GetPublicProfileRow struct {
-	Username    string
-	About       string
-	Website     string
-	IsModerator bool
-	CreatedAt   pgtype.Timestamptz
-	StoryCount  int64
-	InviterName pgtype.Text
+	Username         string
+	About            string
+	Website          string
+	IsModerator      bool
+	EmailConfirmedAt pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	StoryCount       int64
+	InviterName      pgtype.Text
 }
 
 func (q *Queries) GetPublicProfile(ctx context.Context, username string) (GetPublicProfileRow, error) {
@@ -140,6 +142,7 @@ func (q *Queries) GetPublicProfile(ctx context.Context, username string) (GetPub
 		&i.About,
 		&i.Website,
 		&i.IsModerator,
+		&i.EmailConfirmedAt,
 		&i.CreatedAt,
 		&i.StoryCount,
 		&i.InviterName,

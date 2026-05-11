@@ -211,6 +211,7 @@ func (a *App) showStory(w http.ResponseWriter, r *http.Request) {
 		flagCountsMap:    commentFlagCountsMap,
 		lastVisit:        lastVisit,
 		isLoggedIn:       loggedIn,
+		emailConfirmed:   loggedIn && current.User.EmailConfirmedAt.Valid,
 		storyCode:        row.ShortCode,
 	})
 

@@ -37,11 +37,18 @@ func (a *App) profilePage(w http.ResponseWriter, r *http.Request) {
 		invitedBy = profile.InviterName.String
 	}
 
+	about := profile.About
+	website := profile.Website
+	if !profile.EmailConfirmedAt.Valid {
+		about = ""
+		website = ""
+	}
+
 	a.render(w, "profile", ProfilePageData{
 		Base:            a.baseData(r),
 		ProfileUsername: profile.Username,
-		About:           profile.About,
-		Website:         profile.Website,
+		About:           about,
+		Website:         website,
 		IsModerator:     profile.IsModerator,
 		StoryCount:      profile.StoryCount,
 		InvitedBy:       invitedBy,

@@ -212,6 +212,13 @@
     </nav>
   {{ end }}
   <div class="tab-content">
+    {{ if .EmailUnconfirmed }}
+      <p class="error" role="alert">
+        Please confirm your email address before submitting stories.
+        <br />
+        <a href="/account?tab=email">Go to your account to resend the confirmation email.</a>
+      </p>
+    {{ else }}
     {{ if .Error }}
       <p class="error" role="alert">
         {{ .Error }}{{ if .DuplicateURL }}
@@ -551,6 +558,7 @@
           </li>
         </ul>
       </div>
+    {{ end }}
     {{ end }}
   </div>
   <script src="{{ static "js/tag-picker.js" }}"></script>

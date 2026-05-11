@@ -54,6 +54,7 @@ SELECT
     u.about,
     u.website,
     u.is_moderator,
+    u.email_confirmed_at,
     u.created_at,
     (SELECT count(*) FROM stories s WHERE s.user_id = u.id AND s.deleted_at IS NULL)::bigint AS story_count,
     inviter.username AS inviter_name

@@ -24,31 +24,32 @@ const (
 var flagReasons = []string{"off-topic", "troll", "unkind", "spam"}
 
 type CommentNode struct {
-	ID          int64
-	ShortCode   string
-	StoryID     int64
-	UserID      int64
-	ParentID    int64
-	Username    string
-	Body        template.HTML
-	RawBody     string
-	Depth       int
-	Upvotes     int
-	Downvotes   int
-	HasUpvoted  bool
-	HasFlagged  bool
-	IsAuthor    bool
-	IsSubmitter bool
-	CanEdit     bool
-	IsDeleted   bool
-	IsUnread    bool
-	IsLoggedIn  bool
-	IsMaxDepth  bool
-	CreatedAt   time.Time
-	Children    []*CommentNode
-	FlagReasons []string
-	FlagCounts  []FlagCount
-	StoryCode   string
+	ID             int64
+	ShortCode      string
+	StoryID        int64
+	UserID         int64
+	ParentID       int64
+	Username       string
+	Body           template.HTML
+	RawBody        string
+	Depth          int
+	Upvotes        int
+	Downvotes      int
+	HasUpvoted     bool
+	HasFlagged     bool
+	IsAuthor       bool
+	IsSubmitter    bool
+	CanEdit        bool
+	IsDeleted      bool
+	IsUnread       bool
+	IsLoggedIn     bool
+	EmailConfirmed bool
+	IsMaxDepth     bool
+	CreatedAt      time.Time
+	Children       []*CommentNode
+	FlagReasons    []string
+	FlagCounts     []FlagCount
+	StoryCode      string
 }
 
 type buildTreeOpts struct {
@@ -59,6 +60,7 @@ type buildTreeOpts struct {
 	flagCountsMap    map[int64][]FlagCount
 	lastVisit        time.Time
 	isLoggedIn       bool
+	emailConfirmed   bool
 	storyCode        string
 }
 
@@ -94,29 +96,30 @@ func buildCommentTree(rows []store.ListCommentsByStoryRow, opts buildTreeOpts) [
 		}
 
 		node := &CommentNode{
-			ID:          r.ID,
-			ShortCode:   r.ShortCode,
-			StoryID:     r.StoryID,
-			UserID:      r.UserID,
-			Username:    r.Username,
-			Body:        body,
-			RawBody:     rawBody,
-			Depth:       int(r.Depth),
-			Upvotes:     int(r.Upvotes),
-			Downvotes:   int(r.Downvotes),
-			HasUpvoted:  opts.votedMap[r.ID],
-			HasFlagged:  opts.flaggedMap[r.ID],
-			IsAuthor:    opts.isLoggedIn && r.UserID == opts.currentUserID,
-			IsSubmitter: r.UserID == opts.storySubmitterID,
-			CanEdit:     canEdit,
-			IsDeleted:   isDeleted,
-			IsUnread:    isUnread,
-			IsLoggedIn:  opts.isLoggedIn,
-			IsMaxDepth:  int(r.Depth) >= maxCommentDepth,
-			CreatedAt:   r.CreatedAt.Time,
-			FlagReasons: flagReasons,
-			FlagCounts:  opts.flagCountsMap[r.ID],
-			StoryCode:   opts.storyCode,
+			ID:             r.ID,
+			ShortCode:      r.ShortCode,
+			StoryID:        r.StoryID,
+			UserID:         r.UserID,
+			Username:       r.Username,
+			Body:           body,
+			RawBody:        rawBody,
+			Depth:          int(r.Depth),
+			Upvotes:        int(r.Upvotes),
+			Downvotes:      int(r.Downvotes),
+			HasUpvoted:     opts.votedMap[r.ID],
+			HasFlagged:     opts.flaggedMap[r.ID],
+			IsAuthor:       opts.isLoggedIn && r.UserID == opts.currentUserID,
+			IsSubmitter:    r.UserID == opts.storySubmitterID,
+			CanEdit:        canEdit,
+			IsDeleted:      isDeleted,
+			IsUnread:       isUnread,
+			IsLoggedIn:     opts.isLoggedIn,
+			EmailConfirmed: opts.emailConfirmed,
+			IsMaxDepth:     int(r.Depth) >= maxCommentDepth,
+			CreatedAt:      r.CreatedAt.Time,
+			FlagReasons:    flagReasons,
+			FlagCounts:     opts.flagCountsMap[r.ID],
+			StoryCode:      opts.storyCode,
 		}
 		if r.ParentID.Valid {
 			node.ParentID = r.ParentID.Int64
@@ -175,6 +178,11 @@ func (a *App) createComment(w http.ResponseWriter, r *http.Request) {
 	story, err := a.Queries.GetStory(r.Context(), store.GetStoryParams{ShortCode: pgtype.Text{String: code, Valid: true}})
 	if err != nil {
 		http.NotFound(w, r)
+		return
+	}
+
+	if !current.User.EmailConfirmedAt.Valid {
+		http.Error(w, "Confirm your email address before commenting.", http.StatusForbidden)
 		return
 	}
 

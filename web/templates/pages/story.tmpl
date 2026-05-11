@@ -289,23 +289,29 @@
 
   <section class="comments-section">
     {{ if and .Base.IsLoggedIn (not .Story.DeletedAt) }}
-      <form
-        method="POST"
-        action="/x/{{ .Story.ShortCode }}/comments"
-        class="comment-form"
-      >
-        <textarea
-          name="body"
-          class="field-input comment-form__textarea"
-          rows="4"
-          placeholder="Write a comment..."
-          required
-          maxlength="10000"
-        ></textarea>
-        <button type="submit" class="btn comment-form__submit">
-          Post Comment
-        </button>
-      </form>
+      {{ if .Base.EmailConfirmed }}
+        <form
+          method="POST"
+          action="/x/{{ .Story.ShortCode }}/comments"
+          class="comment-form"
+        >
+          <textarea
+            name="body"
+            class="field-input comment-form__textarea"
+            rows="4"
+            placeholder="Write a comment..."
+            required
+            maxlength="10000"
+          ></textarea>
+          <button type="submit" class="btn comment-form__submit">
+            Post Comment
+          </button>
+        </form>
+      {{ else }}
+        <p class="error" role="alert">
+          Please <a href="/account?tab=email">confirm your email address</a> before commenting.
+        </p>
+      {{ end }}
     {{ end }}
 
     {{ if .Comments }}
